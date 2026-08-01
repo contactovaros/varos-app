@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body { -webkit-font-smoothing: antialiased; }
+
+::-webkit-scrollbar { display: none; }
+
+@keyframes emberFloat {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.12) translate(6px, -4px); }
+}
+.ember-glow::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(255,122,26,0.55), transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(122,22,32,0.5), transparent 55%);
+  filter: blur(28px);
+  animation: emberFloat 6s ease-in-out infinite alternate;
+  z-index: 0;
+}
+
+@keyframes shine {
+  0%, 100% { left: -40%; }
+  50% { left: 120%; }
+}
+.card-shine::after {
+  content: "";
+  position: absolute;
+  top: -60%;
+  left: -40%;
+  width: 60%;
+  height: 220%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.09), transparent);
+  transform: rotate(20deg);
+  animation: shine 5s ease-in-out infinite;
+}

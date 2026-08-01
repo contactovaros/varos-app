@@ -1,0 +1,14 @@
+{
+  "name": "Varo's",
+  "short_name": "Varo's",
+  "description": "Pide, reserva y acumula puntos en el Club Varo's",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#15100D",
+  "theme_color": "#15100D",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
