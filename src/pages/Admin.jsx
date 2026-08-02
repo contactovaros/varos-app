@@ -57,6 +57,11 @@ export default function Admin() {
     await supabase.from('rewards').update({ cost_points: cost }).eq('id', id)
   }
 
+  async function toggleReward(id, active) {
+    setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, active: !active } : r)))
+    await supabase.from('rewards').update({ active: !active }).eq('id', id)
+  }
+
   async function updateRule(value) {
     setRule(value)
     await supabase.from('points_rules').update({ clp_per_point: value }).eq('id', 1)
@@ -277,18 +282,26 @@ export default function Admin() {
       </div>
 
       <h3 className="font-head font-semibold text-sm mb-2">Recompensas</h3>
+      <p className="text-[11px] text-paper/40 mb-2">Elige qué recompensas ven tus clientes en "Canjea tus puntos".</p>
       <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
         {rewards.map((r) => (
-          <div key={r.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <span>{r.icon} {r.name}</span>
+          <div key={r.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
+            <span className={r.active ? 'text-paper' : 'text-paper/30 line-through'}>{r.icon} {r.name}</span>
             <input
               type="number"
               value={r.cost_points}
               onChange={(e) => updateRewardCost(r.id, Number(e.target.value))}
               className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember"
             />
+            <button
+              onClick={() => toggleReward(r.id, r.active)}
+              className={`px-2 py-1.5 rounded-md border text-[10px] whitespace-nowrap ${r.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+            >
+              {r.active ? 'Visible' : 'Oculta'}
+            </button>
           </div>
         ))}
+        {rewards.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no tienes recompensas creadas.</p>}
       </div>
 
       <h3 className="font-head font-semibold text-sm mb-2">Ranking de clientes</h3>

@@ -97,6 +97,26 @@ export default function Club() {
         </div>
       </div>
 
+      {/* Estrellas por visita */}
+      <div className="bg-inkSoft border border-ember/10 rounded-2xl p-4 mb-5">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs text-paper/60 font-head font-semibold">Estrellas de visita</span>
+          {customer.ciclos_completados > 0 && (
+            <span className="text-[10px] text-paper/35">🏆 {customer.ciclos_completados} premio{customer.ciclos_completados === 1 ? '' : 's'} ganado{customer.ciclos_completados === 1 ? '' : 's'}</span>
+          )}
+        </div>
+        <div className="flex gap-1.5 justify-center mb-2">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <span key={i} className={`text-2xl ${i < (customer.estrellas_actuales ?? 0) ? 'opacity-100' : 'opacity-20'}`}>⭐</span>
+          ))}
+        </div>
+        <p className="text-center text-[11px] text-paper/40">
+          {5 - (customer.estrellas_actuales ?? 0) > 0
+            ? `Te faltan ${5 - (customer.estrellas_actuales ?? 0)} visita${5 - (customer.estrellas_actuales ?? 0) === 1 ? '' : 's'} para tu próximo premio`
+            : '¡Ya puedes canjear tu premio!'}
+        </p>
+      </div>
+
       {/* Progress */}
       <div className="bg-inkSoft border border-ember/10 rounded-2xl p-4 mb-5">
         <div className="flex justify-between text-xs mb-2">
