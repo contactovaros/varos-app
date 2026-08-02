@@ -8,11 +8,12 @@ import Profile from './pages/Profile.jsx'
 import Admin from './pages/Admin.jsx'
 import Login from './pages/Login.jsx'
 import CheckIn from './pages/CheckIn.jsx'
-import { useAuth } from './context/AuthContext.jsx'
 import MostrarQR from './pages/MostrarQR.jsx'
+import CompletarPerfil from './pages/CompletarPerfil.jsx'
+import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
-  const { session, loading } = useAuth()
+  const { session, customer, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -20,9 +21,14 @@ export default function App() {
   }
 
   // Si alguien escanea el QR del local y no ha iniciado sesión, lo mandamos a
-  // Login pero recordando que debe volver a /checkin después del enlace mágico.
+  // Login pero recordando que debe volver a /checkin después de iniciar sesión.
   if (!session) {
     return <Login redirectPath={location.pathname === '/checkin' ? '/checkin' : '/'} />
+  }
+
+  // Primera vez: le faltan datos de su tarjeta (nombre / fecha de nacimiento)
+  if (customer && (!customer.full_name || !customer.birthday)) {
+    return <CompletarPerfil />
   }
 
   return (

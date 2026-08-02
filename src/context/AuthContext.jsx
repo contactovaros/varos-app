@@ -28,7 +28,6 @@ export function AuthProvider({ children }) {
       }
       setLoading(false)
     })
-
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
       if (newSession) {
@@ -39,21 +38,26 @@ export function AuthProvider({ children }) {
         setIsAdmin(false)
       }
     })
-
     return () => sub.subscription.unsubscribe()
   }, [])
 
-  // redirectPath: a dónde volver después de tocar el enlace mágico del correo
+  // redirectPath: a dónde volver después de iniciar sesión con Google
   // (por ejemplo "/checkin" cuando el cliente escaneó el QR del local)
-  async function signInWithEmail(email, redirectPath = '/') {
-    return supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}${redirectPath}` }
+  async function signInWithGoogle(redirectPath = '/') {
+    return supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}${redirectPath}` }
     })
   }
 
   async function signOut() {
     await supabase.auth.signOut()
+  }
+
+  async function completeProfile({ full_name, birthday }) {
+    if (!session) return
+    await supabase.from('customers').update({ full_name, birthday }).eq('id', session.user.id)
+    await loadCustomer(session.user.id)
   }
 
   return (
@@ -63,8 +67,9 @@ export function AuthProvider({ children }) {
         customer,
         isAdmin,
         loading,
-        signInWithEmail,
+        signInWithGoogle,
         signOut,
+        completeProfile,
         refreshCustomer: () => session && loadCustomer(session.user.id)
       }}
     >
