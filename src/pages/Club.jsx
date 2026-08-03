@@ -75,8 +75,12 @@ export default function Club() {
           </div>
 
           <div className="flex items-center gap-3 my-4">
-            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ember to-wine flex items-center justify-center font-head font-bold text-lg border-2 border-white/20">
-              {customer.full_name?.split(' ').map((n) => n[0]).slice(0, 2).join('')}
+            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ember to-wine flex items-center justify-center font-head font-bold text-lg border-2 border-white/20 overflow-hidden">
+              {customer.avatar_url ? (
+                <img src={customer.avatar_url} alt={customer.full_name} className="w-full h-full object-cover" />
+              ) : (
+                customer.full_name?.split(' ').map((n) => n[0]).slice(0, 2).join('')
+              )}
             </div>
             <div>
               <div className="font-head font-semibold text-base">{customer.full_name}</div>
