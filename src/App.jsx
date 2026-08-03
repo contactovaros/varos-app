@@ -4,7 +4,6 @@ import BottomNav from './components/BottomNav.jsx'
 import Menu from './pages/Menu.jsx'
 import Cart from './pages/Cart.jsx'
 import Club from './pages/Club.jsx'
-import Profile from './pages/Profile.jsx'
 import Admin from './pages/Admin.jsx'
 import Login from './pages/Login.jsx'
 import CheckIn from './pages/CheckIn.jsx'
@@ -38,7 +37,7 @@ export default function App() {
           <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
           <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
           <Route path="/club" element={<Club />} />
-          <Route path="/perfil" element={<Profile />} />
+          <Route path="/perfil" element={<Navigate to="/club" replace />} />
           <Route path="/admin" element={<Admin />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />

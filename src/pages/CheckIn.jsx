@@ -5,6 +5,21 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
 
+const LOCAL_LAT = -18.50020878986493
+const LOCAL_LNG = -70.25482300543662
+const RADIO_METROS = 200
+
+function distanciaMetros(lat1, lng1, lat2, lng2) {
+  const R = 6371000
+  const toRad = (d) => (d * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLng = toRad(lng2 - lng1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 function Ornamento() {
   return (
     <div className="flex items-center gap-2 justify-center my-2">
@@ -71,7 +86,7 @@ function TarjetaVaros({ customer, estrellas, mensaje }) {
 
 export default function CheckIn() {
   const { customer, refreshCustomer } = useAuth()
-  const [status, setStatus] = useState('registrando') // registrando | listo | premio | ya_hoy | error
+  const [status, setStatus] = useState('registrando') // registrando | listo | premio | ya_hoy | error | lejos | sin_ubicacion
   const [resultado, setResultado] = useState(null)
   const navigate = useNavigate()
 
@@ -79,7 +94,7 @@ export default function CheckIn() {
     if (!customer) return
     let cancelled = false
 
-    async function run() {
+    async function registrar() {
       const { data, error } = await supabase.rpc('register_visit', { p_customer_id: customer.id })
       if (cancelled) return
       if (error) {
@@ -97,6 +112,33 @@ export default function CheckIn() {
           confetti({ particleCount: 70, spread: 65, colors: ['#FF7A1A', '#7A1620', '#E3B341'] })
         }
       }
+    }
+
+    function run() {
+      if (!navigator.geolocation) {
+        setStatus('sin_ubicacion')
+        return
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          if (cancelled) return
+          const distancia = distanciaMetros(
+            pos.coords.latitude,
+            pos.coords.longitude,
+            LOCAL_LAT,
+            LOCAL_LNG
+          )
+          if (distancia > RADIO_METROS) {
+            setStatus('lejos')
+            return
+          }
+          registrar()
+        },
+        () => {
+          if (!cancelled) setStatus('sin_ubicacion')
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      )
     }
     run()
     return () => {
@@ -118,6 +160,32 @@ export default function CheckIn() {
         <div className="text-4xl mb-3">😕</div>
         <h2 className="font-head text-lg font-semibold mb-2 text-paper">No pudimos registrar tu visita</h2>
         <p className="text-sm text-paper/50 mb-6">Muéstrale esta pantalla a tu garzón para que te ayude.</p>
+        <button onClick={() => navigate('/club')} className="px-6 py-3 rounded-xl font-head font-semibold text-sm border border-white/10 text-paper">
+          Ir al Club Varo's
+        </button>
+      </div>
+    )
+  }
+
+  if (status === 'lejos') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center bg-ink">
+        <div className="text-4xl mb-3">📍</div>
+        <h2 className="font-head text-lg font-semibold mb-2 text-paper">Debes estar en Varo's para registrar tu visita</h2>
+        <p className="text-sm text-paper/50 mb-6">Parece que no estás en el local en este momento. Escanea el QR nuevamente cuando estés aquí.</p>
+        <button onClick={() => navigate('/club')} className="px-6 py-3 rounded-xl font-head font-semibold text-sm border border-white/10 text-paper">
+          Ir al Club Varo's
+        </button>
+      </div>
+    )
+  }
+
+  if (status === 'sin_ubicacion') {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center bg-ink">
+        <div className="text-4xl mb-3">📍</div>
+        <h2 className="font-head text-lg font-semibold mb-2 text-paper">Necesitamos tu ubicación</h2>
+        <p className="text-sm text-paper/50 mb-6">Activa el permiso de ubicación en tu celular y vuelve a escanear el QR para registrar tu visita.</p>
         <button onClick={() => navigate('/club')} className="px-6 py-3 rounded-xl font-head font-semibold text-sm border border-white/10 text-paper">
           Ir al Club Varo's
         </button>
