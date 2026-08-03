@@ -6,31 +6,54 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
 
 function TarjetaVaros({ customer, estrellas, mensaje }) {
+  const primerNombre = customer.full_name?.split(' ')[0] ?? ''
+  const puedeCanjear = estrellas >= 5
+
   return (
-    <div className="w-full max-w-xs rounded-3xl border border-ember/30 bg-gradient-to-b from-[#241612] to-ink p-6 text-center shadow-glow">
-      <div className="font-display text-2xl text-ember mb-1">Varo's</div>
-      <div className="w-16 h-16 rounded-full mx-auto my-4 overflow-hidden border-2 border-ember/40 bg-inkSoft flex items-center justify-center">
-        {customer.avatar_url ? (
-          <img src={customer.avatar_url} alt={customer.full_name} className="w-full h-full object-cover" />
-        ) : (
-          <span className="font-head font-bold text-lg">{customer.full_name?.[0]}</span>
-        )}
-      </div>
-      <p className="text-sm text-paper/70 mb-4">Hola, {customer.full_name?.split(' ')[0]}</p>
+    <div className="w-full max-w-xs flex flex-col items-center">
+      <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase mb-1">Varo's</div>
+      <h1 className="font-display text-3xl text-paper mb-1">Hola, {primerNombre}</h1>
+      <p className="text-wineSoft text-sm mb-5">Tu tarjeta de fidelización</p>
 
-      <div className="flex gap-1.5 justify-center mb-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <span key={i} className={`text-2xl ${i < estrellas ? 'opacity-100' : 'opacity-20'}`}>⭐</span>
-        ))}
-      </div>
-      <p className="text-xs text-paper/40 mb-4">{estrellas} de 5 visitas</p>
-      <p className="text-sm text-paper/70 mb-5">{mensaje}</p>
+      <div className="w-full rounded-[28px] border border-ember/30 bg-ink p-6 text-center shadow-glow relative">
+        <div className="rounded-2xl border border-ember/20 p-5">
+          {/* Logo tipo escudo con la inicial */}
+          <div className="mx-auto w-14 h-14 rounded-full border-2 border-ember/50 flex items-center justify-center mb-1 overflow-hidden bg-inkSoft">
+            {customer.avatar_url ? (
+              <img src={customer.avatar_url} alt={primerNombre} className="w-full h-full object-cover" />
+            ) : (
+              <span className="font-display text-2xl text-ember">V</span>
+            )}
+          </div>
+          <div className="text-ember text-[10px] tracking-[0.3em] mb-4">· ⚜ ·</div>
 
-      <div className="bg-white p-3 rounded-xl inline-block">
-        <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={110} />
+          <div className="flex gap-2 justify-center mb-2">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span key={i} className={`text-3xl ${i < estrellas ? 'opacity-100 drop-shadow-[0_0_6px_rgba(227,179,65,0.5)]' : 'opacity-15'}`}>⭐</span>
+            ))}
+          </div>
+          <p className="font-head text-paper text-sm mb-4">{estrellas} de 5 visitas</p>
+
+          <div className="border-t border-white/10 pt-4 mb-5">
+            <p className="text-paper/70 text-sm leading-relaxed">{mensaje}</p>
+          </div>
+
+          <div className="bg-white p-3 rounded-2xl border-2 border-gold/60 inline-block">
+            <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={130} />
+          </div>
+        </div>
       </div>
 
-      <div className="border-t border-white/10 mt-6 pt-3 text-[10px] text-paper/35 leading-relaxed">
+      {puedeCanjear && (
+        <button
+          onClick={() => alert('Muéstrale esta pantalla a tu garzón para canjear tu premio 🎁')}
+          className="w-full mt-5 py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-wineSoft to-wine flex items-center justify-center gap-2 shadow-glow"
+        >
+          🎁 Ver mi premio
+        </button>
+      )}
+
+      <div className="text-center mt-6 text-[10px] text-paper/35">
         Varo's · +56 9 9923 5368 · contacto@varos.cl
       </div>
     </div>
@@ -95,11 +118,11 @@ export default function CheckIn() {
 
   if (status === 'ya_hoy') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-6">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center gap-6">
         <TarjetaVaros customer={customer} estrellas={customer.estrellas_actuales ?? 0} mensaje="Ya registramos tu visita de hoy. ¡Vuelve mañana!" />
         <button
           onClick={() => navigate('/club')}
-          className="w-full max-w-xs py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine shadow-glow"
+          className="w-full max-w-xs py-4 rounded-2xl font-head font-bold border border-white/10"
         >
           Ver mi Club Varo's
         </button>
@@ -137,11 +160,11 @@ export default function CheckIn() {
     : '¡Ya puedes canjear tu premio!'
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center gap-6">
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center gap-4">
       <TarjetaVaros customer={customer} estrellas={estrellas} mensaje={mensaje} />
       <button
         onClick={() => navigate('/club')}
-        className="w-full max-w-xs py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine shadow-glow"
+        className="w-full max-w-xs py-3 rounded-2xl font-head font-semibold text-sm border border-white/10"
       >
         Ver mi Club Varo's
       </button>
