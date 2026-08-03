@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import BottomNav from './components/BottomNav.jsx'
 import Menu from './pages/Menu.jsx'
@@ -13,7 +13,7 @@ import CompletarPerfil from './pages/CompletarPerfil.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
-  const { session, customer, loading } = useAuth()
+  const { session, customer, isAdmin, loading } = useAuth()
   const location = useLocation()
 
   if (loading) {
@@ -35,8 +35,8 @@ export default function App() {
     <CartProvider>
       <div className="max-w-md mx-auto min-h-screen pb-24 relative">
         <Routes>
-          <Route path="/" element={<Menu />} />
-          <Route path="/pedidos" element={<Cart />} />
+          <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
+          <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
           <Route path="/club" element={<Club />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/admin" element={<Admin />} />
