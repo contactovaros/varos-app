@@ -5,56 +5,76 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
 
+function Ornamento() {
+  return (
+    <div className="flex items-center gap-2 justify-center my-2">
+      <span className="h-px w-10 bg-gold/50" />
+      <span className="text-gold text-[10px]">✦</span>
+      <span className="h-px w-10 bg-gold/50" />
+    </div>
+  )
+}
+
 function TarjetaVaros({ customer, estrellas, mensaje }) {
   const primerNombre = customer.full_name?.split(' ')[0] ?? ''
   const puedeCanjear = estrellas >= 5
 
   return (
-    <div className="w-full max-w-xs flex flex-col items-center">
-      <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase mb-1">Varo's</div>
-      <h1 className="font-display text-3xl text-paper mb-1">Hola, {primerNombre}</h1>
-      <p className="text-wineSoft text-sm mb-5">Tu tarjeta de fidelización</p>
-
-      <div className="w-full rounded-[28px] border border-ember/30 bg-ink p-6 text-center shadow-glow relative">
-        <div className="rounded-2xl border border-ember/20 p-5">
-          {/* Logo tipo escudo con la inicial */}
-          <div className="mx-auto w-14 h-14 rounded-full border-2 border-ember/50 flex items-center justify-center mb-1 overflow-hidden bg-inkSoft">
-            {customer.avatar_url ? (
-              <img src={customer.avatar_url} alt={primerNombre} className="w-full h-full object-cover" />
-            ) : (
-              <span className="font-display text-2xl text-ember">V</span>
-            )}
-          </div>
-          <div className="text-ember text-[10px] tracking-[0.3em] mb-4">· ⚜ ·</div>
-
-          <div className="flex gap-2 justify-center mb-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={`text-3xl ${i < estrellas ? 'opacity-100 drop-shadow-[0_0_6px_rgba(227,179,65,0.5)]' : 'opacity-15'}`}>⭐</span>
-            ))}
-          </div>
-          <p className="font-head text-paper text-sm mb-4">{estrellas} de 5 visitas</p>
-
-          <div className="border-t border-white/10 pt-4 mb-5">
-            <p className="text-paper/70 text-sm leading-relaxed">{mensaje}</p>
-          </div>
-
-          <div className="bg-white p-3 rounded-2xl border-2 border-gold/60 inline-block">
-            <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={130} />
-          </div>
-        </div>
+    <div className="min-h-screen bg-paper flex flex-col items-center">
+      {/* Barra superior estilo referencia */}
+      <div className="w-full bg-ink pt-6 pb-5 px-6 flex items-center justify-between">
+        <span className="text-gold text-lg">☰</span>
+        <div className="font-display italic text-3xl text-gold">Varo's</div>
+        <span className="text-gold text-lg">🔔</span>
       </div>
 
-      {puedeCanjear && (
-        <button
-          onClick={() => alert('Muéstrale esta pantalla a tu garzón para canjear tu premio 🎁')}
-          className="w-full mt-5 py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-wineSoft to-wine flex items-center justify-center gap-2 shadow-glow"
-        >
-          🎁 Ver mi premio
-        </button>
-      )}
+      <div className="px-6 pt-6 w-full max-w-xs flex flex-col items-center text-center">
+        <h1 className="font-head text-3xl text-ink font-semibold mb-1">Hola, {primerNombre}</h1>
+        <p className="text-wineSoft font-medium mb-1">Tu tarjeta de fidelización</p>
+        <Ornamento />
 
-      <div className="text-center mt-6 text-[10px] text-paper/35">
-        Varo's · +56 9 9923 5368 · contacto@varos.cl
+        {/* Tarjeta oscura */}
+        <div className="w-full rounded-[26px] border-2 border-gold/70 bg-ink p-1.5 mt-4 shadow-xl">
+          <div className="rounded-[20px] border border-gold/30 p-6 text-center">
+            <div className="font-display text-4xl text-gold leading-none">V</div>
+            <Ornamento />
+
+            <div className="flex gap-1.5 justify-center mb-3 mt-4">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <span key={i} className={`text-3xl ${i < estrellas ? 'text-gold' : 'text-gold/20'}`}>
+                  {i < estrellas ? '★' : '☆'}
+                </span>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 justify-center mb-4">
+              <span className="h-px w-8 bg-gold/40" />
+              <p className="text-paper text-sm">{estrellas} de 5 visitas</p>
+              <span className="h-px w-8 bg-gold/40" />
+            </div>
+
+            <div className="border-t border-gold/20 pt-4 mb-5">
+              <p className="text-paper/85 text-[15px] leading-relaxed">{mensaje}</p>
+            </div>
+
+            <div className="bg-white p-3 rounded-2xl border-2 border-gold/60 inline-block">
+              <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={130} />
+            </div>
+          </div>
+        </div>
+
+        {puedeCanjear && (
+          <button
+            onClick={() => alert('Muéstrale esta pantalla a tu garzón para canjear tu premio 🎁')}
+            className="w-full mt-5 py-4 rounded-2xl font-head font-bold bg-bronze text-paper flex items-center justify-center gap-2 shadow-lg"
+          >
+            🎁 Ver mi premio
+          </button>
+        )}
+
+        <div className="text-center mt-6 mb-4 text-[10px] text-ink/40">
+          Varo's · +56 9 9923 5368 · contacto@varos.cl
+        </div>
       </div>
     </div>
   )
@@ -97,7 +117,7 @@ export default function CheckIn() {
 
   if (!customer || status === 'registrando') {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-paper/50 px-8 text-center">
+      <div className="min-h-screen flex items-center justify-center text-sm text-paper/50 px-8 text-center bg-ink">
         Registrando tu visita…
       </div>
     )
@@ -105,11 +125,11 @@ export default function CheckIn() {
 
   if (status === 'error') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center px-8 text-center bg-ink">
         <div className="text-4xl mb-3">😕</div>
-        <h2 className="font-head text-lg font-semibold mb-2">No pudimos registrar tu visita</h2>
+        <h2 className="font-head text-lg font-semibold mb-2 text-paper">No pudimos registrar tu visita</h2>
         <p className="text-sm text-paper/50 mb-6">Muéstrale esta pantalla a tu garzón para que te ayude.</p>
-        <button onClick={() => navigate('/club')} className="px-6 py-3 rounded-xl font-head font-semibold text-sm border border-white/10">
+        <button onClick={() => navigate('/club')} className="px-6 py-3 rounded-xl font-head font-semibold text-sm border border-white/10 text-paper">
           Ir al Club Varo's
         </button>
       </div>
@@ -117,22 +137,12 @@ export default function CheckIn() {
   }
 
   if (status === 'ya_hoy') {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center gap-6">
-        <TarjetaVaros customer={customer} estrellas={customer.estrellas_actuales ?? 0} mensaje="Ya registramos tu visita de hoy. ¡Vuelve mañana!" />
-        <button
-          onClick={() => navigate('/club')}
-          className="w-full max-w-xs py-4 rounded-2xl font-head font-bold border border-white/10"
-        >
-          Ver mi Club Varo's
-        </button>
-      </div>
-    )
+    return <TarjetaVaros customer={customer} estrellas={customer.estrellas_actuales ?? 0} mensaje="Ya registramos tu visita de hoy. ¡Vuelve mañana!" />
   }
 
   if (status === 'premio') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center">
+      <div className="min-h-screen flex flex-col items-center justify-center px-6 text-center bg-ink">
         <div className="w-full max-w-xs rounded-3xl border-2 border-dashed border-ember/60 bg-inkSoft p-6 relative overflow-hidden">
           <p className="uppercase tracking-widest text-xs text-ember font-head mb-1">Ticket ganador 🎟️</p>
           <div className="text-5xl mb-3">🏆</div>
@@ -145,7 +155,7 @@ export default function CheckIn() {
         </div>
         <button
           onClick={() => navigate('/club')}
-          className="w-full max-w-xs mt-6 py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine shadow-glow"
+          className="w-full max-w-xs mt-6 py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine shadow-glow text-paper"
         >
           Ver mi Club Varo's
         </button>
@@ -159,15 +169,5 @@ export default function CheckIn() {
     ? `Te faltan ${restantes} visita${restantes === 1 ? '' : 's'} para ganar tu premio`
     : '¡Ya puedes canjear tu premio!'
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 text-center gap-4">
-      <TarjetaVaros customer={customer} estrellas={estrellas} mensaje={mensaje} />
-      <button
-        onClick={() => navigate('/club')}
-        className="w-full max-w-xs py-3 rounded-2xl font-head font-semibold text-sm border border-white/10"
-      >
-        Ver mi Club Varo's
-      </button>
-    </div>
-  )
+  return <TarjetaVaros customer={customer} estrellas={estrellas} mensaje={mensaje} />
 }
