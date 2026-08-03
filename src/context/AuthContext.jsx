@@ -9,8 +9,26 @@ export function AuthProvider({ children }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  async function loadCustomer(userId) {
+  async function loadCustomer(userId, googleUser) {
     const { data } = await supabase.from('customers').select('*').eq('id', userId).single()
+
+    // Si el cliente ya existía pero le falta la foto o el nombre (ej. se registró antes
+    // con el login por correo), la completamos con los datos de su cuenta de Google.
+    if (data && googleUser) {
+      const googleAvatar = googleUser.user_metadata?.avatar_url || googleUser.user_metadata?.picture
+      const googleName = googleUser.user_metadata?.full_name || googleUser.user_metadata?.name
+      const faltaAvatar = !data.avatar_url && googleAvatar
+      const faltaNombre = !data.full_name && googleName
+      if (faltaAvatar || faltaNombre) {
+        const patch = {}
+        if (faltaAvatar) patch.avatar_url = googleAvatar
+        if (faltaNombre) patch.full_name = googleName
+        await supabase.from('customers').update(patch).eq('id', userId)
+        setCustomer({ ...data, ...patch })
+        return
+      }
+    }
+
     setCustomer(data ?? null)
   }
 
@@ -23,7 +41,7 @@ export function AuthProvider({ children }) {
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session)
       if (data.session) {
-        loadCustomer(data.session.user.id)
+        loadCustomer(data.session.user.id, data.session.user)
         loadAdminStatus(data.session.user.id)
       }
       setLoading(false)
@@ -31,7 +49,7 @@ export function AuthProvider({ children }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession)
       if (newSession) {
-        loadCustomer(newSession.user.id)
+        loadCustomer(newSession.user.id, newSession.user)
         loadAdminStatus(newSession.user.id)
       } else {
         setCustomer(null)
@@ -70,7 +88,7 @@ export function AuthProvider({ children }) {
         signInWithGoogle,
         signOut,
         completeProfile,
-        refreshCustomer: () => session && loadCustomer(session.user.id)
+        refreshCustomer: () => session && loadCustomer(session.user.id, session.user)
       }}
     >
       {children}
