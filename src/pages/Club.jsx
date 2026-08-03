@@ -173,6 +173,10 @@ export default function Club() {
         {history.length === 0 && <p className="text-xs text-paper/35 py-3">Aún no tienes movimientos.</p>}
       </div>
 
+      <div className="text-center mt-8 pb-2 text-[11px] text-paper/35">
+        Varo's · +56 9 9923 5368 · contacto@varos.cl
+      </div>
+
       {toast && (
         <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-inkSoft border border-ember/40 rounded-2xl px-5 py-3 text-xs shadow-glow z-50">
           🎉 Canjeaste <b className="text-ember">{toast}</b>. Muéstraselo al garzón.

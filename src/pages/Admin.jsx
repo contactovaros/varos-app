@@ -11,19 +11,22 @@ export default function Admin() {
   const [menuItems, setMenuItems] = useState([])
   const [promotions, setPromotions] = useState([])
   const [rule, setRule] = useState(100)
+  const [premioEstrellas, setPremioEstrellas] = useState('')
+  const [savingPremio, setSavingPremio] = useState(false)
   const [checkinUrl, setCheckinUrl] = useState(`${window.location.origin}/checkin`)
   const [newDish, setNewDish] = useState({ name: '', description: '', price_clp: '', category: 'Platos principales' })
   const [newPromo, setNewPromo] = useState({ title: '', message: '' })
   const [savingDish, setSavingDish] = useState(false)
 
   async function loadAll() {
-    const [c, r, rd, mi, pr, promo] = await Promise.all([
+    const [c, r, rd, mi, pr, promo, premio] = await Promise.all([
       supabase.from('customers').select('*').order('points', { ascending: false }).limit(30),
       supabase.from('rewards').select('*').order('cost_points'),
       supabase.from('redemptions').select('*, customers(full_name), rewards(name)').order('created_at', { ascending: false }).limit(20),
       supabase.from('menu_items').select('*').order('category'),
       supabase.from('points_rules').select('*').eq('id', 1).single(),
-      supabase.from('promotions').select('*').order('starts_at', { ascending: false }).limit(10)
+      supabase.from('promotions').select('*').order('starts_at', { ascending: false }).limit(10),
+      supabase.from('config_recompensa_estrellas').select('*').eq('id', 1).single()
     ])
     setCustomers(c.data ?? [])
     setRewards(r.data ?? [])
@@ -31,6 +34,7 @@ export default function Admin() {
     setMenuItems(mi.data ?? [])
     setRule(pr.data?.clp_per_point ?? 100)
     setPromotions(promo.data ?? [])
+    setPremioEstrellas(premio.data?.producto ?? '')
   }
 
   useEffect(() => {
@@ -60,6 +64,13 @@ export default function Admin() {
   async function toggleReward(id, active) {
     setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, active: !active } : r)))
     await supabase.from('rewards').update({ active: !active }).eq('id', id)
+  }
+
+  async function guardarPremioEstrellas() {
+    if (!premioEstrellas) return
+    setSavingPremio(true)
+    await supabase.from('config_recompensa_estrellas').update({ producto: premioEstrellas }).eq('id', 1)
+    setSavingPremio(false)
   }
 
   async function updateRule(value) {
@@ -166,6 +177,29 @@ export default function Admin() {
           Ahora mismo apunta a tu dirección local — cuando publiques la app (paso 6 del README), reemplaza este texto
           por tu URL final (ej. https://club.varos.cl/checkin) antes de imprimir el QR definitivo.
         </p>
+      </div>
+
+      {/* ---- PREMIO DE 5 ESTRELLAS (nuevo) ---- */}
+      <h3 className="font-head font-semibold text-sm mb-2">Premio por 5 estrellas</h3>
+      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6 flex flex-col gap-2">
+        <p className="text-[11px] text-paper/45">
+          Lo que gana el cliente al completar sus 5 visitas. Se muestra en su ticket ganador.
+        </p>
+        <div className="flex gap-2">
+          <input
+            value={premioEstrellas}
+            onChange={(e) => setPremioEstrellas(e.target.value)}
+            placeholder="Ej: Postre a elección"
+            className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+          />
+          <button
+            onClick={guardarPremioEstrellas}
+            disabled={savingPremio}
+            className="px-4 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+          >
+            {savingPremio ? 'Guardando…' : 'Guardar'}
+          </button>
+        </div>
       </div>
 
       {/* ---- MENÚ (nuevo) ---- */}
