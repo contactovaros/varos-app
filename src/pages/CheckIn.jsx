@@ -29,7 +29,8 @@ function TarjetaVaros({ customer, estrellas, mensaje }) {
       {/* Tarjeta oscura */}
       <div className="w-full max-w-xs rounded-[26px] border-2 border-gold/70 bg-inkSoft p-1.5 mt-4 shadow-glow">
         <div className="rounded-[20px] border border-gold/30 p-6 text-center">
-          <div className="font-display text-4xl text-gold leading-none">V</div>
+          <div className="font-display text-2xl text-gold leading-tight">Varo's</div>
+          <p className="text-gold/70 text-[10px] tracking-wide mt-1">+56 9 9923 5368 · contacto@varos.cl</p>
           <Ornamento />
 
           <div className="flex gap-1.5 justify-center mb-3 mt-4">
@@ -64,10 +65,6 @@ function TarjetaVaros({ customer, estrellas, mensaje }) {
           🎁 Ver mi premio
         </button>
       )}
-
-      <div className="text-center mt-6 text-[10px] text-paper/35">
-        Varo's · +56 9 9923 5368 · contacto@varos.cl
-      </div>
     </div>
   )
 }
