@@ -1,5 +1,5 @@
-const CACHE = 'varos-cache-v1';
-const CORE_ASSETS = ['/', '/index.html', '/manifest.json'];
+const CACHE = 'varos-cache-v2';
+const CORE_ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -19,6 +19,16 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // El HTML de navegación siempre debe pedirse a la red primero: si viene cacheado,
+  // apunta a bundles JS con hash antiguo que ya no existen tras un nuevo deploy.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
   event.respondWith(
     caches.match(event.request).then((cached) => {
       const network = fetch(event.request)
