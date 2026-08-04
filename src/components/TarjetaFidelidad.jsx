@@ -22,6 +22,16 @@ function mensajeFaltan(restantes, premioTexto) {
   return `Te falta${restantes === 1 ? '' : 'n'} ${restantes} ${visita} para: ${premioTexto}`
 }
 
+function IconoInstagram() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  )
+}
+
 // Muestra el QR solo cuando falta 1 o 2 visitas para el premio: el garzón lo usa
 // para identificar al cliente que está por completar su tarjeta.
 export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
@@ -90,6 +100,16 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
           <div className="border-t border-gold/20 mt-5 pt-3 text-[10px] text-gold/50 tracking-wide">
             +56 9 9923 5368 · contacto@varos.cl
           </div>
+
+          <a
+            href="https://www.instagram.com/varosrestaurant/?hl=es"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Síguenos en Instagram"
+            className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gold/50 text-gold mt-3"
+          >
+            <IconoInstagram />
+          </a>
         </div>
       </div>
     </>
