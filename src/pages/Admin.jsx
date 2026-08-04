@@ -69,8 +69,15 @@ export default function Admin() {
   async function guardarPremioEstrellas() {
     if (!premioEstrellas) return
     setSavingPremio(true)
-    await supabase.from('config_recompensa_estrellas').update({ producto: premioEstrellas }).eq('id', 1)
+    const { data, error } = await supabase
+      .from('config_recompensa_estrellas')
+      .update({ producto: premioEstrellas })
+      .eq('id', 1)
+      .select()
     setSavingPremio(false)
+    if (error || !data?.length) {
+      alert('No se pudo guardar el premio. Puede faltar el permiso de escritura (RLS) en Supabase para la tabla config_recompensa_estrellas.')
+    }
   }
 
   async function updateRule(value) {
@@ -200,6 +207,23 @@ export default function Admin() {
             {savingPremio ? 'Guardando…' : 'Guardar'}
           </button>
         </div>
+      </div>
+
+      {/* ---- CLIENTES Y SU PREMIO POR ESTRELLAS (nuevo) ---- */}
+      <h3 className="font-head font-semibold text-sm mb-2">Clientes — premio al llegar a 5 estrellas</h3>
+      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+        {customers.map((c) => (
+          <div key={c.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
+            <div>
+              <div className="text-paper">{c.full_name}</div>
+              <div className="text-paper/40 text-[10px]">{c.estrellas_actuales ?? 0} de 5 ⭐</div>
+            </div>
+            <span className="text-ember text-[11px] text-right max-w-[140px]">
+              {premioEstrellas ? `Ganaría: ${premioEstrellas}` : 'Sin premio configurado'}
+            </span>
+          </div>
+        ))}
+        {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
       </div>
 
       {/* ---- MENÚ (nuevo) ---- */}
