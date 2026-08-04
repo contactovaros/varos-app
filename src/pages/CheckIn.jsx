@@ -193,10 +193,6 @@ export default function CheckIn() {
   }
 
   const estrellas = resultado?.estrellas ?? 0
-  const restantes = 5 - estrellas
-  const mensaje = restantes > 0
-    ? `Te faltan ${restantes} visita${restantes === 1 ? '' : 's'} para ganar tu premio`
-    : '¡Ya puedes canjear tu premio!'
 
-  return <TarjetaVaros customer={customer} estrellas={estrellas} mensaje={mensaje} />
+  return <TarjetaVaros customer={customer} estrellas={estrellas} />
 }

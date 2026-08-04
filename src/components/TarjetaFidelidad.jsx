@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
+import { supabase } from '../lib/supabase'
 
 export function Ornamento() {
   return (
@@ -15,12 +17,31 @@ function formatearCumpleanos(fecha) {
   return new Date(`${fecha}T00:00:00`).toLocaleDateString('es-CL', { day: 'numeric', month: 'long' })
 }
 
+function mensajeFaltan(restantes, premioTexto) {
+  const visita = restantes === 1 ? 'estrella' : 'estrellas'
+  return `Te falta${restantes === 1 ? '' : 'n'} ${restantes} ${visita} para: ${premioTexto}`
+}
+
 // Muestra el QR solo cuando falta 1 o 2 visitas para el premio: el garzón lo usa
 // para identificar al cliente que está por completar su tarjeta.
 export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
+  const [premio, setPremio] = useState(null)
+
+  useEffect(() => {
+    supabase
+      .from('config_recompensa_estrellas')
+      .select('producto, visible')
+      .eq('id', 1)
+      .single()
+      .then(({ data }) => setPremio(data))
+  }, [])
+
   const primerNombre = customer.full_name?.split(' ')[0] ?? ''
   const cumpleanos = formatearCumpleanos(customer.birthday)
   const mostrarQR = estrellas === 3 || estrellas === 4
+  const restantes = 5 - estrellas
+  const premioTexto = premio?.producto ? (premio.visible ? premio.producto : 'tu premio sorpresa 🎁') : null
+  const mensajePremio = restantes > 0 && premioTexto ? mensajeFaltan(restantes, premioTexto) : null
 
   return (
     <>
@@ -52,6 +73,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             ))}
           </div>
           <p className="text-paper text-sm mb-1">{estrellas} de 5 visitas</p>
+          {mensajePremio && <p className="text-gold/80 text-xs mb-2">{mensajePremio}</p>}
 
           {mensaje && (
             <div className="border-t border-gold/20 pt-4 mt-3">
