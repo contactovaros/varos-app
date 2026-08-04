@@ -43,7 +43,18 @@ export default function CheckIn() {
   const { customer, refreshCustomer } = useAuth()
   const [status, setStatus] = useState('registrando') // registrando | listo | premio | ya_hoy | error | lejos | sin_ubicacion
   const [resultado, setResultado] = useState(null)
+  const [premioVisible, setPremioVisible] = useState(true)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    if (status !== 'premio') return
+    supabase
+      .from('config_recompensa_estrellas')
+      .select('visible')
+      .eq('id', 1)
+      .single()
+      .then(({ data }) => setPremioVisible(data?.visible ?? true))
+  }, [status])
 
   useEffect(() => {
     if (!customer) return
@@ -159,8 +170,14 @@ export default function CheckIn() {
           <p className="uppercase tracking-widest text-xs text-ember font-head mb-1">Ticket ganador 🎟️</p>
           <div className="text-5xl mb-3">🏆</div>
           <h2 className="font-display text-3xl text-paper mb-2">¡Completaste tus 5 estrellas!</h2>
-          <p className="text-sm text-paper/60 mb-4">Ganaste:</p>
-          <p className="font-head text-xl font-bold text-ember mb-4">{resultado?.producto}</p>
+          {premioVisible ? (
+            <>
+              <p className="text-sm text-paper/60 mb-4">Ganaste:</p>
+              <p className="font-head text-xl font-bold text-ember mb-4">{resultado?.producto}</p>
+            </>
+          ) : (
+            <p className="text-sm text-paper/60 mb-4">Pregúntale a tu garzón cuál es tu premio 🎉</p>
+          )}
           <div className="border-t border-white/10 pt-3 text-xs text-paper/40">
             Muéstrale esta pantalla a tu garzón para canjearlo
           </div>

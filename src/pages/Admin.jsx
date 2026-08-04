@@ -12,6 +12,7 @@ export default function Admin() {
   const [promotions, setPromotions] = useState([])
   const [rule, setRule] = useState(100)
   const [premioEstrellas, setPremioEstrellas] = useState('')
+  const [premioVisible, setPremioVisible] = useState(true)
   const [savingPremio, setSavingPremio] = useState(false)
   const [checkinUrl, setCheckinUrl] = useState(`${window.location.origin}/checkin`)
   const [newDish, setNewDish] = useState({ name: '', description: '', price_clp: '', category: 'Platos principales' })
@@ -35,6 +36,7 @@ export default function Admin() {
     setRule(pr.data?.clp_per_point ?? 100)
     setPromotions(promo.data ?? [])
     setPremioEstrellas(premio.data?.producto ?? '')
+    setPremioVisible(premio.data?.visible ?? true)
   }
 
   useEffect(() => {
@@ -77,6 +79,20 @@ export default function Admin() {
     setSavingPremio(false)
     if (error || !data?.length) {
       alert('No se pudo guardar el premio. Puede faltar el permiso de escritura (RLS) en Supabase para la tabla config_recompensa_estrellas.')
+    }
+  }
+
+  async function toggleVisiblePremio() {
+    const nuevoValor = !premioVisible
+    setPremioVisible(nuevoValor)
+    const { data, error } = await supabase
+      .from('config_recompensa_estrellas')
+      .update({ visible: nuevoValor })
+      .eq('id', 1)
+      .select()
+    if (error || !data?.length) {
+      setPremioVisible(!nuevoValor)
+      alert('No se pudo cambiar la visibilidad del premio.')
     }
   }
 
@@ -206,7 +222,18 @@ export default function Admin() {
           >
             {savingPremio ? 'Guardando…' : 'Guardar'}
           </button>
+          <button
+            onClick={toggleVisiblePremio}
+            className={`px-3 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${premioVisible ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+          >
+            {premioVisible ? 'Visible' : 'No visible'}
+          </button>
         </div>
+        <p className="text-[10px] text-paper/35">
+          {premioVisible
+            ? 'El cliente ve el nombre del premio en su ticket ganador.'
+            : 'El cliente NO ve el nombre del premio — solo el garzón sabrá cuál es.'}
+        </p>
       </div>
 
       {/* ---- CLIENTES Y SU PREMIO POR ESTRELLAS (nuevo) ---- */}
