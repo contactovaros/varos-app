@@ -105,12 +105,12 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
   return (
     <>
       <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase mb-1">Varo's</div>
-      <h1 className="font-head text-3xl text-ink font-semibold mb-1">Hola, {primerNombre}</h1>
+      <h1 className="font-head text-3xl text-paper font-semibold mb-1">Hola, {primerNombre}</h1>
       <p className="text-wineSoft font-medium mb-1">Tu tarjeta de fidelización</p>
       <Ornamento />
 
-      <div className="w-full max-w-xs rounded-[26px] border-2 border-gold/70 bg-inkSoft p-1.5 mt-4 shadow-glow">
-        <div className="rounded-[20px] border border-gold/30 p-6 text-center">
+      <div className="w-full max-w-xs rounded-[26px] border-[3px] border-gold bg-inkSoft p-1.5 mt-4 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
+        <div className="rounded-[20px] border border-gold/40 p-6 text-center">
           <div className="font-display text-2xl text-gold leading-tight">Varo's</div>
           <Ornamento />
 

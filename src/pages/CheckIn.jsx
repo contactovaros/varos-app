@@ -24,7 +24,7 @@ function TarjetaVaros({ customer, estrellas, mensaje }) {
   const puedeCanjear = estrellas >= 5
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col items-center justify-center px-6 py-10">
+    <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 py-10">
       <TarjetaFidelidad customer={customer} estrellas={estrellas} mensaje={mensaje} />
 
       {puedeCanjear && (
