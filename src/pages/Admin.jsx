@@ -115,6 +115,30 @@ export default function Admin() {
     setCustomers((prev) => prev.filter((x) => x.id !== c.id))
   }
 
+  async function agregarEstrella(c) {
+    const { data, error } = await supabase.rpc('admin_add_star', { p_customer_id: c.id })
+    if (error) {
+      alert('No se pudo agregar la estrella: ' + error.message)
+      return
+    }
+    setCustomers((prev) => prev.map((x) => (x.id === c.id ? { ...x, estrellas_actuales: data.estrellas } : x)))
+    if (data.gano_premio) {
+      alert(`🎉 ${c.full_name} llegó a 5 estrellas y ganó: ${data.producto}`)
+    }
+  }
+
+  async function quitarEstrella(c) {
+    const actual = c.estrellas_actuales ?? 0
+    if (actual <= 0) return
+    const nuevo = actual - 1
+    setCustomers((prev) => prev.map((x) => (x.id === c.id ? { ...x, estrellas_actuales: nuevo } : x)))
+    const { error } = await supabase.from('customers').update({ estrellas_actuales: nuevo }).eq('id', c.id)
+    if (error) {
+      setCustomers((prev) => prev.map((x) => (x.id === c.id ? { ...x, estrellas_actuales: actual } : x)))
+      alert('No se pudo quitar la estrella.')
+    }
+  }
+
   async function updateRule(value) {
     setRule(value)
     await supabase.from('points_rules').update({ clp_per_point: value }).eq('id', 1)
@@ -259,20 +283,37 @@ export default function Admin() {
       <h3 className="font-head font-semibold text-sm mb-2">Clientes — premio al llegar a 5 estrellas</h3>
       <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
         {customers.map((c) => (
-          <div key={c.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <div>
-              <div className="text-paper">{c.full_name}</div>
-              <div className="text-paper/40 text-[10px]">{c.estrellas_actuales ?? 0} de 5 ⭐</div>
+          <div key={c.id} className="flex flex-col gap-1.5 py-2 border-b border-white/5 last:border-b-0 text-xs">
+            <div className="flex justify-between items-center gap-2">
+              <div>
+                <div className="text-paper">{c.full_name}</div>
+                <div className="text-paper/40 text-[10px]">{c.estrellas_actuales ?? 0} de 5 ⭐</div>
+              </div>
+              <span className="text-ember text-[11px] text-right max-w-[110px]">
+                {premioEstrellas ? `Ganaría: ${premioEstrellas}` : 'Sin premio configurado'}
+              </span>
             </div>
-            <span className="text-ember text-[11px] text-right max-w-[110px]">
-              {premioEstrellas ? `Ganaría: ${premioEstrellas}` : 'Sin premio configurado'}
-            </span>
-            <button
-              onClick={() => eliminarCliente(c)}
-              className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap"
-            >
-              Eliminar
-            </button>
+            <div className="flex justify-end items-center gap-1.5">
+              <button
+                onClick={() => quitarEstrella(c)}
+                disabled={(c.estrellas_actuales ?? 0) <= 0}
+                className="w-6 h-6 rounded-md border border-white/10 text-paper/60 disabled:opacity-30"
+              >
+                −
+              </button>
+              <button
+                onClick={() => agregarEstrella(c)}
+                className="w-6 h-6 rounded-md border border-ember/40 text-ember"
+              >
+                +
+              </button>
+              <button
+                onClick={() => eliminarCliente(c)}
+                className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap"
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
