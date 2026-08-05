@@ -96,6 +96,25 @@ export default function Admin() {
     }
   }
 
+  async function eliminarCliente(c) {
+    const escrito = window.prompt(
+      `Esto borrará PERMANENTEMENTE a "${c.full_name}" y todo su historial (visitas, estrellas, canjes, pedidos).\n\nEscribe su nombre completo exactamente para confirmar:`
+    )
+    if (escrito === null) return
+    if (escrito.trim() !== c.full_name) {
+      alert('El nombre no coincide. No se eliminó al cliente.')
+      return
+    }
+    if (!window.confirm(`Última confirmación: ¿eliminar a "${c.full_name}" para siempre?`)) return
+
+    const { error } = await supabase.rpc('admin_delete_customer', { p_customer_id: c.id })
+    if (error) {
+      alert('No se pudo eliminar al cliente: ' + error.message)
+      return
+    }
+    setCustomers((prev) => prev.filter((x) => x.id !== c.id))
+  }
+
   async function updateRule(value) {
     setRule(value)
     await supabase.from('points_rules').update({ clp_per_point: value }).eq('id', 1)
@@ -245,9 +264,15 @@ export default function Admin() {
               <div className="text-paper">{c.full_name}</div>
               <div className="text-paper/40 text-[10px]">{c.estrellas_actuales ?? 0} de 5 ⭐</div>
             </div>
-            <span className="text-ember text-[11px] text-right max-w-[140px]">
+            <span className="text-ember text-[11px] text-right max-w-[110px]">
               {premioEstrellas ? `Ganaría: ${premioEstrellas}` : 'Sin premio configurado'}
             </span>
+            <button
+              onClick={() => eliminarCliente(c)}
+              className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap"
+            >
+              Eliminar
+            </button>
           </div>
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
