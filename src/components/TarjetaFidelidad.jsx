@@ -154,7 +154,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             <BotonRedSocial href="https://www.instagram.com/varosrestaurant/?hl=es" label="Síguenos en Instagram">
               <IconoInstagram />
             </BotonRedSocial>
-            <BotonRedSocial href="https://www.facebook.com/varos.restobar" label="Síguenos en Facebook">
+            <BotonRedSocial href="https://www.facebook.com/varosrestaurant" label="Síguenos en Facebook">
               <IconoFacebook />
             </BotonRedSocial>
             <BotonRedSocial href="https://varos.cl/" label="Visita nuestro sitio web">
