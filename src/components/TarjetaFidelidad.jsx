@@ -121,8 +121,8 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
               <span className="font-head font-bold text-2xl text-gold">{customer.full_name?.[0]}</span>
             )}
           </div>
-          <div className="font-head font-semibold text-lg text-paper mb-1">{customer.full_name}</div>
-          {cumpleanos && <p className="text-paper/50 text-xs mb-2">🎂 {cumpleanos}</p>}
+          <div className="font-head font-semibold text-xl text-paper mb-1">{customer.full_name}</div>
+          {cumpleanos && <p className="text-paper/50 text-sm mb-2">🎂 {cumpleanos}</p>}
 
           <div className="flex gap-1.5 justify-center mb-3 mt-2">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -131,12 +131,12 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
               </span>
             ))}
           </div>
-          <p className="text-paper text-sm mb-1">{estrellas} de 5 visitas</p>
-          {mensajePremio && <p className="text-gold/80 text-xs mb-2">{mensajePremio}</p>}
+          <p className="text-paper text-base mb-1">{estrellas} de 5 visitas</p>
+          {mensajePremio && <p className="text-gold/80 text-sm mb-2">{mensajePremio}</p>}
 
           {mensaje && (
             <div className="border-t border-gold/20 pt-4 mt-3">
-              <p className="text-paper/85 text-[15px] leading-relaxed">{mensaje}</p>
+              <p className="text-paper/85 text-base leading-relaxed">{mensaje}</p>
             </div>
           )}
 
@@ -146,7 +146,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             </div>
           )}
 
-          <div className="border-t border-gold/20 mt-5 pt-3 text-[10px] text-gold/50 tracking-wide">
+          <div className="border-t border-gold/20 mt-5 pt-3 text-sm text-gold/50 tracking-wide">
             contacto@varos.cl
           </div>
 
