@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
 import TarjetaFidelidad from '../components/TarjetaFidelidad.jsx'
 import AlertaCercania from '../components/AlertaCercania.jsx'
+import CampanaPopup from '../components/CampanaPopup.jsx'
 
 export default function Club() {
   const { customer, signOut } = useAuth()
@@ -28,18 +29,8 @@ export default function Club() {
   return (
     <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 py-10">
       <AlertaCercania />
+      <CampanaPopup campanas={campanas} />
       <TarjetaFidelidad customer={customer} estrellas={estrellas} />
-
-      {campanas.length > 0 && (
-        <div className="w-full max-w-xs mt-5 flex flex-col gap-2">
-          {campanas.map((c) => (
-            <div key={c.id} className="bg-inkSoft border border-ember/30 rounded-xl p-3">
-              <p className="font-head font-semibold text-xs text-ember">📣 {c.title}</p>
-              <p className="text-paper/70 text-xs mt-1">{c.message}</p>
-            </div>
-          ))}
-        </div>
-      )}
 
       <button
         onClick={signOut}
