@@ -16,18 +16,21 @@ export default function Admin() {
   const [savingPremio, setSavingPremio] = useState(false)
   const [checkinUrl, setCheckinUrl] = useState(`${window.location.origin}/checkin`)
   const [newDish, setNewDish] = useState({ name: '', description: '', price_clp: '', category: 'Platos principales' })
-  const [newPromo, setNewPromo] = useState({ title: '', message: '' })
+  const [newPromo, setNewPromo] = useState({ title: '', message: '', target_customer_id: '' })
   const [savingDish, setSavingDish] = useState(false)
+  const [locationAlerts, setLocationAlerts] = useState([])
+  const [newAlert, setNewAlert] = useState({ titulo: '', mensaje: '', lat: '', lng: '' })
 
   async function loadAll() {
-    const [c, r, rd, mi, pr, promo, premio] = await Promise.all([
+    const [c, r, rd, mi, pr, promo, premio, alerts] = await Promise.all([
       supabase.from('customers').select('*').order('points', { ascending: false }).limit(30),
       supabase.from('rewards').select('*').order('cost_points'),
       supabase.from('redemptions').select('*, customers(full_name), rewards(name)').order('created_at', { ascending: false }).limit(20),
       supabase.from('menu_items').select('*').order('category'),
       supabase.from('points_rules').select('*').eq('id', 1).single(),
       supabase.from('promotions').select('*').order('starts_at', { ascending: false }).limit(10),
-      supabase.from('config_recompensa_estrellas').select('*').eq('id', 1).single()
+      supabase.from('config_recompensa_estrellas').select('*').eq('id', 1).single(),
+      supabase.from('location_alerts').select('*').order('created_at', { ascending: false })
     ])
     setCustomers(c.data ?? [])
     setRewards(r.data ?? [])
@@ -37,6 +40,7 @@ export default function Admin() {
     setPromotions(promo.data ?? [])
     setPremioEstrellas(premio.data?.producto ?? '')
     setPremioVisible(premio.data?.visible ?? true)
+    setLocationAlerts(alerts.data ?? [])
   }
 
   useEffect(() => {
@@ -176,16 +180,62 @@ export default function Admin() {
 
   async function addPromo() {
     if (!newPromo.title || !newPromo.message) return
-    const { data, error } = await supabase.from('promotions').insert(newPromo).select().single()
+    const payload = {
+      title: newPromo.title,
+      message: newPromo.message,
+      target_customer_id: newPromo.target_customer_id || null
+    }
+    const { data, error } = await supabase.from('promotions').insert(payload).select().single()
     if (!error && data) {
       setPromotions((prev) => [data, ...prev])
-      setNewPromo({ title: '', message: '' })
+      setNewPromo({ title: '', message: '', target_customer_id: '' })
     }
   }
 
   async function togglePromo(id, active) {
     setPromotions((prev) => prev.map((p) => (p.id === id ? { ...p, active: !active } : p)))
     await supabase.from('promotions').update({ active: !active }).eq('id', id)
+  }
+
+  async function deletePromo(id) {
+    if (!window.confirm('¿Eliminar esta campaña/notificación?')) return
+    setPromotions((prev) => prev.filter((p) => p.id !== id))
+    await supabase.from('promotions').delete().eq('id', id)
+  }
+
+  async function addLocationAlert() {
+    if (!newAlert.titulo || !newAlert.mensaje || !newAlert.lat || !newAlert.lng) return
+    const { data, error } = await supabase
+      .from('location_alerts')
+      .insert({
+        titulo: newAlert.titulo,
+        mensaje: newAlert.mensaje,
+        lat: Number(newAlert.lat),
+        lng: Number(newAlert.lng)
+      })
+      .select()
+      .single()
+    if (!error && data) {
+      setLocationAlerts((prev) => [data, ...prev])
+      setNewAlert({ titulo: '', mensaje: '', lat: '', lng: '' })
+    }
+  }
+
+  async function updateAlertField(id, field, value) {
+    setLocationAlerts((prev) => prev.map((a) => (a.id === id ? { ...a, [field]: value } : a)))
+    await supabase.from('location_alerts').update({ [field]: value }).eq('id', id)
+  }
+
+  function toggleAlertDia(alert, dia) {
+    const actuales = alert.dias_semana ?? []
+    const nuevos = actuales.includes(dia) ? actuales.filter((d) => d !== dia) : [...actuales, dia].sort()
+    updateAlertField(alert.id, 'dias_semana', nuevos)
+  }
+
+  async function deleteLocationAlert(id) {
+    if (!window.confirm('¿Eliminar esta alerta de cercanía?')) return
+    setLocationAlerts((prev) => prev.filter((a) => a.id !== id))
+    await supabase.from('location_alerts').delete().eq('id', id)
   }
 
   function exportCSV() {
@@ -388,9 +438,12 @@ export default function Admin() {
         </div>
       </div>
 
-      {/* ---- PROMOCIONES (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2 mt-6">Promociones</h3>
+      {/* ---- CAMPAÑAS / NOTIFICACIONES (nuevo) ---- */}
+      <h3 className="font-head font-semibold text-sm mb-2 mt-6">Campañas y notificaciones</h3>
       <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+        <p className="text-[11px] text-paper/45 mb-2">
+          Escribe un título y un mensaje, elige a quién va dirigido, y aparecerá dentro de la app del cliente en su Club Varo's.
+        </p>
         <div className="flex flex-col gap-2 mb-3">
           <input
             placeholder="Título (ej. 2x1 en pisco sour)"
@@ -404,25 +457,148 @@ export default function Admin() {
             onChange={(e) => setNewPromo({ ...newPromo, message: e.target.value })}
             className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
           />
+          <select
+            value={newPromo.target_customer_id}
+            onChange={(e) => setNewPromo({ ...newPromo, target_customer_id: e.target.value })}
+            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+          >
+            <option value="">Todos los clientes</option>
+            {customers.map((c) => (
+              <option key={c.id} value={c.id}>{c.full_name}</option>
+            ))}
+          </select>
           <button onClick={addPromo} className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink">
-            + Crear promoción
+            + Enviar campaña
           </button>
         </div>
         {promotions.map((p) => (
-          <div key={p.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <div>
+          <div key={p.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
+            <div className="flex-1">
               <div className="text-paper">{p.title}</div>
               <div className="text-paper/40 text-[10px]">{p.message}</div>
+              <div className="text-ember/70 text-[10px] mt-0.5">
+                {p.target_customer_id ? (customers.find((c) => c.id === p.target_customer_id)?.full_name ?? 'Cliente eliminado') : 'Todos los clientes'}
+              </div>
             </div>
-            <button
-              onClick={() => togglePromo(p.id, p.active)}
-              className={`px-2 py-1 rounded-md text-[10px] border ${p.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-            >
-              {p.active ? 'Activa' : 'Inactiva'}
-            </button>
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={() => togglePromo(p.id, p.active)}
+                className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${p.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+              >
+                {p.active ? 'Activa' : 'Inactiva'}
+              </button>
+              <button onClick={() => deletePromo(p.id)} className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
+                Eliminar
+              </button>
+            </div>
           </div>
         ))}
-        {promotions.length === 0 && <p className="text-paper/35 text-xs">Sin promociones creadas.</p>}
+        {promotions.length === 0 && <p className="text-paper/35 text-xs">Sin campañas creadas.</p>}
+      </div>
+
+      {/* ---- ALERTAS POR CERCANÍA / GPS (nuevo) ---- */}
+      <h3 className="font-head font-semibold text-sm mb-2">Alertas por cercanía (GPS)</h3>
+      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+        <p className="text-[11px] text-paper/45 mb-3">
+          Un mensaje distinto según en qué coordenada esté el cliente. Ojo: NO es una notificación push del celular
+          (eso requiere una app nativa) — es un aviso que aparece dentro de la app cuando el cliente la tiene abierta
+          y su GPS lo ubica cerca de ese punto, en el día y horario que configures.
+        </p>
+        <div className="flex flex-col gap-2 mb-4 pb-4 border-b border-white/5">
+          <input
+            placeholder="Título (ej. Publicidad zona 3)"
+            value={newAlert.titulo}
+            onChange={(e) => setNewAlert({ ...newAlert, titulo: e.target.value })}
+            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+          />
+          <input
+            placeholder="Mensaje para el cliente"
+            value={newAlert.mensaje}
+            onChange={(e) => setNewAlert({ ...newAlert, mensaje: e.target.value })}
+            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+          />
+          <div className="flex gap-2">
+            <input
+              placeholder="Latitud (ej. -18.489485)"
+              value={newAlert.lat}
+              onChange={(e) => setNewAlert({ ...newAlert, lat: e.target.value })}
+              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+            />
+            <input
+              placeholder="Longitud (ej. -70.285883)"
+              value={newAlert.lng}
+              onChange={(e) => setNewAlert({ ...newAlert, lng: e.target.value })}
+              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+            />
+          </div>
+          <button onClick={addLocationAlert} className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink">
+            + Agregar coordenada
+          </button>
+        </div>
+
+        {locationAlerts.map((a) => (
+          <div key={a.id} className="flex flex-col gap-2 py-3 border-b border-white/5 last:border-b-0 text-xs">
+            <div className="flex justify-between items-start gap-2">
+              <input
+                defaultValue={a.titulo}
+                onBlur={(e) => e.target.value !== a.titulo && updateAlertField(a.id, 'titulo', e.target.value)}
+                className="flex-1 bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper font-head font-semibold"
+              />
+              <button
+                onClick={() => updateAlertField(a.id, 'activo', !a.activo)}
+                className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${a.activo ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+              >
+                {a.activo ? 'Activa' : 'Inactiva'}
+              </button>
+            </div>
+            <textarea
+              defaultValue={a.mensaje}
+              onBlur={(e) => e.target.value !== a.mensaje && updateAlertField(a.id, 'mensaje', e.target.value)}
+              className="bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper/70 resize-none"
+              rows={2}
+            />
+            <div className="text-paper/35 text-[10px] font-mono">
+              📍 {a.lat}, {a.lng} — radio {a.radio_metros} m
+            </div>
+            <div className="flex items-center gap-1 flex-wrap">
+              {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((letra, dia) => (
+                <button
+                  key={dia}
+                  onClick={() => toggleAlertDia(a, dia)}
+                  className={`w-6 h-6 rounded-md border text-[10px] ${
+                    (a.dias_semana ?? []).includes(dia) || !a.dias_semana?.length
+                      ? 'border-ember/40 text-ember'
+                      : 'border-white/10 text-paper/30'
+                  }`}
+                  title={(a.dias_semana ?? []).length === 0 ? 'Todos los días (toca para elegir días específicos)' : undefined}
+                >
+                  {letra}
+                </button>
+              ))}
+              <span className="text-paper/30 text-[10px] ml-1">{(a.dias_semana ?? []).length === 0 ? 'todos los días' : 'días marcados'}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-paper/40 text-[10px]">Desde</span>
+              <input
+                type="time"
+                defaultValue={a.hora_inicio ?? ''}
+                onBlur={(e) => updateAlertField(a.id, 'hora_inicio', e.target.value || null)}
+                className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
+              />
+              <span className="text-paper/40 text-[10px]">hasta</span>
+              <input
+                type="time"
+                defaultValue={a.hora_fin ?? ''}
+                onBlur={(e) => updateAlertField(a.id, 'hora_fin', e.target.value || null)}
+                className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
+              />
+              <button onClick={() => deleteLocationAlert(a.id)} className="ml-auto px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        ))}
+        {locationAlerts.length === 0 && <p className="text-paper/35 text-xs">Sin alertas configuradas.</p>}
       </div>
 
       <h3 className="font-head font-semibold text-sm mb-2">Regla de puntos</h3>
