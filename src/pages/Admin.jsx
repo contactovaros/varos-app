@@ -280,9 +280,9 @@ export default function Admin() {
         className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
       >
         <div>
-          <div className="font-head font-semibold text-sm">🥂 Salón de eventos</div>
+          <div className="font-head font-semibold text-sm">🥂 Comedor Principal</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
-            Editar mesas — elige "Salón de eventos" con el selector arriba del plano (10 × 15 m, reconstruido del video)
+            Editar mesas — elige "Comedor Principal" con el selector arriba del plano (10 × 15 m, reconstruido del video)
           </div>
         </div>
         <span className="text-ember text-lg">→</span>

@@ -9,14 +9,14 @@ import { chairPositions } from '../lib/mesasLayout'
 // pero se editan las dos desde /admin/mesas con el selector de abajo.
 const ROOMS = {
   comedor: {
-    label: 'Comedor',
+    label: 'Comedor Exterior',
     table: 'mesas',
     idPrefix: 't',
     viewBox: { x: -40, y: -40, w: 1420, h: 1780 },
     nuevaMesa: { x: 690, y: 1080, ancho: 120, capacidad: 8 }
   },
   salon: {
-    label: 'Salón de eventos',
+    label: 'Comedor Principal',
     table: 'mesas_salon',
     idPrefix: 'sm',
     viewBox: { x: -40, y: -40, w: 1080, h: 1580 },
