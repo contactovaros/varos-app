@@ -165,6 +165,7 @@ export default function AdminMesas() {
   const [room, setRoom] = useState('comedor')
   const [mesas, setMesas] = useState([])
   const [zonas, setZonas] = useState([])
+  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true } })
   const [selectedId, setSelectedId] = useState(null)
   const svgRef = useRef(null)
   const dragRef = useRef(null)
@@ -186,12 +187,34 @@ export default function AdminMesas() {
       .then(({ data }) => setZonas(data ?? []))
   }, [isAdmin, room])
 
+  useEffect(() => {
+    if (!isAdmin) return
+    supabase
+      .from('salas')
+      .select('*')
+      .then(({ data }) => {
+        if (!data?.length) return
+        const map = {}
+        data.forEach((s) => {
+          map[s.id] = s
+        })
+        setSalas(map)
+      })
+  }, [isAdmin])
+
   function updateZonaLocal(id, texto) {
     setZonas((prev) => prev.map((z) => (z.id === id ? { ...z, texto } : z)))
   }
 
   async function persistZona(id, texto) {
     await supabase.from('zonas').update({ texto }).eq('id', id)
+  }
+
+  async function toggleSalaActiva() {
+    const actual = salas[room]?.activo ?? true
+    const nuevo = !actual
+    setSalas((prev) => ({ ...prev, [room]: { ...prev[room], activo: nuevo } }))
+    await supabase.from('salas').update({ activo: nuevo }).eq('id', room)
   }
 
   if (authLoading) return null
@@ -343,6 +366,21 @@ export default function AdminMesas() {
             {r.label}
           </button>
         ))}
+      </div>
+
+      <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-4">
+        <div>
+          <div className="text-xs text-paper/70">Disponible para reservas online</div>
+          <div className="text-[10px] text-paper/40">Si la apagas, {config.label} no aparece en /reservas</div>
+        </div>
+        <button
+          onClick={toggleSalaActiva}
+          className={`px-4 py-2 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${
+            (salas[room]?.activo ?? true) ? 'border-ember/40 text-ember bg-ember/10' : 'border-white/10 text-paper/40'
+          }`}
+        >
+          {(salas[room]?.activo ?? true) ? 'Activa' : 'Inactiva'}
+        </button>
       </div>
 
       <div className="bg-inkSoft rounded-2xl p-3 mb-4">

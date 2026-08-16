@@ -5,6 +5,9 @@ import { chairPositions } from '../lib/mesasLayout'
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
 
+const SALON_ROOM_W = 1000
+const SALON_ROOM_H = 1500
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -25,6 +28,8 @@ export default function Reservas() {
   const [personas, setPersonas] = useState(2)
   const [zona, setZona] = useState('cualquiera')
 
+  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true } })
+  const [zonas, setZonas] = useState([])
   const [mesas, setMesas] = useState([])
   const [reservasDelDia, setReservasDelDia] = useState([])
   const [mesaId, setMesaId] = useState(null)
@@ -36,8 +41,45 @@ export default function Reservas() {
   const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => {
-    supabase.from('mesas').select('*').order('orden').then(({ data }) => setMesas(data ?? []))
+    supabase
+      .from('salas')
+      .select('*')
+      .then(({ data }) => {
+        if (!data?.length) return
+        const map = {}
+        data.forEach((s) => {
+          map[s.id] = s
+        })
+        setSalas(map)
+      })
+    supabase
+      .from('zonas')
+      .select('*')
+      .order('orden')
+      .then(({ data }) => setZonas(data ?? []))
   }, [])
+
+  useEffect(() => {
+    async function cargarMesas() {
+      const combinadas = []
+      if (salas.comedor?.activo !== false) {
+        const { data } = await supabase.from('mesas').select('*').order('orden')
+        ;(data ?? []).forEach((m) => combinadas.push({ ...m, sala: 'comedor' }))
+      }
+      if (salas.salon?.activo !== false) {
+        const { data } = await supabase.from('mesas_salon').select('*').order('orden')
+        ;(data ?? []).forEach((m) => combinadas.push({ ...m, sala: 'salon', zona: 'Comedor Principal' }))
+      }
+      setMesas(combinadas)
+    }
+    cargarMesas()
+  }, [salas])
+
+  const zonaOptions = [
+    'cualquiera',
+    ...(salas.comedor?.activo !== false ? ['Exterior principal', 'Exterior lateral'] : []),
+    ...(salas.salon?.activo !== false ? ['Comedor Principal'] : [])
+  ]
 
   async function verPlano() {
     setMesaId(null)
@@ -71,6 +113,7 @@ export default function Reservas() {
       for (let j = i + 1; j < libres.length; j++) {
         const a = libres[i]
         const b = libres[j]
+        if (a.sala !== b.sala) continue // nunca combinar mesas de salas distintas
         if (zona !== 'cualquiera' && (a.zona !== zona || b.zona !== zona)) continue
         const capacidad = a.capacidad + b.capacidad
         if (capacidad < personas) continue
@@ -99,6 +142,18 @@ export default function Reservas() {
   const mesaSeleccionada = mesas.find((m) => m.id === mesaId)
   const comboSeleccionado = comboIds ? mesas.filter((m) => comboIds.includes(m.id)) : null
   const puedeContinuar = !!mesaSeleccionada || !!comboSeleccionado
+
+  // Qué sala dibujar: si el cliente ya restringió la zona, esa manda; si no,
+  // seguimos a la mesa/combo elegido, o al primer candidato disponible.
+  const salaMostrada =
+    zona === 'Comedor Principal'
+      ? 'salon'
+      : zona === 'Exterior principal' || zona === 'Exterior lateral'
+      ? 'comedor'
+      : mesaSeleccionada?.sala || comboSeleccionado?.[0]?.sala || candidatosSolos[0]?.sala || (salas.comedor?.activo !== false ? 'comedor' : 'salon')
+
+  const mesasVisibles = mesas.filter((m) => m.sala === salaMostrada)
+  const zonasVisibles = zonas.filter((z) => z.room === salaMostrada && z.texto)
 
   async function confirmarReserva(e) {
     e.preventDefault()
@@ -206,7 +261,7 @@ export default function Reservas() {
           <div>
             <span className="text-sm text-paper/70">Zona (opcional)</span>
             <div className="mt-1 flex gap-2 flex-wrap">
-              {['cualquiera', 'Exterior principal', 'Exterior lateral'].map((z) => (
+              {zonaOptions.map((z) => (
                 <button
                   key={z}
                   type="button"
@@ -219,13 +274,16 @@ export default function Reservas() {
                 </button>
               ))}
             </div>
+            {salas.comedor?.activo === false && salas.salon?.activo === false && (
+              <p className="text-xs text-wineSoft mt-2">Hoy no hay salas disponibles para reserva online — escríbenos por WhatsApp.</p>
+            )}
           </div>
 
           <button
             type="submit"
             className="mt-3 w-full py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine text-paper shadow-glow"
           >
-            Ver plano del comedor
+            Ver plano y mesas disponibles
           </button>
         </form>
       )}
@@ -242,21 +300,74 @@ export default function Reservas() {
           </div>
 
           <div className="w-full max-w-md bg-inkSoft rounded-2xl p-3 mb-4">
-            <svg viewBox="-40 -40 1420 1780" className="w-full h-auto" role="img" aria-label="Plano del comedor, elige una mesa">
+            <svg
+              viewBox={salaMostrada === 'salon' ? `-40 -40 ${SALON_ROOM_W + 80} ${SALON_ROOM_H + 80}` : '-40 -40 1420 1780'}
+              className="w-full h-auto"
+              role="img"
+              aria-label={`Plano de ${salaMostrada === 'salon' ? 'Comedor Principal' : 'Comedor Exterior'}, elige una mesa`}
+            >
               <defs>
                 <pattern id="hatchReservada" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
                   <line x1="0" y1="0" x2="0" y2="10" stroke="#E3B341" strokeWidth="3" opacity="0.5" />
                 </pattern>
               </defs>
-              <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
-              <text x="20" y="40" fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize="30" fill="#FFF8F1" opacity="0.6">
-                COMEDOR LATERAL
-              </text>
-              <text x="344" y="600" fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize="34" fill="#FFF8F1" opacity="0.6">
-                COMEDOR PRINCIPAL
-              </text>
 
-              {mesas.map((m) => {
+              {salaMostrada === 'comedor' ? (
+                <>
+                  <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
+                  {zonasVisibles.map((z) => (
+                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 30} fill="#FFF8F1" opacity="0.6">
+                      {z.texto}
+                    </text>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <rect x="0" y="0" width={SALON_ROOM_W} height={SALON_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
+                  {zonasVisibles
+                    .filter((z) => z.id !== 's_barra_letrero' && z.id !== 's_terraza')
+                    .map((z) => (
+                      <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
+                        {z.texto}
+                      </text>
+                    ))}
+
+                  {/* columnas doradas junto al acceso */}
+                  <circle cx="330" cy="60" r="16" fill="#E3B341" />
+                  <circle cx="670" cy="60" r="16" fill="#E3B341" />
+
+                  {/* pared espejada, referencia */}
+                  <rect x={SALON_ROOM_W - 16} y="420" width="16" height="260" fill="#221A16" stroke="#6FD4D9" strokeWidth="2" />
+
+                  {/* barra */}
+                  <rect x={SALON_ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
+                  {zonasVisibles
+                    .filter((z) => z.id === 's_barra_letrero')
+                    .map((z) => (
+                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fontWeight="700" fill="#E3B341" transform={`rotate(${z.angulo} ${z.x} ${z.y})`}>
+                        {z.texto}
+                      </text>
+                    ))}
+
+                  {/* cabina telefónica */}
+                  <rect x="0" y="1160" width="90" height="90" fill="#7A1620" stroke="#E3B341" strokeWidth="3" />
+
+                  {/* banqueta lounge */}
+                  <rect x={SALON_ROOM_W - 60} y="1180" width="60" height="180" rx="14" fill="#7A1620" opacity="0.55" stroke="#E3B341" strokeWidth="2" />
+
+                  {/* puerta trasera */}
+                  <line x1="400" y1={SALON_ROOM_H} x2="600" y2={SALON_ROOM_H} stroke="#6FD4D9" strokeWidth="2.5" strokeDasharray="6 5" />
+                  {zonasVisibles
+                    .filter((z) => z.id === 's_terraza')
+                    .map((z) => (
+                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill="#6FD4D9" opacity="0.7">
+                        {z.texto}
+                      </text>
+                    ))}
+                </>
+              )}
+
+              {mesasVisibles.map((m) => {
                 const reservada = estaReservada(m)
                 const compatible = esCompatible(m)
                 const enCombo = comboIds?.includes(m.id)
@@ -323,10 +434,15 @@ export default function Reservas() {
               })}
             </svg>
 
-            <div className="flex items-center gap-4 justify-center mt-3 text-[10px] text-paper/50">
-              <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#3a2c24', border: '1.5px solid #8fae76' }} />Disponible</span>
-              <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#E3B341', opacity: 0.5 }} />Reservada</span>
-              <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />Seleccionada</span>
+            <div className="flex items-center justify-between mt-3">
+              <div className="flex items-center gap-4 text-[10px] text-paper/50">
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#3a2c24', border: '1.5px solid #8fae76' }} />Disponible</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#E3B341', opacity: 0.5 }} />Reservada</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />Seleccionada</span>
+              </div>
+              {zonaOptions.length > 1 && (
+                <span className="text-[10px] text-paper/40">{salaMostrada === 'salon' ? 'Comedor Principal' : 'Comedor Exterior'}</span>
+              )}
             </div>
           </div>
 
