@@ -206,7 +206,7 @@ export default function Reservas() {
           <div>
             <span className="text-sm text-paper/70">Zona (opcional)</span>
             <div className="mt-1 flex gap-2 flex-wrap">
-              {['cualquiera', 'Comedor principal', 'Comedor lateral'].map((z) => (
+              {['cualquiera', 'Exterior principal', 'Exterior lateral'].map((z) => (
                 <button
                   key={z}
                   type="button"
