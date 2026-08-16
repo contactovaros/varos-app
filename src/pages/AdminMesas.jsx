@@ -236,7 +236,11 @@ export default function AdminMesas() {
   }
 
   async function persist(id, patch) {
-    await supabase.from(config.table).update(patch).eq('id', id)
+    const { error } = await supabase.from(config.table).update(patch).eq('id', id)
+    if (error) {
+      console.error('No se pudo guardar el cambio de la mesa:', error)
+      alert('No se pudo guardar ese cambio (revisa tu conexión) — vuelve a intentarlo.')
+    }
   }
 
   function onPointerDownMesa(e, mesa) {
@@ -306,24 +310,41 @@ export default function AdminMesas() {
     persist(selected.id, { capacidad: nueva })
   }
 
-  async function agregarMesa() {
+  async function agregarMesa(tipo) {
     const base = config.nuevaMesa
-    const nueva = {
-      id: `${config.idPrefix}${Date.now()}`,
-      tipo: 'round',
-      etiqueta: `Mesa ${mesas.length + 1}`,
-      x: base.x,
-      y: base.y,
-      ancho: base.ancho,
-      alto: null,
-      angulo: 0,
-      capacidad: base.capacidad,
-      orden: mesas.length + 1
-    }
+    const nueva =
+      tipo === 'rect'
+        ? {
+            id: `${config.idPrefix}${Date.now()}`,
+            tipo: 'rect',
+            etiqueta: `Mesa ${mesas.length + 1}`,
+            x: base.x,
+            y: base.y,
+            ancho: 180,
+            alto: 90,
+            angulo: 0,
+            capacidad: base.capacidad,
+            orden: mesas.length + 1
+          }
+        : {
+            id: `${config.idPrefix}${Date.now()}`,
+            tipo: 'round',
+            etiqueta: `Mesa ${mesas.length + 1}`,
+            x: base.x,
+            y: base.y,
+            ancho: base.ancho,
+            alto: null,
+            angulo: 0,
+            capacidad: base.capacidad,
+            orden: mesas.length + 1
+          }
     const { data, error } = await supabase.from(config.table).insert(nueva).select().single()
     if (!error && data) {
       setMesas((prev) => [...prev, data])
       setSelectedId(data.id)
+    } else if (error) {
+      console.error('No se pudo agregar la mesa:', error)
+      alert('No se pudo agregar la mesa (revisa tu conexión) — vuelve a intentarlo.')
     }
   }
 
@@ -346,12 +367,20 @@ export default function AdminMesas() {
             cuadrado en la esquina para agrandar/achicar. Los cambios se guardan solos.
           </p>
         </div>
-        <button
-          onClick={agregarMesa}
-          className="shrink-0 px-3 py-2 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink"
-        >
-          + Mesa
-        </button>
+        <div className="shrink-0 flex flex-col gap-1.5">
+          <button
+            onClick={() => agregarMesa('round')}
+            className="px-3 py-2 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink whitespace-nowrap"
+          >
+            + Redonda
+          </button>
+          <button
+            onClick={() => agregarMesa('rect')}
+            className="px-3 py-2 rounded-lg font-head font-semibold text-xs border border-ember/40 text-ember whitespace-nowrap"
+          >
+            + Rectangular
+          </button>
+        </div>
       </div>
 
       <div className="flex gap-2 mb-4">
