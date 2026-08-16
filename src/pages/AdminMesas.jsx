@@ -39,23 +39,41 @@ function toLocal(dx, dy, angleDeg) {
   }
 }
 
-function ComedorBackground() {
+// Los nombres de zona (COMEDOR LATERAL, BARRA, etc.) vienen de la tabla
+// `zonas` y se dibujan acá — la geometría fija (muros, columnas, barra, etc.)
+// se queda hardcodeada porque eso no se pidió que fuera editable.
+function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk',Arial,sans-serif", fill = '#FFF8F1', opacity = 0.55 }) {
+  return (
+    <g fontFamily={fontFamily} fontWeight="700" fill={fill}>
+      {zonas.map((z) => (
+        <text
+          key={z.id}
+          x={z.x}
+          y={z.y}
+          fontSize={z.tam || fontSize}
+          opacity={opacity}
+          textAnchor={z.angulo ? 'middle' : undefined}
+          transform={z.angulo ? `rotate(${z.angulo} ${z.x} ${z.y})` : undefined}
+        >
+          {z.texto}
+        </text>
+      ))}
+    </g>
+  )
+}
+
+function ComedorBackground({ zonas }) {
   return (
     <>
       <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
-      <text x="20" y="40" fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize="30" fill="#FFF8F1" opacity="0.6">
-        COMEDOR LATERAL
-      </text>
-      <text x="344" y="600" fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize="34" fill="#FFF8F1" opacity="0.6">
-        COMEDOR PRINCIPAL
-      </text>
+      <ZonaLabels zonas={zonas} opacity={0.6} />
     </>
   )
 }
 
 // Salón de 10 x 15 m reconstruido desde el video de recorrido (agosto 2026).
 // Columnas, barra, cabina telefónica, etc. son solo referencia fija del espacio.
-function SalonBackground() {
+function SalonBackground({ zonas }) {
   const ROOM_W = 1000
   const ROOM_H = 1500
   return (
@@ -68,12 +86,7 @@ function SalonBackground() {
         <line x1="0" y1="1100" x2={ROOM_W} y2="1100" />
       </g>
 
-      <g fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fill="#FFF8F1" opacity="0.5">
-        <text x="20" y="40" fontSize="26">01 · VESTÍBULO</text>
-        <text x="20" y="290" fontSize="26">02 · SALÓN PRINCIPAL</text>
-        <text x="20" y="940" fontSize="26">03 · BARRA</text>
-        <text x="20" y="1140" fontSize="26">04 · LOUNGE</text>
-      </g>
+      <ZonaLabels zonas={zonas.filter((z) => z.id !== 's_barra_letrero')} />
 
       {/* puerta de acceso */}
       <line x1="350" y1="0" x2="650" y2="0" stroke="#221A16" strokeWidth="10" />
@@ -110,9 +123,22 @@ function SalonBackground() {
 
       {/* barra, pared derecha */}
       <rect x={ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
-      <text x={ROOM_W - 35} y="1000" textAnchor="middle" fontSize="22" fontWeight="700" fill="#E3B341" transform={`rotate(90 ${ROOM_W - 35} 1000)`}>
-        BARRA
-      </text>
+      {zonas
+        .filter((z) => z.id === 's_barra_letrero')
+        .map((z) => (
+          <text
+            key={z.id}
+            x={z.x}
+            y={z.y}
+            textAnchor="middle"
+            fontSize={z.tam || 22}
+            fontWeight="700"
+            fill="#E3B341"
+            transform={`rotate(${z.angulo} ${z.x} ${z.y})`}
+          >
+            {z.texto}
+          </text>
+        ))}
 
       {/* cabina telefónica, pared izquierda del lounge */}
       <rect x="0" y="1160" width="90" height="90" fill="#7A1620" stroke="#E3B341" strokeWidth="3" />
@@ -134,6 +160,7 @@ export default function AdminMesas() {
   const { isAdmin, loading: authLoading } = useAuth()
   const [room, setRoom] = useState('comedor')
   const [mesas, setMesas] = useState([])
+  const [zonas, setZonas] = useState([])
   const [selectedId, setSelectedId] = useState(null)
   const svgRef = useRef(null)
   const dragRef = useRef(null)
@@ -147,7 +174,21 @@ export default function AdminMesas() {
       .select('*')
       .order('orden')
       .then(({ data }) => setMesas(data ?? []))
+    supabase
+      .from('zonas')
+      .select('*')
+      .eq('room', room)
+      .order('orden')
+      .then(({ data }) => setZonas(data ?? []))
   }, [isAdmin, room])
+
+  function updateZonaLocal(id, texto) {
+    setZonas((prev) => prev.map((z) => (z.id === id ? { ...z, texto } : z)))
+  }
+
+  async function persistZona(id, texto) {
+    await supabase.from('zonas').update({ texto }).eq('id', id)
+  }
 
   if (authLoading) return null
 
@@ -309,7 +350,7 @@ export default function AdminMesas() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          {room === 'comedor' ? <ComedorBackground /> : <SalonBackground />}
+          {room === 'comedor' ? <ComedorBackground zonas={zonas} /> : <SalonBackground zonas={zonas} />}
 
           {mesas.map((mesa) => {
             const isSel = mesa.id === selectedId
@@ -388,6 +429,31 @@ export default function AdminMesas() {
           })}
         </svg>
       </div>
+
+      {zonas.length > 0 && (
+        <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-4">
+          <div className="font-head font-semibold text-sm mb-2">Nombres de zona</div>
+          <p className="text-[11px] text-paper/40 mb-3">Cambia el texto y toca fuera del campo para guardar.</p>
+          <div className="flex flex-col gap-2">
+            {zonas.map((z) => (
+              <input
+                key={z.id}
+                defaultValue={z.texto}
+                onBlur={(e) => {
+                  const val = e.target.value.trim()
+                  if (val && val !== z.texto) {
+                    updateZonaLocal(z.id, val)
+                    persistZona(z.id, val)
+                  } else {
+                    e.target.value = z.texto
+                  }
+                }}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs text-paper"
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {selected && (
         <div className="bg-inkSoft border border-ember/20 rounded-2xl p-4 flex flex-col gap-3">
