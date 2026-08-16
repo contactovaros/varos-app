@@ -77,9 +77,15 @@ export default function Reservas() {
 
   const zonaOptions = [
     'cualquiera',
-    ...(salas.comedor?.activo !== false ? ['Exterior principal', 'Exterior lateral'] : []),
+    ...(salas.comedor?.activo !== false ? ['Comedor Exterior'] : []),
     ...(salas.salon?.activo !== false ? ['Comedor Principal'] : [])
   ]
+
+  function salaDeZona(z) {
+    if (z === 'Comedor Principal') return 'salon'
+    if (z === 'Comedor Exterior') return 'comedor'
+    return null
+  }
 
   async function verPlano() {
     setMesaId(null)
@@ -99,7 +105,7 @@ export default function Reservas() {
   }
 
   function esCompatible(mesa) {
-    if (zona !== 'cualquiera' && mesa.zona !== zona) return false
+    if (zona !== 'cualquiera' && mesa.sala !== salaDeZona(zona)) return false
     return mesa.capacidad >= personas
   }
 
@@ -114,7 +120,7 @@ export default function Reservas() {
         const a = libres[i]
         const b = libres[j]
         if (a.sala !== b.sala) continue // nunca combinar mesas de salas distintas
-        if (zona !== 'cualquiera' && (a.zona !== zona || b.zona !== zona)) continue
+        if (zona !== 'cualquiera' && a.sala !== salaDeZona(zona)) continue
         const capacidad = a.capacidad + b.capacidad
         if (capacidad < personas) continue
         if (dist(a, b) > COMBO_MAX_DIST) continue
@@ -146,11 +152,11 @@ export default function Reservas() {
   // Qué sala dibujar: si el cliente ya restringió la zona, esa manda; si no,
   // seguimos a la mesa/combo elegido, o al primer candidato disponible.
   const salaMostrada =
-    zona === 'Comedor Principal'
-      ? 'salon'
-      : zona === 'Exterior principal' || zona === 'Exterior lateral'
-      ? 'comedor'
-      : mesaSeleccionada?.sala || comboSeleccionado?.[0]?.sala || candidatosSolos[0]?.sala || (salas.comedor?.activo !== false ? 'comedor' : 'salon')
+    salaDeZona(zona) ||
+    mesaSeleccionada?.sala ||
+    comboSeleccionado?.[0]?.sala ||
+    candidatosSolos[0]?.sala ||
+    (salas.comedor?.activo !== false ? 'comedor' : 'salon')
 
   const mesasVisibles = mesas.filter((m) => m.sala === salaMostrada)
   const zonasVisibles = zonas.filter((z) => z.room === salaMostrada && z.texto)
