@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
@@ -273,6 +274,19 @@ export default function Admin() {
           <div className="font-display text-3xl text-ember">{redemptions.length}</div>
         </div>
       </div>
+
+      <Link
+        to="/admin/mesas"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">🥂 Salón de eventos</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Editar mesas — elige "Salón de eventos" con el selector arriba del plano (10 × 15 m, reconstruido del video)
+          </div>
+        </div>
+        <span className="text-ember text-lg">→</span>
+      </Link>
 
       {/* ---- QR DE CHECK-IN DEL LOCAL (nuevo) ---- */}
       <h3 className="font-head font-semibold text-sm mb-2">QR de bienvenida del local</h3>

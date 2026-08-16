@@ -9,6 +9,9 @@ import Login from './pages/Login.jsx'
 import CheckIn from './pages/CheckIn.jsx'
 import MostrarQR from './pages/MostrarQR.jsx'
 import CompletarPerfil from './pages/CompletarPerfil.jsx'
+import Reservas from './pages/Reservas.jsx'
+import AdminMesas from './pages/AdminMesas.jsx'
+import AdminReservas from './pages/AdminReservas.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
@@ -19,10 +22,17 @@ export default function App() {
     return <div className="h-screen flex items-center justify-center text-paper/50 text-sm">Cargando Varo's…</div>
   }
 
-  // Si alguien escanea el QR del local y no ha iniciado sesión, lo mandamos a
-  // Login pero recordando que debe volver a /checkin después de iniciar sesión.
+  // Reservar mesa es público: cualquier visitante del sitio web debe poder
+  // hacerlo sin crear cuenta ni iniciar sesión.
+  if (location.pathname === '/reservas') {
+    return <Reservas />
+  }
+
+  // Si alguien entra a un link directo (QR del local, /admin/mesas, etc.) sin
+  // sesión iniciada, lo mandamos a Login recordando esa misma ruta para volver
+  // ahí apenas inicie sesión con Google.
   if (!session) {
-    return <Login redirectPath={location.pathname === '/checkin' ? '/checkin' : '/'} />
+    return <Login redirectPath={location.pathname} />
   }
 
   // Primera vez: le faltan datos de su tarjeta (nombre / fecha de nacimiento)
@@ -39,6 +49,8 @@ export default function App() {
           <Route path="/club" element={<Club />} />
           <Route path="/perfil" element={<Navigate to="/club" replace />} />
           <Route path="/admin" element={<Admin />} />
+          <Route path="/admin/mesas" element={<AdminMesas />} />
+          <Route path="/admin/reservas" element={<AdminReservas />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>

@@ -5,7 +5,9 @@ const itemsAdmin = [
   { to: '/', label: 'Menú', icon: '📖', end: true },
   { to: '/pedidos', label: 'Pedidos', icon: '🧾' },
   { to: '/club', label: "Club Varo's", icon: '⭐' },
-  { to: '/admin', label: 'Admin', icon: '🛠️' }
+  { to: '/admin', label: 'Admin', icon: '🛠️' },
+  { to: '/admin/mesas', label: 'Mesas', icon: '🪑' },
+  { to: '/admin/reservas', label: 'Reservas', icon: '📅' }
 ]
 
 export default function BottomNav() {
