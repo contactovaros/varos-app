@@ -86,7 +86,7 @@ function SalonBackground({ zonas }) {
         <line x1="0" y1="1100" x2={ROOM_W} y2="1100" />
       </g>
 
-      <ZonaLabels zonas={zonas.filter((z) => z.id !== 's_barra_letrero')} />
+      <ZonaLabels zonas={zonas.filter((z) => z.id !== 's_barra_letrero' && z.id !== 's_terraza' && z.texto)} />
 
       {/* puerta de acceso */}
       <line x1="350" y1="0" x2="650" y2="0" stroke="#221A16" strokeWidth="10" />
@@ -124,7 +124,7 @@ function SalonBackground({ zonas }) {
       {/* barra, pared derecha */}
       <rect x={ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
       {zonas
-        .filter((z) => z.id === 's_barra_letrero')
+        .filter((z) => z.id === 's_barra_letrero' && z.texto)
         .map((z) => (
           <text
             key={z.id}
@@ -149,9 +149,13 @@ function SalonBackground({ zonas }) {
       {/* puerta trasera hacia terraza / piscina */}
       <line x1="400" y1={ROOM_H} x2="600" y2={ROOM_H} stroke="#221A16" strokeWidth="10" />
       <line x1="400" y1={ROOM_H} x2="600" y2={ROOM_H} stroke="#6FD4D9" strokeWidth="2.5" strokeDasharray="6 5" />
-      <text x="500" y={ROOM_H + 34} textAnchor="middle" fontSize="18" fill="#6FD4D9" opacity="0.7">
-        ↓ Terraza / Piscina
-      </text>
+      {zonas
+        .filter((z) => z.id === 's_terraza' && z.texto)
+        .map((z) => (
+          <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill="#6FD4D9" opacity="0.7">
+            {z.texto}
+          </text>
+        ))}
     </>
   )
 }
@@ -433,19 +437,20 @@ export default function AdminMesas() {
       {zonas.length > 0 && (
         <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-4">
           <div className="font-head font-semibold text-sm mb-2">Nombres de zona</div>
-          <p className="text-[11px] text-paper/40 mb-3">Cambia el texto y toca fuera del campo para guardar.</p>
+          <p className="text-[11px] text-paper/40 mb-3">
+            Cambia el texto y toca fuera del campo para guardar. Déjalo vacío para que no se muestre en el plano.
+          </p>
           <div className="flex flex-col gap-2">
             {zonas.map((z) => (
               <input
                 key={z.id}
                 defaultValue={z.texto}
+                placeholder="(vacío — no se muestra)"
                 onBlur={(e) => {
                   const val = e.target.value.trim()
-                  if (val && val !== z.texto) {
+                  if (val !== z.texto) {
                     updateZonaLocal(z.id, val)
                     persistZona(z.id, val)
-                  } else {
-                    e.target.value = z.texto
                   }
                 }}
                 className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs text-paper"
