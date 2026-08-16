@@ -37,6 +37,7 @@ export default function Reservas() {
 
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
+  const [email, setEmail] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -166,14 +167,17 @@ export default function Reservas() {
     setEnviando(true)
     setErrorMsg('')
 
-    const base = { nombre, telefono, fecha, hora, personas }
+    const base = { nombre, telefono, email, fecha, hora, personas }
     let error
+    let mesaLabelFinal
     if (comboSeleccionado) {
       const label = comboSeleccionado.map((m) => m.etiqueta.replace('Mesa ', '')).join(' + ')
-      const inserts = comboSeleccionado.map((m) => ({ ...base, mesa_id: m.id, mesa_label: `Mesa ${label} (combinada)` }))
+      mesaLabelFinal = `Mesa ${label} (combinada)`
+      const inserts = comboSeleccionado.map((m) => ({ ...base, mesa_id: m.id, mesa_label: mesaLabelFinal }))
       ;({ error } = await supabase.from('reservas').insert(inserts))
     } else {
-      ;({ error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaSeleccionada.etiqueta }))
+      mesaLabelFinal = mesaSeleccionada.etiqueta
+      ;({ error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaLabelFinal }))
     }
 
     setEnviando(false)
@@ -185,6 +189,22 @@ export default function Reservas() {
       )
       return
     }
+
+    // Una sola llamada aunque sea reserva combinada (2 filas insertadas) —
+    // si esto falla, la reserva ya quedó guardada igual, no bloqueamos al cliente.
+    supabase
+      .rpc('confirmar_reserva_cliente', {
+        p_nombre: nombre,
+        p_email: email,
+        p_fecha: fecha,
+        p_hora: hora,
+        p_personas: personas,
+        p_mesa_label: mesaLabelFinal
+      })
+      .then(({ error: rpcError }) => {
+        if (rpcError) console.error('No se pudo enviar el correo de confirmación:', rpcError)
+      })
+
     setStep('ok')
   }
 
@@ -530,6 +550,17 @@ export default function Reservas() {
               onChange={(e) => setTelefono(e.target.value)}
               className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
               placeholder="+56 9 ..."
+            />
+          </label>
+          <label className="text-sm text-paper/70">
+            Correo (te llega la confirmación ahí)
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
+              placeholder="tucorreo@ejemplo.com"
             />
           </label>
 
