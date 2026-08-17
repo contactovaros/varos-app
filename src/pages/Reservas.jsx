@@ -13,9 +13,10 @@ const TERRAZA_ROOM_H = 2000
 
 const ROOM_LABELS = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
 
-// Objetos decorativos (piscina, carrito) — mismas formas que en /admin/mesas,
-// no son reservables (ver esReservable), solo dan contexto del plano.
-function poolPath(ancho, alto) {
+// Objetos decorativos (escenario, carrito) — mismas formas que en
+// /admin/mesas, no son reservables (ver esReservable), solo dan contexto
+// del plano. ovalPath() es la mitad recta + mitad ovalada del escenario.
+function ovalPath(ancho, alto) {
   const r = alto / 2
   const straightEnd = ancho / 2 - r
   return `M${-ancho / 2},${-r} L${straightEnd},${-r} A${r},${r} 0 0 1 ${straightEnd},${r} L${-ancho / 2},${r} Z`
@@ -245,10 +246,10 @@ export default function Reservas() {
     return reservasDelDia.some(enConflicto) || holdsDelDia.some(enConflicto)
   }
 
-  // Objetos decorativos (piscina, carrito, parlante) viven en la misma tabla
-  // que las mesas para heredar drag/resize/eliminar gratis, pero no son
-  // reservables. Una mesa bloqueada manualmente (mantención, evento privado,
-  // mobiliario retirado) tampoco lo es, aunque sea de tipo round/rect.
+  // Objetos decorativos (escenario, carrito, parlante) viven en la misma
+  // tabla que las mesas para heredar drag/resize/eliminar gratis, pero no
+  // son reservables. Una mesa bloqueada manualmente (mantención, evento
+  // privado, mobiliario retirado) tampoco lo es, aunque sea round/rect.
   function esReservable(mesa) {
     return (mesa.tipo === 'round' || mesa.tipo === 'rect') && mesa.activa !== false
   }
@@ -624,38 +625,26 @@ export default function Reservas() {
               {salaMostrada === 'terraza' && (
                 <>
                   <rect x="0" y="0" width={TERRAZA_ROOM_W} height={TERRAZA_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
-                  {zonasVisibles
-                    .filter((z) => z.id !== 'tz_piscina')
-                    .map((z) => (
-                      <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
-                        {z.texto}
-                      </text>
-                    ))}
+                  {zonasVisibles.map((z) => (
+                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
+                      {z.texto}
+                    </text>
+                  ))}
 
                   {/* arco de truss que marca el ingreso a la pista */}
                   <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
                   <line x1="0" y1="600" x2={TERRAZA_ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
                   <line x1={TERRAZA_ROOM_W} y1="600" x2={TERRAZA_ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
-
-                  {/* piscina cubierta */}
-                  <rect x="850" y="1550" width="300" height="380" rx="24" fill="#6FD4D9" opacity="0.15" stroke="#6FD4D9" strokeWidth="2.5" />
-                  {zonasVisibles
-                    .filter((z) => z.id === 'tz_piscina')
-                    .map((z) => (
-                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fill="#6FD4D9" opacity="0.8">
-                        {z.texto}
-                      </text>
-                    ))}
                 </>
               )}
 
               {mesasVisibles.map((m) => {
-                if (m.tipo === 'piscina' || m.tipo === 'decor') {
-                  // Piscina / carrito / parlante: solo referencia visual del plano, no se clickean.
+                if (m.tipo === 'escenario' || m.tipo === 'decor') {
+                  // Escenario / carrito / parlante: solo referencia visual del plano, no se clickean.
                   return (
                     <g key={m.id} transform={`translate(${m.x},${m.y}) rotate(${m.angulo})`}>
-                      {m.tipo === 'piscina' ? (
-                        <path d={poolPath(m.ancho, m.alto)} fill="#6FD4D9" opacity="0.22" stroke="#6FD4D9" strokeWidth="2.5" />
+                      {m.tipo === 'escenario' ? (
+                        <path d={ovalPath(m.ancho, m.alto)} fill="#B5732A" opacity="0.28" stroke="#E3B341" strokeWidth="2.5" />
                       ) : m.estilo === 'parlante' ? (
                         <ParlanteShape ancho={m.ancho} alto={m.alto} />
                       ) : (

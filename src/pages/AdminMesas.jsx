@@ -170,8 +170,8 @@ function SalonBackground({ zonas }) {
 
 // Terraza/jardín trasera, estimada a partir de fotos del recinto (agosto 2026,
 // sin medidas reales todavía). 3 zonas apiladas: caminata cubierta con carpas,
-// pista central bajo un arco de truss, y jardín con barra/mesas de barril junto
-// a la piscina cubierta.
+// pista central bajo un arco de truss, y jardín con barra/mesas de barril
+// junto al escenario (objeto arrastrable, ver MesaShape).
 function TerrazaBackground({ zonas }) {
   const ROOM_W = 1200
   const ROOM_H = 2000
@@ -201,10 +201,11 @@ function TerrazaBackground({ zonas }) {
   )
 }
 
-// La piscina y el carrito ya no son formas fijas acá: son filas de
-// mesas_terraza (tipo 'piscina' / 'decor', capacidad 0) que se arrastran,
-// agrandan/achican y eliminan con el mismo mecanismo que las mesas.
-function poolPath(ancho, alto) {
+// El escenario y el carrito ya no son formas fijas acá: son filas de
+// mesas_terraza (tipo 'escenario' / 'decor', capacidad 0) que se arrastran,
+// agrandan/achican (incl. alargar el escenario) y eliminan con el mismo
+// mecanismo que las mesas.
+function ovalPath(ancho, alto) {
   const r = alto / 2
   const straightEnd = ancho / 2 - r
   return `M${-ancho / 2},${-r} L${straightEnd},${-r} A${r},${r} 0 0 1 ${straightEnd},${r} L${-ancho / 2},${r} Z`
@@ -273,13 +274,13 @@ function ParlanteShape({ ancho, alto, isSel }) {
 }
 
 function MesaShape({ mesa, isSel }) {
-  if (mesa.tipo === 'piscina') {
+  if (mesa.tipo === 'escenario') {
     return (
       <path
-        d={poolPath(mesa.ancho, mesa.alto)}
-        fill="#6FD4D9"
-        opacity={isSel ? 0.4 : 0.22}
-        stroke="#6FD4D9"
+        d={ovalPath(mesa.ancho, mesa.alto)}
+        fill="#B5732A"
+        opacity={isSel ? 0.45 : 0.28}
+        stroke="#E3B341"
         strokeWidth={isSel ? 5 : 2.5}
       />
     )
@@ -537,7 +538,7 @@ export default function AdminMesas() {
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
           <h1 className="font-head text-2xl font-semibold">Editar mesas</h1>
           <p className="text-xs text-paper/50 mt-1">
-            Arrastra una mesa u objeto (piscina, carrito) para moverlo. Las mesas rectangulares y la piscina
+            Arrastra una mesa u objeto (escenario, carrito) para moverlo. Las mesas rectangulares y el escenario
             tienen un punto celeste para girar y un cuadrado en la esquina para agrandar/achicar. Selecciona
             cualquiera para eliminarlo. Los cambios se guardan solos.
           </p>
@@ -629,7 +630,7 @@ export default function AdminMesas() {
                   <text
                     textAnchor="middle"
                     dy="8"
-                    fontSize={mesa.tipo === 'piscina' || mesa.tipo === 'decor' ? 22 : 30}
+                    fontSize={mesa.tipo === 'escenario' || mesa.tipo === 'decor' ? 22 : 30}
                     fontWeight="700"
                     fill={isSel ? '#15100D' : '#FFF8F1'}
                   >
@@ -637,7 +638,7 @@ export default function AdminMesas() {
                   </text>
                 </g>
 
-                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'piscina') && (
+                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'escenario') && (
                   <>
                     <line x1="0" y1={-mesa.alto / 2} x2="0" y2={-mesa.alto / 2 - 45} stroke="#7DD3E8" strokeWidth="3" strokeDasharray="4 4" />
                     <circle
@@ -704,7 +705,7 @@ export default function AdminMesas() {
               Eliminar
             </button>
           </div>
-          {selected.tipo !== 'piscina' && selected.tipo !== 'decor' && (
+          {selected.tipo !== 'escenario' && selected.tipo !== 'decor' && (
             <div className="flex items-center justify-between text-xs text-paper/60">
               <span>Sillas</span>
               <div className="flex items-center gap-3">
@@ -718,7 +719,7 @@ export default function AdminMesas() {
               </div>
             </div>
           )}
-          {selected.tipo !== 'piscina' && selected.tipo !== 'decor' && (
+          {selected.tipo !== 'escenario' && selected.tipo !== 'decor' && (
             <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
               <div className="flex items-center justify-between text-xs text-paper/60">
                 <span>Disponible para reservar</span>
