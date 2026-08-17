@@ -184,7 +184,7 @@ function TerrazaBackground({ zonas }) {
         <line x1="0" y1="1350" x2={ROOM_W} y2="1350" />
       </g>
 
-      <ZonaLabels zonas={zonas.filter((z) => z.id !== 'tz_piscina' && z.texto)} />
+      <ZonaLabels zonas={zonas} />
 
       {/* carpas tipo pagoda sobre la caminata cubierta */}
       <g fill="#FFF8F1" opacity="0.12">
@@ -197,22 +197,106 @@ function TerrazaBackground({ zonas }) {
       <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
       <line x1="0" y1="600" x2={ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
       <line x1={ROOM_W} y1="600" x2={ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
-
-      {/* piscina cubierta, esquina del jardín */}
-      <rect x="850" y="1550" width="300" height="380" rx="24" fill="#6FD4D9" opacity="0.15" stroke="#6FD4D9" strokeWidth="2.5" />
-      {zonas
-        .filter((z) => z.id === 'tz_piscina' && z.texto)
-        .map((z) => (
-          <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fill="#6FD4D9" opacity="0.8">
-            {z.texto}
-          </text>
-        ))}
-
-      {/* carrito de dulces, referencia fija del jardín */}
-      <rect x="720" y="1420" width="60" height="46" rx="6" fill="#221A16" stroke="#FFF8F1" strokeWidth="2" opacity="0.5" />
-      <circle cx="736" cy="1470" r="8" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" opacity="0.5" />
-      <circle cx="764" cy="1470" r="8" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" opacity="0.5" />
     </>
+  )
+}
+
+// La piscina y el carrito ya no son formas fijas acá: son filas de
+// mesas_terraza (tipo 'piscina' / 'decor', capacidad 0) que se arrastran,
+// agrandan/achican y eliminan con el mismo mecanismo que las mesas.
+function poolPath(ancho, alto) {
+  const r = alto / 2
+  const straightEnd = ancho / 2 - r
+  return `M${-ancho / 2},${-r} L${straightEnd},${-r} A${r},${r} 0 0 1 ${straightEnd},${r} L${-ancho / 2},${r} Z`
+}
+
+function SombrillaShape({ radio, isSel }) {
+  const n = 8
+  const wedges = []
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2 - Math.PI / 2
+    const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2
+    const x0 = Math.cos(a0) * radio
+    const y0 = Math.sin(a0) * radio
+    const x1 = Math.cos(a1) * radio
+    const y1 = Math.sin(a1) * radio
+    wedges.push(
+      <path
+        key={i}
+        d={`M0,0 L${x0},${y0} A${radio},${radio} 0 0 1 ${x1},${y1} Z`}
+        fill={isSel ? '#FF7A1A' : i % 2 === 0 ? '#B5732A' : '#8a5a25'}
+        stroke={isSel ? '#FFD9B3' : '#221A16'}
+        strokeWidth="1.5"
+      />
+    )
+  }
+  return (
+    <g>
+      {wedges}
+      <circle r={radio} fill="none" stroke={isSel ? '#FFD9B3' : '#221A16'} strokeWidth={isSel ? 5 : 2.5} />
+      <circle r="6" fill="#221A16" stroke={isSel ? '#FFD9B3' : '#B5732A'} strokeWidth="2" />
+    </g>
+  )
+}
+
+function CarritoShape({ ancho, alto, isSel }) {
+  return (
+    <g opacity={isSel ? 1 : 0.8}>
+      <rect
+        x={-ancho / 2}
+        y={-alto / 2}
+        width={ancho}
+        height={alto}
+        rx="6"
+        fill="#221A16"
+        stroke={isSel ? '#FFD9B3' : '#FFF8F1'}
+        strokeWidth={isSel ? 4 : 2}
+      />
+      <circle cx={-ancho / 2 + 14} cy={alto / 2} r="7" fill="#221A16" stroke={isSel ? '#FFD9B3' : '#FFF8F1'} strokeWidth="1.5" />
+      <circle cx={ancho / 2 - 14} cy={alto / 2} r="7" fill="#221A16" stroke={isSel ? '#FFD9B3' : '#FFF8F1'} strokeWidth="1.5" />
+    </g>
+  )
+}
+
+function MesaShape({ mesa, isSel }) {
+  if (mesa.tipo === 'piscina') {
+    return (
+      <path
+        d={poolPath(mesa.ancho, mesa.alto)}
+        fill="#6FD4D9"
+        opacity={isSel ? 0.4 : 0.22}
+        stroke="#6FD4D9"
+        strokeWidth={isSel ? 5 : 2.5}
+      />
+    )
+  }
+  if (mesa.tipo === 'decor') {
+    return <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+  }
+  if (mesa.tipo === 'round' && mesa.estilo === 'sombrilla') {
+    return <SombrillaShape radio={mesa.ancho / 2} isSel={isSel} />
+  }
+  if (mesa.tipo === 'round') {
+    return (
+      <circle
+        r={mesa.ancho / 2}
+        fill={isSel ? '#FF7A1A' : '#3a2c24'}
+        stroke={isSel ? '#FFD9B3' : '#B5732A'}
+        strokeWidth={isSel ? 6 : 3}
+      />
+    )
+  }
+  return (
+    <rect
+      x={-mesa.ancho / 2}
+      y={-mesa.alto / 2}
+      width={mesa.ancho}
+      height={mesa.alto}
+      rx="10"
+      fill={isSel ? '#FF7A1A' : '#3a2c24'}
+      stroke={isSel ? '#FFD9B3' : '#B5732A'}
+      strokeWidth={isSel ? 6 : 3}
+    />
   )
 }
 
@@ -419,8 +503,9 @@ export default function AdminMesas() {
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
           <h1 className="font-head text-2xl font-semibold">Editar mesas</h1>
           <p className="text-xs text-paper/50 mt-1">
-            Arrastra una mesa para moverla. Las mesas rectangulares tienen un punto celeste para girar y un
-            cuadrado en la esquina para agrandar/achicar. Los cambios se guardan solos.
+            Arrastra una mesa u objeto (piscina, carrito) para moverlo. Las mesas rectangulares y la piscina
+            tienen un punto celeste para girar y un cuadrado en la esquina para agrandar/achicar. Selecciona
+            cualquiera para eliminarlo. Los cambios se guardan solos.
           </p>
         </div>
         <div className="shrink-0 flex flex-col gap-1.5">
@@ -485,7 +570,7 @@ export default function AdminMesas() {
             const isSel = mesa.id === selectedId
             const chairs = chairPositions(mesa)
             return (
-              <g key={mesa.id} transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.tipo === 'rect' ? mesa.angulo : 0})`}>
+              <g key={mesa.id} transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.tipo !== 'round' ? mesa.angulo : 0})`}>
                 {chairs.map((c, i) => (
                   <rect
                     key={i}
@@ -502,31 +587,19 @@ export default function AdminMesas() {
                 ))}
 
                 <g onPointerDown={(e) => onPointerDownMesa(e, mesa)} className="cursor-move">
-                  {mesa.tipo === 'round' ? (
-                    <circle
-                      r={mesa.ancho / 2}
-                      fill={isSel ? '#FF7A1A' : '#3a2c24'}
-                      stroke={isSel ? '#FFD9B3' : '#B5732A'}
-                      strokeWidth={isSel ? 6 : 3}
-                    />
-                  ) : (
-                    <rect
-                      x={-mesa.ancho / 2}
-                      y={-mesa.alto / 2}
-                      width={mesa.ancho}
-                      height={mesa.alto}
-                      rx="10"
-                      fill={isSel ? '#FF7A1A' : '#3a2c24'}
-                      stroke={isSel ? '#FFD9B3' : '#B5732A'}
-                      strokeWidth={isSel ? 6 : 3}
-                    />
-                  )}
-                  <text textAnchor="middle" dy="8" fontSize="30" fontWeight="700" fill={isSel ? '#15100D' : '#FFF8F1'}>
+                  <MesaShape mesa={mesa} isSel={isSel} />
+                  <text
+                    textAnchor="middle"
+                    dy="8"
+                    fontSize={mesa.tipo === 'piscina' || mesa.tipo === 'decor' ? 22 : 30}
+                    fontWeight="700"
+                    fill={isSel ? '#15100D' : '#FFF8F1'}
+                  >
                     {mesa.etiqueta.replace('Mesa ', '')}
                   </text>
                 </g>
 
-                {isSel && mesa.tipo === 'rect' && (
+                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'piscina') && (
                   <>
                     <line x1="0" y1={-mesa.alto / 2} x2="0" y2={-mesa.alto / 2 - 45} stroke="#7DD3E8" strokeWidth="3" strokeDasharray="4 4" />
                     <circle
@@ -593,18 +666,20 @@ export default function AdminMesas() {
               Eliminar
             </button>
           </div>
-          <div className="flex items-center justify-between text-xs text-paper/60">
-            <span>Sillas</span>
-            <div className="flex items-center gap-3">
-              <button onClick={() => cambiarCapacidad(-1)} className="w-8 h-8 rounded-lg border border-white/10 text-paper/70">
-                −
-              </button>
-              <span className="font-mono text-ember w-6 text-center">{selected.capacidad}</span>
-              <button onClick={() => cambiarCapacidad(1)} className="w-8 h-8 rounded-lg border border-ember/40 text-ember">
-                +
-              </button>
+          {selected.tipo !== 'piscina' && selected.tipo !== 'decor' && (
+            <div className="flex items-center justify-between text-xs text-paper/60">
+              <span>Sillas</span>
+              <div className="flex items-center gap-3">
+                <button onClick={() => cambiarCapacidad(-1)} className="w-8 h-8 rounded-lg border border-white/10 text-paper/70">
+                  −
+                </button>
+                <span className="font-mono text-ember w-6 text-center">{selected.capacidad}</span>
+                <button onClick={() => cambiarCapacidad(1)} className="w-8 h-8 rounded-lg border border-ember/40 text-ember">
+                  +
+                </button>
+              </div>
             </div>
-          </div>
+          )}
           <div className="text-[11px] text-paper/40">
             {selected.tipo === 'round'
               ? `Diámetro: ${Math.round(selected.ancho)} cm`

@@ -12,6 +12,54 @@ const TERRAZA_ROOM_H = 2000
 
 const ROOM_LABELS = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
 
+// Objetos decorativos (piscina, carrito) — mismas formas que en /admin/mesas,
+// no son reservables (ver esReservable), solo dan contexto del plano.
+function poolPath(ancho, alto) {
+  const r = alto / 2
+  const straightEnd = ancho / 2 - r
+  return `M${-ancho / 2},${-r} L${straightEnd},${-r} A${r},${r} 0 0 1 ${straightEnd},${r} L${-ancho / 2},${r} Z`
+}
+
+function SombrillaShape({ radio, seleccionada, reservada }) {
+  const n = 8
+  const tones = seleccionada ? ['#FF7A1A', '#E85D04'] : reservada ? ['#E3B341', '#c99a2e'] : ['#B5732A', '#8a5a25']
+  const wedges = []
+  for (let i = 0; i < n; i++) {
+    const a0 = (i / n) * Math.PI * 2 - Math.PI / 2
+    const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2
+    const x0 = Math.cos(a0) * radio
+    const y0 = Math.sin(a0) * radio
+    const x1 = Math.cos(a1) * radio
+    const y1 = Math.sin(a1) * radio
+    wedges.push(
+      <path
+        key={i}
+        d={`M0,0 L${x0},${y0} A${radio},${radio} 0 0 1 ${x1},${y1} Z`}
+        fill={tones[i % 2]}
+        stroke="#221A16"
+        strokeWidth="1.5"
+      />
+    )
+  }
+  return (
+    <g>
+      {wedges}
+      <circle r={radio} fill="none" stroke={seleccionada ? '#FFD9B3' : '#221A16'} strokeWidth={seleccionada ? 5 : 2.5} />
+      <circle r="6" fill="#221A16" stroke="#B5732A" strokeWidth="2" />
+    </g>
+  )
+}
+
+function CarritoShape({ ancho, alto }) {
+  return (
+    <g opacity="0.8">
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="6" fill="#221A16" stroke="#FFF8F1" strokeWidth="2" />
+      <circle cx={-ancho / 2 + 14} cy={alto / 2} r="7" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" />
+      <circle cx={ancho / 2 - 14} cy={alto / 2} r="7" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" />
+    </g>
+  )
+}
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -115,7 +163,14 @@ export default function Reservas() {
     return reservasDelDia.some((r) => r.mesa_id === mesa.id && Math.abs(horaToMin(r.hora) - solicitada) < BUFFER_MIN)
   }
 
+  // Objetos decorativos (piscina, carrito) viven en la misma tabla que las
+  // mesas para heredar drag/resize/eliminar gratis, pero no son reservables.
+  function esReservable(mesa) {
+    return mesa.tipo === 'round' || mesa.tipo === 'rect'
+  }
+
   function esCompatible(mesa) {
+    if (!esReservable(mesa)) return false
     if (zona !== 'cualquiera' && mesa.sala !== salaDeZona(zona)) return false
     return mesa.capacidad >= personas
   }
@@ -130,6 +185,7 @@ export default function Reservas() {
       for (let j = i + 1; j < libres.length; j++) {
         const a = libres[i]
         const b = libres[j]
+        if (!esReservable(a) || !esReservable(b)) continue
         if (a.sala !== b.sala) continue // nunca combinar mesas de salas distintas
         if (zona !== 'cualquiera' && a.sala !== salaDeZona(zona)) continue
         const capacidad = a.capacidad + b.capacidad
@@ -440,11 +496,28 @@ export default function Reservas() {
               )}
 
               {mesasVisibles.map((m) => {
+                if (!esReservable(m)) {
+                  // Piscina / carrito: solo referencia visual del plano, no se clickean.
+                  return (
+                    <g key={m.id} transform={`translate(${m.x},${m.y}) rotate(${m.angulo})`}>
+                      {m.tipo === 'piscina' ? (
+                        <path d={poolPath(m.ancho, m.alto)} fill="#6FD4D9" opacity="0.22" stroke="#6FD4D9" strokeWidth="2.5" />
+                      ) : (
+                        <CarritoShape ancho={m.ancho} alto={m.alto} />
+                      )}
+                      <text textAnchor="middle" dy="8" fontSize="22" fontWeight="700" fill="#FFF8F1" opacity="0.7">
+                        {m.etiqueta.replace('Mesa ', '')}
+                      </text>
+                    </g>
+                  )
+                }
+
                 const reservada = estaReservada(m)
                 const compatible = esCompatible(m)
                 const enCombo = comboIds?.includes(m.id)
                 const seleccionada = m.id === mesaId || enCombo
                 const chairs = chairPositions(m)
+                const esSombrilla = m.tipo === 'round' && m.estilo === 'sombrilla'
 
                 let fill = '#3a2c24'
                 let stroke = '#B5732A'
@@ -483,7 +556,9 @@ export default function Reservas() {
                       />
                     ))}
                     <g onClick={() => clickable && seleccionarMesa(m)} className={clickable ? 'cursor-pointer' : ''}>
-                      {m.tipo === 'round' ? (
+                      {esSombrilla ? (
+                        <SombrillaShape radio={m.ancho / 2} seleccionada={seleccionada} reservada={reservada} />
+                      ) : m.tipo === 'round' ? (
                         <circle r={m.ancho / 2} fill={fill} stroke={stroke} strokeWidth={seleccionada ? 6 : 3} />
                       ) : (
                         <rect
