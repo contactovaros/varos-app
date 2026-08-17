@@ -5,11 +5,16 @@
 -- ("PISCINA" flotando aparte) que quedó de un diseño anterior — el
 -- objeto ya trae su propio texto encima.
 -- pega este archivo en Supabase → SQL Editor → Run
+--
+-- 'piscina' se deja permitido en la restricción aunque ya no se use (no
+-- estorba) para no pelear con el orden update-antes-o-después-de-la-
+-- restricción — así funciona sin importar qué haya quedado a medio
+-- aplicar de un intento anterior.
 -- =========================================================
 
 alter table public.mesas_terraza drop constraint if exists mesas_terraza_tipo_check;
 alter table public.mesas_terraza add constraint mesas_terraza_tipo_check
-  check (tipo in ('round', 'rect', 'escenario', 'decor'));
+  check (tipo in ('round', 'rect', 'piscina', 'escenario', 'decor'));
 
 update public.mesas_terraza set tipo = 'escenario', etiqueta = 'Escenario' where id = 'tz7';
 
