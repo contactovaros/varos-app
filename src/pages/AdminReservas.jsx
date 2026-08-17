@@ -6,11 +6,26 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-const ESTADO_LABEL = { pendiente: 'Pendiente', confirmada: 'Confirmada', cancelada: 'Cancelada' }
+const SALA_LABEL = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
+
+const ESTADO_LABEL = {
+  pendiente: 'Pendiente',
+  confirmada: 'Confirmada',
+  cancelada: 'Cancelada',
+  completada: 'Completada',
+  no_asistio: 'No asistió'
+}
 const ESTADO_CLASS = {
   pendiente: 'border-gold/40 text-gold',
   confirmada: 'border-ember/40 text-ember',
-  cancelada: 'border-white/10 text-paper/30 line-through'
+  cancelada: 'border-white/10 text-paper/30 line-through',
+  completada: 'border-diamond/40 text-diamond',
+  no_asistio: 'border-wine/40 text-wineSoft'
+}
+
+function formatFechaCL(iso) {
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
 }
 
 export default function AdminReservas() {
@@ -76,18 +91,29 @@ export default function AdminReservas() {
             <div className="flex justify-between items-start gap-3 mb-2">
               <div>
                 <div className="font-head font-semibold text-sm">{r.nombre}</div>
-                <div className="text-paper/50 text-xs mt-0.5">{r.mesa_label} · {r.personas} personas</div>
+                <div className="text-paper/50 text-xs mt-0.5">
+                  {r.mesa_label} · {r.personas} personas{r.sala ? ` · ${SALA_LABEL[r.sala] ?? r.sala}` : ''}
+                </div>
               </div>
               <span className={`px-2 py-1 rounded-md border text-[10px] whitespace-nowrap ${ESTADO_CLASS[r.estado] ?? ''}`}>
                 {ESTADO_LABEL[r.estado] ?? r.estado}
               </span>
             </div>
-            <div className="flex justify-between items-center text-xs text-paper/60 font-mono mb-3">
-              <span>{r.fecha} · {r.hora?.slice(0, 5)}</span>
+            <div className="flex justify-between items-center text-xs text-paper/60 font-mono mb-1">
+              <span>{formatFechaCL(r.fecha)} · {r.hora?.slice(0, 5)}</span>
               <span>{r.telefono}</span>
             </div>
+            <div className="flex justify-between items-center text-[11px] text-paper/40 mb-3">
+              <span>{r.email || 'sin correo'}</span>
+              <span>{r.codigo}</span>
+            </div>
+            {r.created_at && (
+              <div className="text-[10px] text-paper/30 mb-2">
+                Creada {new Date(r.created_at).toLocaleString('es-CL')}
+              </div>
+            )}
             {r.estado !== 'cancelada' && (
-              <div className="flex gap-2 justify-end">
+              <div className="flex gap-2 justify-end flex-wrap">
                 {r.estado === 'pendiente' && (
                   <button
                     onClick={() => cambiarEstado(r, 'confirmada')}
@@ -95,6 +121,22 @@ export default function AdminReservas() {
                   >
                     Confirmar
                   </button>
+                )}
+                {r.estado === 'confirmada' && (
+                  <>
+                    <button
+                      onClick={() => cambiarEstado(r, 'completada')}
+                      className="px-3 py-1.5 rounded-md border border-diamond/40 text-diamond text-[11px]"
+                    >
+                      Completada
+                    </button>
+                    <button
+                      onClick={() => cambiarEstado(r, 'no_asistio')}
+                      className="px-3 py-1.5 rounded-md border border-wine/40 text-wineSoft text-[11px]"
+                    >
+                      No asistió
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={() => cancelar(r)}

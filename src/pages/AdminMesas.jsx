@@ -468,6 +468,22 @@ export default function AdminMesas() {
     persist(selected.id, { capacidad: nueva })
   }
 
+  // Bloqueo manual (mantención, evento privado, mobiliario retirado, etc.) —
+  // se refleja automáticamente en /reservas: la mesa deja de ser reservable.
+  function toggleBloqueo() {
+    if (!selected) return
+    const nuevaActiva = selected.activa === false
+    const patch = nuevaActiva ? { activa: true, bloqueo_motivo: null } : { activa: false }
+    updateLocal(selected.id, patch)
+    persist(selected.id, patch)
+  }
+
+  function guardarMotivoBloqueo(motivo) {
+    if (!selected) return
+    updateLocal(selected.id, { bloqueo_motivo: motivo })
+    persist(selected.id, { bloqueo_motivo: motivo })
+  }
+
   async function agregarMesa(tipo) {
     const base = config.nuevaMesa
     const nueva =
@@ -588,7 +604,11 @@ export default function AdminMesas() {
             const isSel = mesa.id === selectedId
             const chairs = chairPositions(mesa)
             return (
-              <g key={mesa.id} transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.tipo !== 'round' ? mesa.angulo : 0})`}>
+              <g
+                key={mesa.id}
+                transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.tipo !== 'round' ? mesa.angulo : 0})`}
+                opacity={mesa.activa === false ? 0.45 : 1}
+              >
                 {chairs.map((c, i) => (
                   <rect
                     key={i}
@@ -696,6 +716,33 @@ export default function AdminMesas() {
                   +
                 </button>
               </div>
+            </div>
+          )}
+          {selected.tipo !== 'piscina' && selected.tipo !== 'decor' && (
+            <div className="flex flex-col gap-2 pt-1 border-t border-white/5">
+              <div className="flex items-center justify-between text-xs text-paper/60">
+                <span>Disponible para reservar</span>
+                <button
+                  onClick={toggleBloqueo}
+                  className={`px-3 py-1.5 rounded-md border text-[11px] whitespace-nowrap ${
+                    selected.activa === false ? 'border-wine/40 text-wineSoft' : 'border-ember/40 text-ember'
+                  }`}
+                >
+                  {selected.activa === false ? 'Bloqueada — reactivar' : 'Bloquear mesa'}
+                </button>
+              </div>
+              {selected.activa === false && (
+                <input
+                  key={selected.id}
+                  defaultValue={selected.bloqueo_motivo ?? ''}
+                  placeholder="Motivo (mantención, evento privado...)"
+                  onBlur={(e) => {
+                    const val = e.target.value.trim()
+                    if (val !== (selected.bloqueo_motivo ?? '')) guardarMotivoBloqueo(val)
+                  }}
+                  className="bg-ink border border-wine/20 rounded-lg px-3 py-2 text-xs text-paper"
+                />
+              )}
             </div>
           )}
           <div className="text-[11px] text-paper/40">

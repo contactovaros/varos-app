@@ -4,6 +4,7 @@ import { chairPositions } from '../lib/mesasLayout'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
+const HOLD_MIN = 5 // minutos que se retiene una mesa mientras el cliente completa sus datos
 
 const SALON_ROOM_W = 1000
 const SALON_ROOM_H = 1500
@@ -94,6 +95,10 @@ function formatFechaCL(iso) {
   return `${d}/${m}/${y}`
 }
 
+function telefonoValido(t) {
+  return t.replace(/\D/g, '').length >= 9
+}
+
 function IconCalendario(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
@@ -156,6 +161,9 @@ export default function Reservas() {
   const [zonas, setZonas] = useState([])
   const [mesas, setMesas] = useState([])
   const [reservasDelDia, setReservasDelDia] = useState([])
+  const [holdsDelDia, setHoldsDelDia] = useState([])
+  const [misHolds, setMisHolds] = useState([])
+  const [avisoPlano, setAvisoPlano] = useState('')
   const [mesaId, setMesaId] = useState(null)
   const [comboIds, setComboIds] = useState(null)
 
@@ -164,6 +172,7 @@ export default function Reservas() {
   const [email, setEmail] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [codigoReserva, setCodigoReserva] = useState('')
 
   useEffect(() => {
     supabase
@@ -221,24 +230,27 @@ export default function Reservas() {
   async function verPlano() {
     setMesaId(null)
     setComboIds(null)
-    const { data } = await supabase
-      .from('reservas')
-      .select('mesa_id, hora')
-      .eq('fecha', fecha)
-      .neq('estado', 'cancelada')
-    setReservasDelDia(data ?? [])
+    const [{ data: reservasData }, { data: holdsData }] = await Promise.all([
+      supabase.from('reservas').select('mesa_id, hora').eq('fecha', fecha).neq('estado', 'cancelada'),
+      supabase.from('mesa_holds').select('mesa_id, hora').eq('fecha', fecha).gt('expira_at', new Date().toISOString())
+    ])
+    setReservasDelDia(reservasData ?? [])
+    setHoldsDelDia(holdsData ?? [])
     setStep('plano')
   }
 
   function estaReservada(mesa) {
     const solicitada = horaToMin(hora)
-    return reservasDelDia.some((r) => r.mesa_id === mesa.id && Math.abs(horaToMin(r.hora) - solicitada) < BUFFER_MIN)
+    const enConflicto = (r) => r.mesa_id === mesa.id && Math.abs(horaToMin(r.hora) - solicitada) < BUFFER_MIN
+    return reservasDelDia.some(enConflicto) || holdsDelDia.some(enConflicto)
   }
 
-  // Objetos decorativos (piscina, carrito) viven en la misma tabla que las
-  // mesas para heredar drag/resize/eliminar gratis, pero no son reservables.
+  // Objetos decorativos (piscina, carrito, parlante) viven en la misma tabla
+  // que las mesas para heredar drag/resize/eliminar gratis, pero no son
+  // reservables. Una mesa bloqueada manualmente (mantención, evento privado,
+  // mobiliario retirado) tampoco lo es, aunque sea de tipo round/rect.
   function esReservable(mesa) {
-    return mesa.tipo === 'round' || mesa.tipo === 'rect'
+    return (mesa.tipo === 'round' || mesa.tipo === 'rect') && mesa.activa !== false
   }
 
   function esCompatible(mesa) {
@@ -246,6 +258,31 @@ export default function Reservas() {
     if (zona !== 'cualquiera' && mesa.sala !== salaDeZona(zona)) return false
     return mesa.capacidad >= personas
   }
+
+  // Retiene la(s) mesa elegida(s) por HOLD_MIN minutos mientras el cliente
+  // completa sus datos, para que no la tome otra persona en ese rato.
+  async function crearHolds(ids) {
+    const expiraAt = new Date(Date.now() + HOLD_MIN * 60000).toISOString()
+    const rows = ids.map((id) => ({ mesa_id: id, fecha, hora, expira_at: expiraAt }))
+    const { data, error } = await supabase.from('mesa_holds').insert(rows).select()
+    if (!error && data) setMisHolds(data.map((h) => h.id))
+  }
+
+  async function liberarHolds() {
+    if (!misHolds.length) return
+    const ids = misHolds
+    setMisHolds([])
+    await supabase.from('mesa_holds').delete().in('id', ids)
+  }
+
+  // Si el cliente abandona la página con una mesa retenida (sin volver al
+  // plano ni confirmar), se libera al salir. Si cierra la pestaña sin más,
+  // el hold igual expira solo a los HOLD_MIN minutos.
+  useEffect(() => {
+    return () => {
+      if (misHolds.length) supabase.from('mesa_holds').delete().in('id', misHolds)
+    }
+  }, [misHolds])
 
   const libres = mesas.filter((m) => !estaReservada(m))
   const candidatosSolos = libres.filter((m) => esCompatible(m)).sort((a, b) => a.capacidad - b.capacidad)
@@ -302,31 +339,47 @@ export default function Reservas() {
 
   async function confirmarReserva(e) {
     e.preventDefault()
+    if (!telefonoValido(telefono)) {
+      setErrorMsg('Revisa el teléfono — debe incluir código de área, ej. +56 9 1234 5678.')
+      return
+    }
     setEnviando(true)
     setErrorMsg('')
 
-    const base = { nombre, telefono, email, fecha, hora, personas }
+    const sala = mesaSeleccionada?.sala ?? comboSeleccionado?.[0]?.sala
+    const base = { nombre, telefono, email, fecha, hora, personas, sala }
     let error
+    let data
     let mesaLabelFinal
     if (comboSeleccionado) {
       const label = comboSeleccionado.map((m) => m.etiqueta.replace('Mesa ', '')).join(' + ')
       mesaLabelFinal = `Mesa ${label} (combinada)`
       const inserts = comboSeleccionado.map((m) => ({ ...base, mesa_id: m.id, mesa_label: mesaLabelFinal }))
-      ;({ error } = await supabase.from('reservas').insert(inserts))
+      ;({ data, error } = await supabase.from('reservas').insert(inserts).select())
     } else {
       mesaLabelFinal = mesaSeleccionada.etiqueta
-      ;({ error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaLabelFinal }))
+      ;({ data, error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaLabelFinal }).select())
     }
 
     setEnviando(false)
+
+    // Se vuelve a comprobar disponibilidad recién al guardar (no basta con
+    // que estuviera libre cuando se cargó el plano) — el índice único de
+    // `reservas` es quien realmente lo garantiza; acá solo reaccionamos.
     if (error) {
-      setErrorMsg(
-        error.code === '23505'
-          ? 'Justo se ocupó esa mesa para ese horario. Vuelve al plano y elige otra.'
-          : 'No pudimos registrar tu reserva. Inténtalo de nuevo o escríbenos por WhatsApp.'
-      )
+      if (error.code === '23505') {
+        await liberarHolds()
+        setErrorMsg('')
+        setAvisoPlano('Esta mesa acaba de ser reservada. Por favor elige otra mesa disponible.')
+        await verPlano()
+      } else {
+        setErrorMsg('No pudimos registrar tu reserva. Inténtalo de nuevo o escríbenos por WhatsApp.')
+      }
       return
     }
+
+    setCodigoReserva(data?.[0]?.codigo ?? '')
+    liberarHolds()
 
     // Una sola llamada aunque sea reserva combinada (2 filas insertadas) —
     // si esto falla, la reserva ya quedó guardada igual, no bloqueamos al cliente.
@@ -360,6 +413,11 @@ export default function Reservas() {
           <br />
           {formatFechaCL(fecha)} · {hora} hrs
         </p>
+        {codigoReserva && (
+          <p className="font-mono text-ember text-sm mt-3 tracking-wide border border-ember/30 rounded-full px-4 py-1.5">
+            {codigoReserva}
+          </p>
+        )}
         <p className="text-xs text-paper/40 max-w-xs mt-4">
           El restaurante recibirá tu solicitud y te contactará al {telefono} para confirmarla.
         </p>
@@ -469,13 +527,19 @@ export default function Reservas() {
       {step === 'plano' && (
         <>
           <div className="w-full max-w-md flex items-center justify-between text-xs text-paper/50 mb-3 gap-2">
-            <button onClick={() => setStep('filtros')} className="text-gold/80 underline decoration-gold/30 shrink-0">
+            <button onClick={() => { setAvisoPlano(''); setStep('filtros') }} className="text-gold/80 underline decoration-gold/30 shrink-0">
               ← Cambiar fecha/hora/personas
             </button>
             <span className="font-mono text-ember text-right">
               {personas} · {hora} · {formatFechaCL(fecha)}
             </span>
           </div>
+
+          {avisoPlano && (
+            <p className="w-full max-w-md text-center text-xs text-gold bg-gold/10 border border-gold/30 rounded-xl px-3 py-2 mb-3">
+              {avisoPlano}
+            </p>
+          )}
 
           <div className="w-full max-w-md bg-inkSoft rounded-2xl p-3 mb-4">
             <svg
@@ -586,8 +650,8 @@ export default function Reservas() {
               )}
 
               {mesasVisibles.map((m) => {
-                if (!esReservable(m)) {
-                  // Piscina / carrito: solo referencia visual del plano, no se clickean.
+                if (m.tipo === 'piscina' || m.tipo === 'decor') {
+                  // Piscina / carrito / parlante: solo referencia visual del plano, no se clickean.
                   return (
                     <g key={m.id} transform={`translate(${m.x},${m.y}) rotate(${m.angulo})`}>
                       {m.tipo === 'piscina' ? (
@@ -598,6 +662,40 @@ export default function Reservas() {
                         <CarritoShape ancho={m.ancho} alto={m.alto} />
                       )}
                       <text textAnchor="middle" dy="8" fontSize="22" fontWeight="700" fill="#FFF8F1" opacity="0.7">
+                        {m.etiqueta.replace('Mesa ', '')}
+                      </text>
+                    </g>
+                  )
+                }
+
+                if (m.activa === false) {
+                  // Bloqueada manualmente desde /admin/mesas (mantención, evento
+                  // privado, etc.) — distinguible de "reservada" por el trazo
+                  // punteado y el aria-label, no solo por el color.
+                  return (
+                    <g
+                      key={m.id}
+                      transform={`translate(${m.x},${m.y}) rotate(${m.tipo === 'rect' ? m.angulo : 0})`}
+                      opacity="0.4"
+                      role="img"
+                      aria-label={`${m.etiqueta}, no disponible${m.bloqueo_motivo ? ': ' + m.bloqueo_motivo : ''}`}
+                    >
+                      {m.tipo === 'round' ? (
+                        <circle r={m.ancho / 2} fill="#2a2320" stroke="#6b5330" strokeWidth="3" strokeDasharray="6 5" />
+                      ) : (
+                        <rect
+                          x={-m.ancho / 2}
+                          y={-m.alto / 2}
+                          width={m.ancho}
+                          height={m.alto}
+                          rx="10"
+                          fill="#2a2320"
+                          stroke="#6b5330"
+                          strokeWidth="3"
+                          strokeDasharray="6 5"
+                        />
+                      )}
+                      <text textAnchor="middle" dy="8" fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill="#FFF8F1">
                         {m.etiqueta.replace('Mesa ', '')}
                       </text>
                     </g>
@@ -726,7 +824,11 @@ export default function Reservas() {
           </p>
 
           <button
-            onClick={() => setStep('contacto')}
+            onClick={async () => {
+              const ids = mesaSeleccionada ? [mesaSeleccionada.id] : comboSeleccionado.map((m) => m.id)
+              await crearHolds(ids)
+              setStep('contacto')
+            }}
             disabled={!puedeContinuar}
             className="w-full max-w-md py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-40 disabled:shadow-none"
           >
@@ -737,9 +839,17 @@ export default function Reservas() {
 
       {step === 'contacto' && (
         <form onSubmit={confirmarReserva} className="w-full max-w-md flex flex-col gap-3">
-          <button type="button" onClick={() => setStep('plano')} className="text-xs text-gold/80 underline decoration-gold/30 text-left mb-1">
+          <button
+            type="button"
+            onClick={async () => {
+              await liberarHolds()
+              setStep('plano')
+            }}
+            className="text-xs text-gold/80 underline decoration-gold/30 text-left mb-1"
+          >
             ← Volver al plano
           </button>
+          <p className="text-[10px] text-paper/35 -mt-2 mb-1">Tu mesa queda retenida por {HOLD_MIN} minutos mientras completas estos datos.</p>
 
           <div className="bg-inkSoft border border-bronze/25 rounded-xl p-3.5 text-xs text-paper/70 flex items-center justify-between flex-wrap gap-2">
             <span className="flex items-center gap-1.5">
