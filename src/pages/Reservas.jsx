@@ -60,6 +60,19 @@ function CarritoShape({ ancho, alto }) {
   )
 }
 
+function ParlanteShape({ ancho, alto }) {
+  const stroke = '#E3B341'
+  return (
+    <g opacity="0.85">
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="8" fill="#221A16" stroke={stroke} strokeWidth="2" />
+      <circle cx={-ancho / 6} cy="0" r={alto / 4} fill="none" stroke={stroke} strokeWidth="2" />
+      <circle cx={-ancho / 6} cy="0" r={alto / 10} fill={stroke} />
+      <path d={`M${ancho / 8},${-alto / 4} A${alto / 3},${alto / 3} 0 0 1 ${ancho / 8},${alto / 4}`} fill="none" stroke={stroke} strokeWidth="2" />
+      <path d={`M${ancho / 3.2},${-alto / 3} A${alto / 2},${alto / 2} 0 0 1 ${ancho / 3.2},${alto / 3}`} fill="none" stroke={stroke} strokeWidth="2" opacity="0.6" />
+    </g>
+  )
+}
+
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -71,6 +84,65 @@ function horaToMin(hora) {
 
 function dist(a, b) {
   return Math.hypot(a.x - b.x, a.y - b.y)
+}
+
+// El estado interno sigue en ISO (lo necesitan el <input type="date">, las
+// queries a Supabase y el orden lexicográfico) — esto es solo para mostrarle
+// la fecha al cliente en formato chileno, nunca el ISO crudo.
+function formatFechaCL(iso) {
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
+function IconCalendario(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
+      <rect x="3.5" y="5" width="17" height="15" rx="2.5" />
+      <path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function IconReloj(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
+function IconMesa(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
+      <path d="M4 9h16M6 9v10M18 9v10M4 15h16" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+// Wordmark + regla dorada, coherente en las tres pantallas del flujo.
+function Header() {
+  return (
+    <div className="w-full max-w-md text-center mb-4">
+      <div className="font-serif text-[26px] leading-none tracking-[0.12em] text-gold">VARO’S</div>
+      <div className="font-head text-[9px] tracking-[0.45em] text-gold/60 mt-1.5">RESTAURANT</div>
+      <div className="mt-4 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+    </div>
+  )
+}
+
+function TituloReserva({ children }) {
+  return (
+    <div className="w-full max-w-md text-center mb-5">
+      <h1 className="font-serif text-2xl sm:text-[28px] tracking-wide text-gold">RESERVA TU MESA</h1>
+      <p className="text-paper/45 text-sm mt-1.5">{children}</p>
+      <div className="flex items-center justify-center gap-2 mt-4 mx-auto w-32">
+        <span className="h-px flex-1 bg-gold/30" />
+        <span className="w-1.5 h-1.5 rotate-45 bg-gold/50 shrink-0" />
+        <span className="h-px flex-1 bg-gold/30" />
+      </div>
+    </div>
+  )
 }
 
 export default function Reservas() {
@@ -278,11 +350,18 @@ export default function Reservas() {
     const label = comboSeleccionado ? comboSeleccionado.map((m) => m.etiqueta).join(' + ') : mesaSeleccionada.etiqueta
     return (
       <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
-        <div className="text-5xl mb-4">✅</div>
-        <h1 className="font-head text-xl font-semibold mb-2">¡Reserva enviada!</h1>
+        <Header />
+        <div className="w-14 h-14 rounded-full border border-gold/40 flex items-center justify-center mb-4">
+          <span className="text-2xl text-gold">✓</span>
+        </div>
+        <h1 className="font-serif text-2xl text-gold mb-2">¡Reserva confirmada!</h1>
         <p className="text-sm text-paper/60 max-w-xs">
-          {label} para {personas} personas el {fecha} a las {hora}. El restaurante recibirá tu solicitud y te
-          contactará al {telefono} para confirmarla.
+          {label} · {personas} personas
+          <br />
+          {formatFechaCL(fecha)} · {hora} hrs
+        </p>
+        <p className="text-xs text-paper/40 max-w-xs mt-4">
+          El restaurante recibirá tu solicitud y te contactará al {telefono} para confirmarla.
         </p>
       </div>
     )
@@ -290,12 +369,12 @@ export default function Reservas() {
 
   return (
     <div className="min-h-screen bg-ink text-paper px-4 py-8 flex flex-col items-center">
-      <h1 className="font-display text-3xl text-ember mb-1">Reserva tu mesa</h1>
-      <p className="text-paper/60 text-sm mb-6 text-center max-w-sm">
+      <Header />
+      <TituloReserva>
         {step === 'filtros' && 'Cuéntanos cuándo y cuántos son.'}
         {step === 'plano' && 'Elige tu mesa en el plano.'}
         {step === 'contacto' && 'Últimos datos para confirmar.'}
-      </p>
+      </TituloReserva>
 
       {step === 'filtros' && (
         <form
@@ -306,44 +385,50 @@ export default function Reservas() {
           className="w-full max-w-md flex flex-col gap-3"
         >
           <div className="flex gap-3">
-            <label className="text-sm text-paper/70 flex-1">
+            <label className="text-xs tracking-wide text-gold/70 flex-1">
               Fecha
-              <input
-                required
-                type="date"
-                min={todayISO()}
-                value={fecha}
-                onChange={(e) => setFecha(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
-              />
+              <div className="relative mt-1.5">
+                <IconCalendario className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gold/60 pointer-events-none" />
+                <input
+                  required
+                  type="date"
+                  min={todayISO()}
+                  value={fecha}
+                  onChange={(e) => setFecha(e.target.value)}
+                  className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                />
+              </div>
             </label>
-            <label className="text-sm text-paper/70 flex-1">
+            <label className="text-xs tracking-wide text-gold/70 flex-1">
               Hora
-              <input
-                required
-                type="time"
-                value={hora}
-                onChange={(e) => setHora(e.target.value)}
-                className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
-              />
+              <div className="relative mt-1.5">
+                <IconReloj className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gold/60 pointer-events-none" />
+                <input
+                  required
+                  type="time"
+                  value={hora}
+                  onChange={(e) => setHora(e.target.value)}
+                  className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                />
+              </div>
             </label>
           </div>
 
-          <label className="text-sm text-paper/70">
+          <label className="text-xs tracking-wide text-gold/70">
             Personas
-            <div className="mt-1 flex items-center gap-3 bg-inkSoft border border-white/10 rounded-xl px-4 py-2">
+            <div className="mt-1.5 flex items-center gap-3 bg-inkSoft border border-bronze/25 rounded-xl px-4 py-2.5">
               <button
                 type="button"
                 onClick={() => setPersonas((p) => Math.max(1, p - 1))}
-                className="w-8 h-8 rounded-lg border border-white/10 text-paper/70"
+                className="w-9 h-9 rounded-lg border border-bronze/30 text-paper/70 text-lg"
               >
                 −
               </button>
-              <span className="flex-1 text-center font-mono text-ember text-lg">{personas}</span>
+              <span className="flex-1 text-center font-serif text-ember text-xl">{personas}</span>
               <button
                 type="button"
                 onClick={() => setPersonas((p) => Math.min(20, p + 1))}
-                className="w-8 h-8 rounded-lg border border-ember/40 text-ember"
+                className="w-9 h-9 rounded-lg border border-ember/50 text-ember text-lg"
               >
                 +
               </button>
@@ -351,15 +436,15 @@ export default function Reservas() {
           </label>
 
           <div>
-            <span className="text-sm text-paper/70">Zona (opcional)</span>
-            <div className="mt-1 flex gap-2 flex-wrap">
+            <span className="text-xs tracking-wide text-gold/70">Zona (opcional)</span>
+            <div className="mt-1.5 flex gap-2 flex-wrap">
               {zonaOptions.map((z) => (
                 <button
                   key={z}
                   type="button"
                   onClick={() => setZona(z)}
-                  className={`px-3 py-2 rounded-full text-xs border ${
-                    zona === z ? 'border-ember text-ember bg-ember/10' : 'border-white/10 text-paper/50'
+                  className={`px-3.5 py-2 rounded-full text-xs border transition-colors ${
+                    zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
                   }`}
                 >
                   {z === 'cualquiera' ? 'Cualquier lugar' : z}
@@ -373,21 +458,22 @@ export default function Reservas() {
 
           <button
             type="submit"
-            className="mt-3 w-full py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine text-paper shadow-glow"
+            className="mt-3 w-full py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow flex items-center justify-center gap-2"
           >
-            Ver plano y mesas disponibles
+            VER PLANO Y MESAS DISPONIBLES
+            <span aria-hidden="true">›</span>
           </button>
         </form>
       )}
 
       {step === 'plano' && (
         <>
-          <div className="w-full max-w-md flex items-center justify-between text-xs text-paper/50 mb-3">
-            <button onClick={() => setStep('filtros')} className="underline">
+          <div className="w-full max-w-md flex items-center justify-between text-xs text-paper/50 mb-3 gap-2">
+            <button onClick={() => setStep('filtros')} className="text-gold/80 underline decoration-gold/30 shrink-0">
               ← Cambiar fecha/hora/personas
             </button>
-            <span className="font-mono text-ember">
-              {personas} · {hora} · {fecha}
+            <span className="font-mono text-ember text-right">
+              {personas} · {hora} · {formatFechaCL(fecha)}
             </span>
           </div>
 
@@ -405,16 +491,20 @@ export default function Reservas() {
               aria-label={`Plano de ${ROOM_LABELS[salaMostrada]}, elige una mesa`}
             >
               <defs>
-                <pattern id="hatchReservada" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                  <line x1="0" y1="0" x2="0" y2="10" stroke="#E3B341" strokeWidth="3" opacity="0.5" />
-                </pattern>
+                <filter id="glowSeleccionada" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="9" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
               </defs>
 
               {salaMostrada === 'comedor' && (
                 <>
-                  <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
+                  <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#E3B341" strokeWidth="8" opacity="0.85" />
                   {zonasVisibles.map((z) => (
-                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 30} fill="#FFF8F1" opacity="0.6">
+                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 30} fill="#E3B341" opacity="0.65">
                       {z.texto}
                     </text>
                   ))}
@@ -502,6 +592,8 @@ export default function Reservas() {
                     <g key={m.id} transform={`translate(${m.x},${m.y}) rotate(${m.angulo})`}>
                       {m.tipo === 'piscina' ? (
                         <path d={poolPath(m.ancho, m.alto)} fill="#6FD4D9" opacity="0.22" stroke="#6FD4D9" strokeWidth="2.5" />
+                      ) : m.estilo === 'parlante' ? (
+                        <ParlanteShape ancho={m.ancho} alto={m.alto} />
                       ) : (
                         <CarritoShape ancho={m.ancho} alto={m.alto} />
                       )}
@@ -519,19 +611,20 @@ export default function Reservas() {
                 const chairs = chairPositions(m)
                 const esSombrilla = m.tipo === 'round' && m.estilo === 'sombrilla'
 
-                let fill = '#3a2c24'
-                let stroke = '#B5732A'
+                // Disponible: negro + contorno dorado. Reservada: bronce apagado
+                // (sin depender solo del color — ver aria-label/aria-disabled abajo).
+                // Seleccionada: naranja luminoso con glow.
+                let fill = '#15100D'
+                let stroke = '#E3B341'
                 let opacity = 1
                 if (seleccionada) {
                   fill = '#FF7A1A'
                   stroke = '#FFD9B3'
                 } else if (reservada) {
-                  fill = 'url(#hatchReservada)'
-                  stroke = '#E3B341'
+                  fill = '#4a3a24'
+                  stroke = '#6b5330'
                 } else if (!compatible) {
                   opacity = 0.3
-                } else {
-                  stroke = '#8fae76'
                 }
 
                 const clickable = compatible && !reservada
@@ -540,6 +633,10 @@ export default function Reservas() {
                     key={m.id}
                     transform={`translate(${m.x},${m.y}) rotate(${m.tipo === 'rect' ? m.angulo : 0})`}
                     opacity={opacity}
+                    filter={seleccionada ? 'url(#glowSeleccionada)' : undefined}
+                    role="button"
+                    aria-disabled={!clickable}
+                    aria-label={`${m.etiqueta}${reservada ? ', reservada' : seleccionada ? ', seleccionada' : ', disponible'}`}
                   >
                     {chairs.map((c, i) => (
                       <rect
@@ -581,10 +678,10 @@ export default function Reservas() {
               })}
             </svg>
 
-            <div className="flex items-center justify-between mt-3">
+            <div className="flex items-center justify-between mt-3 flex-wrap gap-y-2">
               <div className="flex items-center gap-4 text-[10px] text-paper/50">
-                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#3a2c24', border: '1.5px solid #8fae76' }} />Disponible</span>
-                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#E3B341', opacity: 0.5 }} />Reservada</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#15100D', border: '1.5px solid #E3B341' }} />Disponible</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#4a3a24', border: '1.5px solid #6b5330' }} />Reservada</span>
                 <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />Seleccionada</span>
               </div>
               {zonaOptions.length > 1 && <span className="text-[10px] text-paper/40">{ROOM_LABELS[salaMostrada]}</span>}
@@ -592,14 +689,14 @@ export default function Reservas() {
           </div>
 
           {necesitaCombo && combo && (
-            <div className="w-full max-w-md bg-inkSoft border border-ember/30 rounded-2xl p-4 mb-4">
+            <div className="w-full max-w-md bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-4">
               <p className="text-xs text-paper/50 mb-2">Ninguna mesa sola alcanza para {personas} personas — combinación recomendada:</p>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-head font-semibold text-sm">
                     {combo.a.etiqueta} + {combo.b.etiqueta}
                   </div>
-                  <div className="text-xs text-paper/50">Capacidad {combo.capacidad} · {fecha} {hora}</div>
+                  <div className="text-xs text-paper/50">Capacidad {combo.capacidad} · {formatFechaCL(fecha)} {hora}</div>
                 </div>
                 <button
                   onClick={usarCombo}
@@ -619,66 +716,71 @@ export default function Reservas() {
             </p>
           )}
 
-          <p className="text-center text-xs text-paper/50 mb-4">
+          <p className="text-center text-xs text-gold/70 mb-4 flex items-center justify-center gap-1.5">
+            {(mesaSeleccionada || comboSeleccionado) && <IconMesa className="w-3.5 h-3.5" />}
             {mesaSeleccionada
-              ? `Seleccionaste: ${mesaSeleccionada.etiqueta}`
+              ? `${mesaSeleccionada.etiqueta} · ${personas} personas`
               : comboSeleccionado
-              ? `Seleccionaste: ${comboSeleccionado.map((m) => m.etiqueta).join(' + ')}`
+              ? `${comboSeleccionado.map((m) => m.etiqueta).join(' + ')} · ${personas} personas`
               : 'Toca una mesa disponible'}
           </p>
 
           <button
             onClick={() => setStep('contacto')}
             disabled={!puedeContinuar}
-            className="w-full max-w-md py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-40"
+            className="w-full max-w-md py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-40 disabled:shadow-none"
           >
-            Continuar
+            CONTINUAR
           </button>
         </>
       )}
 
       {step === 'contacto' && (
         <form onSubmit={confirmarReserva} className="w-full max-w-md flex flex-col gap-3">
-          <button type="button" onClick={() => setStep('plano')} className="text-xs text-paper/50 underline text-left mb-1">
+          <button type="button" onClick={() => setStep('plano')} className="text-xs text-gold/80 underline decoration-gold/30 text-left mb-1">
             ← Volver al plano
           </button>
 
-          <div className="bg-inkSoft rounded-xl p-3 text-xs text-paper/60 flex justify-between">
-            <span>
+          <div className="bg-inkSoft border border-bronze/25 rounded-xl p-3.5 text-xs text-paper/70 flex items-center justify-between flex-wrap gap-2">
+            <span className="flex items-center gap-1.5">
+              <IconMesa className="w-3.5 h-3.5 text-gold/70" />
               {mesaSeleccionada ? mesaSeleccionada.etiqueta : comboSeleccionado.map((m) => m.etiqueta).join(' + ')} · {personas} personas
             </span>
-            <span className="font-mono text-ember">{fecha} · {hora}</span>
+            <span className="font-mono text-ember flex items-center gap-1.5">
+              <IconReloj className="w-3.5 h-3.5" />
+              {formatFechaCL(fecha)} · {hora}
+            </span>
           </div>
 
-          <label className="text-sm text-paper/70">
+          <label className="text-xs tracking-wide text-gold/70">
             Nombre
             <input
               required
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
+              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
               placeholder="Tu nombre completo"
             />
           </label>
-          <label className="text-sm text-paper/70">
+          <label className="text-xs tracking-wide text-gold/70">
             Teléfono de contacto
             <input
               required
               type="tel"
               value={telefono}
               onChange={(e) => setTelefono(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
+              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
               placeholder="+56 9 ..."
             />
           </label>
-          <label className="text-sm text-paper/70">
+          <label className="text-xs tracking-wide text-gold/70">
             Correo (te llega la confirmación ahí)
             <input
               required
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="mt-1 w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper"
+              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
               placeholder="tucorreo@ejemplo.com"
             />
           </label>
@@ -688,9 +790,9 @@ export default function Reservas() {
           <button
             type="submit"
             disabled={enviando}
-            className="mt-2 w-full py-4 rounded-2xl font-head font-bold bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-50"
+            className="mt-2 w-full py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-50"
           >
-            {enviando ? 'Enviando...' : 'Confirmar reserva'}
+            {enviando ? 'ENVIANDO...' : 'CONFIRMAR RESERVA'}
           </button>
         </form>
       )}

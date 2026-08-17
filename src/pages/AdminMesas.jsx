@@ -258,6 +258,20 @@ function CarritoShape({ ancho, alto, isSel }) {
   )
 }
 
+// Ícono de parlante: gabinete + cono + ondas de sonido.
+function ParlanteShape({ ancho, alto, isSel }) {
+  const stroke = isSel ? '#FFD9B3' : '#E3B341'
+  return (
+    <g opacity={isSel ? 1 : 0.85}>
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="8" fill="#221A16" stroke={stroke} strokeWidth={isSel ? 4 : 2} />
+      <circle cx={-ancho / 6} cy="0" r={alto / 4} fill="none" stroke={stroke} strokeWidth="2" />
+      <circle cx={-ancho / 6} cy="0" r={alto / 10} fill={stroke} />
+      <path d={`M${ancho / 8},${-alto / 4} A${alto / 3},${alto / 3} 0 0 1 ${ancho / 8},${alto / 4}`} fill="none" stroke={stroke} strokeWidth="2" />
+      <path d={`M${ancho / 3.2},${-alto / 3} A${alto / 2},${alto / 2} 0 0 1 ${ancho / 3.2},${alto / 3}`} fill="none" stroke={stroke} strokeWidth="2" opacity="0.6" />
+    </g>
+  )
+}
+
 function MesaShape({ mesa, isSel }) {
   if (mesa.tipo === 'piscina') {
     return (
@@ -271,7 +285,11 @@ function MesaShape({ mesa, isSel }) {
     )
   }
   if (mesa.tipo === 'decor') {
-    return <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    return mesa.estilo === 'parlante' ? (
+      <ParlanteShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    ) : (
+      <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    )
   }
   if (mesa.tipo === 'round' && mesa.estilo === 'sombrilla') {
     return <SombrillaShape radio={mesa.ancho / 2} isSel={isSel} />

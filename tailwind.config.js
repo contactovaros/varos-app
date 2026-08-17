@@ -21,7 +21,10 @@ export default {
         display: ['"Bebas Neue"', 'sans-serif'],
         head: ['"Space Grotesk"', 'sans-serif'],
         body: ['Inter', 'sans-serif'],
-        mono: ['"JetBrains Mono"', 'monospace']
+        mono: ['"JetBrains Mono"', 'monospace'],
+        // Serif elegante reservado para el sistema de reservas (Reservas.jsx):
+        // "display" (Bebas Neue) sigue siendo la fuente del resto de la app.
+        serif: ['"Playfair Display"', 'Georgia', 'serif']
       },
       boxShadow: {
         glow: '0 0 24px rgba(255,122,26,0.35)'
