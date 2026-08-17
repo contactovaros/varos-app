@@ -3,10 +3,11 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
 
-// Dos salas editables desde la misma pantalla: el comedor (tabla `mesas`) y el
-// salón de eventos (tabla `mesas_salon`, reconstruido de un video, 10 x 15 m).
-// Van en tablas separadas para no mezclar el salón con las reservas del comedor,
-// pero se editan las dos desde /admin/mesas con el selector de abajo.
+// Tres salas editables desde la misma pantalla: el comedor (tabla `mesas`), el
+// salón de eventos (tabla `mesas_salon`, reconstruido de un video, 10 x 15 m) y
+// la terraza/jardín trasera (tabla `mesas_terraza`, estimada a partir de fotos).
+// Van en tablas separadas para no mezclar las reservas entre salas,
+// pero se editan las tres desde /admin/mesas con el selector de abajo.
 const ROOMS = {
   comedor: {
     label: 'Comedor Exterior',
@@ -21,6 +22,13 @@ const ROOMS = {
     idPrefix: 'sm',
     viewBox: { x: -40, y: -40, w: 1080, h: 1580 },
     nuevaMesa: { x: 500, y: 750, ancho: 120, capacidad: 4 }
+  },
+  terraza: {
+    label: 'Terraza',
+    table: 'mesas_terraza',
+    idPrefix: 'tz',
+    viewBox: { x: -40, y: -40, w: 1280, h: 2080 },
+    nuevaMesa: { x: 400, y: 1700, ancho: 70, capacidad: 2 }
   }
 }
 
@@ -160,12 +168,60 @@ function SalonBackground({ zonas }) {
   )
 }
 
+// Terraza/jardín trasera, estimada a partir de fotos del recinto (agosto 2026,
+// sin medidas reales todavía). 3 zonas apiladas: caminata cubierta con carpas,
+// pista central bajo un arco de truss, y jardín con barra/mesas de barril junto
+// a la piscina cubierta.
+function TerrazaBackground({ zonas }) {
+  const ROOM_W = 1200
+  const ROOM_H = 2000
+  return (
+    <>
+      <rect x="0" y="0" width={ROOM_W} height={ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
+
+      <g stroke="#B5732A" strokeWidth="2" strokeDasharray="2 14" opacity="0.4">
+        <line x1="0" y1="650" x2={ROOM_W} y2="650" />
+        <line x1="0" y1="1350" x2={ROOM_W} y2="1350" />
+      </g>
+
+      <ZonaLabels zonas={zonas.filter((z) => z.id !== 'tz_piscina' && z.texto)} />
+
+      {/* carpas tipo pagoda sobre la caminata cubierta */}
+      <g fill="#FFF8F1" opacity="0.12">
+        <path d="M0,0 L150,-40 L300,0 Z" />
+        <path d="M300,0 L450,-40 L600,0 Z" />
+      </g>
+      <line x1="0" y1="0" x2="600" y2="0" stroke="#B5732A" strokeWidth="4" opacity="0.5" />
+
+      {/* arco de truss que marca el ingreso a la pista */}
+      <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
+      <line x1="0" y1="600" x2={ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
+      <line x1={ROOM_W} y1="600" x2={ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
+
+      {/* piscina cubierta, esquina del jardín */}
+      <rect x="850" y="1550" width="300" height="380" rx="24" fill="#6FD4D9" opacity="0.15" stroke="#6FD4D9" strokeWidth="2.5" />
+      {zonas
+        .filter((z) => z.id === 'tz_piscina' && z.texto)
+        .map((z) => (
+          <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fill="#6FD4D9" opacity="0.8">
+            {z.texto}
+          </text>
+        ))}
+
+      {/* carrito de dulces, referencia fija del jardín */}
+      <rect x="720" y="1420" width="60" height="46" rx="6" fill="#221A16" stroke="#FFF8F1" strokeWidth="2" opacity="0.5" />
+      <circle cx="736" cy="1470" r="8" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" opacity="0.5" />
+      <circle cx="764" cy="1470" r="8" fill="#221A16" stroke="#FFF8F1" strokeWidth="1.5" opacity="0.5" />
+    </>
+  )
+}
+
 export default function AdminMesas() {
   const { isAdmin, loading: authLoading } = useAuth()
   const [room, setRoom] = useState('comedor')
   const [mesas, setMesas] = useState([])
   const [zonas, setZonas] = useState([])
-  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true } })
+  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
   const [selectedId, setSelectedId] = useState(null)
   const svgRef = useRef(null)
   const dragRef = useRef(null)
@@ -421,7 +477,9 @@ export default function AdminMesas() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          {room === 'comedor' ? <ComedorBackground zonas={zonas} /> : <SalonBackground zonas={zonas} />}
+          {room === 'comedor' && <ComedorBackground zonas={zonas} />}
+          {room === 'salon' && <SalonBackground zonas={zonas} />}
+          {room === 'terraza' && <TerrazaBackground zonas={zonas} />}
 
           {mesas.map((mesa) => {
             const isSel = mesa.id === selectedId

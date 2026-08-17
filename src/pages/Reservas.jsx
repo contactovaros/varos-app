@@ -7,6 +7,10 @@ const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas
 
 const SALON_ROOM_W = 1000
 const SALON_ROOM_H = 1500
+const TERRAZA_ROOM_W = 1200
+const TERRAZA_ROOM_H = 2000
+
+const ROOM_LABELS = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -28,7 +32,7 @@ export default function Reservas() {
   const [personas, setPersonas] = useState(2)
   const [zona, setZona] = useState('cualquiera')
 
-  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true } })
+  const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
   const [zonas, setZonas] = useState([])
   const [mesas, setMesas] = useState([])
   const [reservasDelDia, setReservasDelDia] = useState([])
@@ -71,6 +75,10 @@ export default function Reservas() {
         const { data } = await supabase.from('mesas_salon').select('*').order('orden')
         ;(data ?? []).forEach((m) => combinadas.push({ ...m, sala: 'salon', zona: 'Comedor Principal' }))
       }
+      if (salas.terraza?.activo !== false) {
+        const { data } = await supabase.from('mesas_terraza').select('*').order('orden')
+        ;(data ?? []).forEach((m) => combinadas.push({ ...m, sala: 'terraza', zona: 'Terraza' }))
+      }
       setMesas(combinadas)
     }
     cargarMesas()
@@ -79,12 +87,14 @@ export default function Reservas() {
   const zonaOptions = [
     'cualquiera',
     ...(salas.comedor?.activo !== false ? ['Comedor Exterior'] : []),
-    ...(salas.salon?.activo !== false ? ['Comedor Principal'] : [])
+    ...(salas.salon?.activo !== false ? ['Comedor Principal'] : []),
+    ...(salas.terraza?.activo !== false ? ['Terraza'] : [])
   ]
 
   function salaDeZona(z) {
     if (z === 'Comedor Principal') return 'salon'
     if (z === 'Comedor Exterior') return 'comedor'
+    if (z === 'Terraza') return 'terraza'
     return null
   }
 
@@ -157,7 +167,7 @@ export default function Reservas() {
     mesaSeleccionada?.sala ||
     comboSeleccionado?.[0]?.sala ||
     candidatosSolos[0]?.sala ||
-    (salas.comedor?.activo !== false ? 'comedor' : 'salon')
+    (salas.comedor?.activo !== false ? 'comedor' : salas.salon?.activo !== false ? 'salon' : 'terraza')
 
   const mesasVisibles = mesas.filter((m) => m.sala === salaMostrada)
   const zonasVisibles = zonas.filter((z) => z.room === salaMostrada && z.texto)
@@ -300,7 +310,7 @@ export default function Reservas() {
                 </button>
               ))}
             </div>
-            {salas.comedor?.activo === false && salas.salon?.activo === false && (
+            {salas.comedor?.activo === false && salas.salon?.activo === false && salas.terraza?.activo === false && (
               <p className="text-xs text-wineSoft mt-2">Hoy no hay salas disponibles para reserva online — escríbenos por WhatsApp.</p>
             )}
           </div>
@@ -327,10 +337,16 @@ export default function Reservas() {
 
           <div className="w-full max-w-md bg-inkSoft rounded-2xl p-3 mb-4">
             <svg
-              viewBox={salaMostrada === 'salon' ? `-40 -40 ${SALON_ROOM_W + 80} ${SALON_ROOM_H + 80}` : '-40 -40 1420 1780'}
+              viewBox={
+                salaMostrada === 'salon'
+                  ? `-40 -40 ${SALON_ROOM_W + 80} ${SALON_ROOM_H + 80}`
+                  : salaMostrada === 'terraza'
+                  ? `-40 -40 ${TERRAZA_ROOM_W + 80} ${TERRAZA_ROOM_H + 80}`
+                  : '-40 -40 1420 1780'
+              }
               className="w-full h-auto"
               role="img"
-              aria-label={`Plano de ${salaMostrada === 'salon' ? 'Comedor Principal' : 'Comedor Exterior'}, elige una mesa`}
+              aria-label={`Plano de ${ROOM_LABELS[salaMostrada]}, elige una mesa`}
             >
               <defs>
                 <pattern id="hatchReservada" width="10" height="10" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
@@ -338,7 +354,7 @@ export default function Reservas() {
                 </pattern>
               </defs>
 
-              {salaMostrada === 'comedor' ? (
+              {salaMostrada === 'comedor' && (
                 <>
                   <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
                   {zonasVisibles.map((z) => (
@@ -347,7 +363,9 @@ export default function Reservas() {
                     </text>
                   ))}
                 </>
-              ) : (
+              )}
+
+              {salaMostrada === 'salon' && (
                 <>
                   <rect x="0" y="0" width={SALON_ROOM_W} height={SALON_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
                   {zonasVisibles
@@ -387,6 +405,34 @@ export default function Reservas() {
                     .filter((z) => z.id === 's_terraza')
                     .map((z) => (
                       <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill="#6FD4D9" opacity="0.7">
+                        {z.texto}
+                      </text>
+                    ))}
+                </>
+              )}
+
+              {salaMostrada === 'terraza' && (
+                <>
+                  <rect x="0" y="0" width={TERRAZA_ROOM_W} height={TERRAZA_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
+                  {zonasVisibles
+                    .filter((z) => z.id !== 'tz_piscina')
+                    .map((z) => (
+                      <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
+                        {z.texto}
+                      </text>
+                    ))}
+
+                  {/* arco de truss que marca el ingreso a la pista */}
+                  <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
+                  <line x1="0" y1="600" x2={TERRAZA_ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
+                  <line x1={TERRAZA_ROOM_W} y1="600" x2={TERRAZA_ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
+
+                  {/* piscina cubierta */}
+                  <rect x="850" y="1550" width="300" height="380" rx="24" fill="#6FD4D9" opacity="0.15" stroke="#6FD4D9" strokeWidth="2.5" />
+                  {zonasVisibles
+                    .filter((z) => z.id === 'tz_piscina')
+                    .map((z) => (
+                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fill="#6FD4D9" opacity="0.8">
                         {z.texto}
                       </text>
                     ))}
@@ -466,9 +512,7 @@ export default function Reservas() {
                 <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#E3B341', opacity: 0.5 }} />Reservada</span>
                 <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />Seleccionada</span>
               </div>
-              {zonaOptions.length > 1 && (
-                <span className="text-[10px] text-paper/40">{salaMostrada === 'salon' ? 'Comedor Principal' : 'Comedor Exterior'}</span>
-              )}
+              {zonaOptions.length > 1 && <span className="text-[10px] text-paper/40">{ROOM_LABELS[salaMostrada]}</span>}
             </div>
           </div>
 
