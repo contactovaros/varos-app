@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
+import { BotonRedSocial, IconoInstagram, IconoFacebook, IconoSitioWeb, IconoWhatsApp, IconoResena } from '../components/TarjetaFidelidad.jsx'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
@@ -133,6 +134,33 @@ function Header() {
       <div className="font-serif text-[26px] leading-none tracking-[0.12em] text-gold">VARO’S</div>
       <div className="font-head text-[9px] tracking-[0.45em] text-gold/60 mt-1.5">RESTAURANT</div>
       <div className="mt-4 h-px bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
+    </div>
+  )
+}
+
+// Mismos 5 botones que la tarjeta de fidelización, fijos al pie de las
+// cuatro pantallas del flujo (no solo la de confirmación).
+function FooterRedes() {
+  return (
+    <div className="w-full max-w-md flex flex-col items-center gap-3 mt-8 pt-5 border-t border-gold/10">
+      <div className="flex items-center justify-center gap-2">
+        <BotonRedSocial href="https://www.instagram.com/varosrestaurant/?hl=es" label="Síguenos en Instagram">
+          <IconoInstagram />
+        </BotonRedSocial>
+        <BotonRedSocial href="https://www.facebook.com/varosrestaurant" label="Síguenos en Facebook">
+          <IconoFacebook />
+        </BotonRedSocial>
+        <BotonRedSocial href="https://varos.cl/" label="Visita nuestro sitio web">
+          <IconoSitioWeb />
+        </BotonRedSocial>
+        <BotonRedSocial href="https://wa.me/56999235368" label="Escríbenos por WhatsApp">
+          <IconoWhatsApp />
+        </BotonRedSocial>
+        <BotonRedSocial href="https://g.page/r/CfTLjMLhcWvCEBM/review" label="Déjanos tu reseña">
+          <IconoResena />
+        </BotonRedSocial>
+      </div>
+      <div className="text-[10px] text-gold/40 tracking-wide">contacto@varos.cl</div>
     </div>
   )
 }
@@ -428,6 +456,7 @@ export default function Reservas() {
         <p className="text-xs text-paper/40 max-w-xs mt-4">
           El restaurante recibirá tu solicitud y te contactará al {telefono} para confirmarla.
         </p>
+        <FooterRedes />
       </div>
     )
   }
@@ -903,6 +932,8 @@ export default function Reservas() {
           </button>
         </form>
       )}
+
+      <FooterRedes />
     </div>
   )
 }

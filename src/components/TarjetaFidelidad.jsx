@@ -22,7 +22,7 @@ function mensajeFaltan(restantes, premioTexto) {
   return `Te falta${restantes === 1 ? '' : 'n'} ${restantes} ${visita} para: ${premioTexto}`
 }
 
-function IconoInstagram() {
+export function IconoInstagram() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -32,7 +32,7 @@ function IconoInstagram() {
   )
 }
 
-function IconoFacebook() {
+export function IconoFacebook() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
       <path d="M22 12.06C22 6.51 17.52 2 12 2S2 6.51 2 12.06c0 5 3.66 9.15 8.44 9.94v-7.03H7.9v-2.91h2.54V9.85c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.47h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.91h-2.34V22c4.78-.79 8.44-4.94 8.44-9.94z" />
@@ -40,7 +40,7 @@ function IconoFacebook() {
   )
 }
 
-function IconoWhatsApp() {
+export function IconoWhatsApp() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
       <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.39 1.26 4.81L2 22l5.41-1.42a9.87 9.87 0 0 0 4.63 1.18h.01c5.46 0 9.9-4.45 9.9-9.91 0-2.64-1.03-5.13-2.9-7A9.82 9.82 0 0 0 12.04 2zm0 1.67c2.2 0 4.26.86 5.82 2.42a8.2 8.2 0 0 1 2.41 5.82c0 4.54-3.7 8.24-8.25 8.24a8.2 8.2 0 0 1-4.19-1.15l-.3-.18-3.21.84.86-3.13-.2-.32a8.18 8.18 0 0 1-1.26-4.36c0-4.55 3.7-8.18 8.32-8.18zm-4.6 4.3c-.16 0-.42.06-.64.31-.22.25-.85.83-.85 2.02s.87 2.34.99 2.5c.12.16 1.7 2.6 4.12 3.64.58.25 1.03.4 1.38.51.58.18 1.11.16 1.53.1.47-.07 1.44-.59 1.64-1.15.2-.57.2-1.05.14-1.15-.06-.1-.22-.16-.46-.28-.24-.12-1.44-.71-1.66-.79-.22-.08-.39-.12-.55.12-.16.24-.63.79-.78.95-.14.16-.28.18-.52.06-.24-.12-1.02-.38-1.94-1.2-.72-.64-1.2-1.44-1.34-1.68-.14-.24-.02-.37.11-.49.11-.11.24-.28.36-.42.12-.14.16-.24.24-.4.08-.16.04-.3-.02-.42-.06-.12-.55-1.33-.76-1.82-.2-.48-.4-.42-.55-.42z" />
@@ -49,7 +49,7 @@ function IconoWhatsApp() {
 }
 
 // Ícono genérico mientras se agrega el logo real de Varo's (pendiente de recibir el archivo).
-function IconoSitioWeb() {
+export function IconoSitioWeb() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <circle cx="12" cy="12" r="10" />
@@ -59,7 +59,7 @@ function IconoSitioWeb() {
   )
 }
 
-function IconoResena() {
+export function IconoResena() {
   return (
     <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
@@ -67,7 +67,7 @@ function IconoResena() {
   )
 }
 
-function BotonRedSocial({ href, label, children }) {
+export function BotonRedSocial({ href, label, children }) {
   return (
     <a
       href={href}
