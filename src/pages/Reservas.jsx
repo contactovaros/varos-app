@@ -347,19 +347,25 @@ export default function Reservas() {
     setEnviando(true)
     setErrorMsg('')
 
+    // El código se pide ANTES del insert (vía RPC) y se manda explícito en
+    // la fila — el cliente reserva sin login y no tiene permiso de SELECT
+    // sobre `reservas`, así que encadenar .select() después del insert
+    // para leer el código de vuelta rompe todo el guardado (RLS 42501).
+    const { data: codigoData } = await supabase.rpc('siguiente_codigo_reserva')
+    const codigo = codigoData ?? ''
+
     const sala = mesaSeleccionada?.sala ?? comboSeleccionado?.[0]?.sala
-    const base = { nombre, telefono, email, fecha, hora, personas, sala }
+    const base = { nombre, telefono, email, fecha, hora, personas, sala, codigo }
     let error
-    let data
     let mesaLabelFinal
     if (comboSeleccionado) {
       const label = comboSeleccionado.map((m) => m.etiqueta.replace('Mesa ', '')).join(' + ')
       mesaLabelFinal = `Mesa ${label} (combinada)`
       const inserts = comboSeleccionado.map((m) => ({ ...base, mesa_id: m.id, mesa_label: mesaLabelFinal }))
-      ;({ data, error } = await supabase.from('reservas').insert(inserts).select())
+      ;({ error } = await supabase.from('reservas').insert(inserts))
     } else {
       mesaLabelFinal = mesaSeleccionada.etiqueta
-      ;({ data, error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaLabelFinal }).select())
+      ;({ error } = await supabase.from('reservas').insert({ ...base, mesa_id: mesaSeleccionada.id, mesa_label: mesaLabelFinal }))
     }
 
     setEnviando(false)
@@ -379,7 +385,7 @@ export default function Reservas() {
       return
     }
 
-    setCodigoReserva(data?.[0]?.codigo ?? '')
+    setCodigoReserva(codigo)
     liberarHolds()
 
     // Una sola llamada aunque sea reserva combinada (2 filas insertadas) —
