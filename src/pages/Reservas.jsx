@@ -497,18 +497,20 @@ export default function Reservas() {
           <div>
             <span className="text-xs tracking-wide text-gold/70">Zona (opcional)</span>
             <div className="mt-1.5 flex gap-2 flex-wrap">
-              {zonaOptions.map((z) => (
-                <button
-                  key={z}
-                  type="button"
-                  onClick={() => setZona(z)}
-                  className={`px-3.5 py-2 rounded-full text-xs border transition-colors ${
-                    zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
-                  }`}
-                >
-                  {z === 'cualquiera' ? 'Cualquier lugar' : z}
-                </button>
-              ))}
+              {zonaOptions
+                .filter((z) => z !== 'cualquiera')
+                .map((z) => (
+                  <button
+                    key={z}
+                    type="button"
+                    onClick={() => setZona(zona === z ? 'cualquiera' : z)}
+                    className={`px-3.5 py-2 rounded-full text-xs border transition-colors ${
+                      zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
+                    }`}
+                  >
+                    {z}
+                  </button>
+                ))}
             </div>
             {salas.comedor?.activo === false && salas.salon?.activo === false && salas.terraza?.activo === false && (
               <p className="text-xs text-wineSoft mt-2">Hoy no hay salas disponibles para reserva online — escríbenos por WhatsApp.</p>
