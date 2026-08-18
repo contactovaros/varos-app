@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
+import { whatsappHref, mensajeConfirmacionReserva } from '../lib/whatsapp.js'
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10)
@@ -62,8 +63,9 @@ export default function AdminReservas() {
 
   async function cambiarEstado(r, estado) {
     setReservas((prev) => prev.map((x) => (x.id === r.id ? { ...x, estado } : x)))
-    // Confirmar pasa por el RPC (además de guardar, le avisa al cliente por
-    // correo) — el resto de los estados solo se guardan, sin correo.
+    // Confirmar pasa por el RPC (guarda el estado) — el aviso al cliente ya
+    // no es un correo automático, se abre WhatsApp abajo para que el admin
+    // mande el mensaje a mano. El resto de los estados solo se guardan.
     const { error } =
       estado === 'confirmada'
         ? await supabase.rpc('admin_confirmar_reserva', { p_reserva_id: r.id })
@@ -71,6 +73,11 @@ export default function AdminReservas() {
     if (error) {
       setReservas((prev) => prev.map((x) => (x.id === r.id ? { ...x, estado: r.estado } : x)))
       alert('No se pudo actualizar la reserva: ' + error.message)
+      return
+    }
+    if (estado === 'confirmada') {
+      if (r.telefono) window.open(whatsappHref(r.telefono, mensajeConfirmacionReserva(r)), '_blank')
+      else alert('Reserva confirmada, pero no tiene teléfono guardado para avisarle por WhatsApp.')
     }
   }
 
@@ -124,7 +131,7 @@ export default function AdminReservas() {
                     onClick={() => cambiarEstado(r, 'confirmada')}
                     className="px-3 py-1.5 rounded-md border border-ember/40 text-ember text-[11px]"
                   >
-                    Confirmar (avisa por correo)
+                    Confirmar por WhatsApp
                   </button>
                 )}
                 {r.estado === 'confirmada' && (

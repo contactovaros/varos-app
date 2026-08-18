@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { SALA_LABEL, ESTADO_LABEL, ESTADO_CLASS } from '../pages/AdminReservas.jsx'
 import { IconoWhatsApp } from './TarjetaFidelidad.jsx'
+import { whatsappHref, mensajeConfirmacionReserva } from '../lib/whatsapp.js'
 
 // Piezas compartidas entre /admin/mesa-trabajo (la página completa) y el
 // panel lateral que aparece en /admin/mesas en pantallas anchas — viven acá,
@@ -22,14 +23,6 @@ export function turnoDe(hora) {
   if (mins >= 12 * 60 + 30 && mins < 16 * 60 + 30) return 'Almuerzo'
   if (mins >= 19 * 60 + 30) return 'Cena'
   return null
-}
-
-// Arma el link de wa.me a partir de lo que la persona haya escrito al reservar
-// (con o sin +56) — wa.me necesita el número completo sin el "+".
-export function whatsappHref(telefono) {
-  const digits = (telefono || '').replace(/\D/g, '')
-  const conCodigo = digits.length === 9 && digits.startsWith('9') ? `56${digits}` : digits
-  return `https://wa.me/${conCodigo}`
 }
 
 // Cruza los correos de una tanda de reservas contra los socios del club
@@ -89,6 +82,13 @@ export function ReservaCard({ r, onConfirmada, onCancelada, socio }) {
       return
     }
     onConfirmada?.(r.id)
+    // El aviso al cliente ya no es un correo automático: se abre WhatsApp con
+    // el mensaje de confirmación ya escrito para que el admin lo mande a mano.
+    if (r.telefono) {
+      window.open(whatsappHref(r.telefono, mensajeConfirmacionReserva(r)), '_blank')
+    } else {
+      alert('Reserva confirmada, pero no tiene teléfono guardado para avisarle por WhatsApp.')
+    }
   }
 
   async function cancelar() {
@@ -141,7 +141,7 @@ export function ReservaCard({ r, onConfirmada, onCancelada, socio }) {
             disabled={confirmando}
             className="flex-1 py-1.5 rounded-md font-head font-semibold text-[11px] bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
           >
-            {confirmando ? 'Confirmando…' : 'Confirmar (avisa por correo)'}
+            {confirmando ? 'Confirmando…' : 'Confirmar por WhatsApp'}
           </button>
         )}
         <button

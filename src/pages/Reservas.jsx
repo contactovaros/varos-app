@@ -416,21 +416,9 @@ export default function Reservas() {
     setCodigoReserva(codigo)
     liberarHolds()
 
-    // Una sola llamada aunque sea reserva combinada (2 filas insertadas) —
-    // si esto falla, la reserva ya quedó guardada igual, no bloqueamos al cliente.
-    supabase
-      .rpc('confirmar_reserva_cliente', {
-        p_nombre: nombre,
-        p_email: email,
-        p_fecha: fecha,
-        p_hora: hora,
-        p_personas: personas,
-        p_mesa_label: mesaLabelFinal
-      })
-      .then(({ error: rpcError }) => {
-        if (rpcError) console.error('No se pudo enviar el correo de confirmación:', rpcError)
-      })
-
+    // Ya no se manda un correo automático al reservar — el aviso al cliente
+    // ahora lo envía el administrador por WhatsApp cuando confirma la mesa
+    // (ver admin_confirmar_reserva / botón "Confirmar por WhatsApp").
     setStep('ok')
   }
 
