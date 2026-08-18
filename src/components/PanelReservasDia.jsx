@@ -108,6 +108,104 @@ export function ReservaCard({ r, onConfirmada }) {
   )
 }
 
+function pad2(n) {
+  return String(n).padStart(2, '0')
+}
+
+// Calendario mensual con puntito en los días que tienen alguna reserva
+// activa (no cancelada) — así se ven las reservas próximas de un vistazo,
+// no solo las del día seleccionado. `sala` es opcional: si se pasa, solo
+// cuenta reservas de esa sala (panel de /admin/mesas); si no, cuenta todas
+// (vista general de /admin/mesa-trabajo).
+export function CalendarioReservas({ fechaSeleccionada, onSelectFecha, sala }) {
+  const [anio, setAnio] = useState(Number(fechaSeleccionada.slice(0, 4)))
+  const [mes, setMes] = useState(Number(fechaSeleccionada.slice(5, 7)) - 1)
+  const [conteoPorFecha, setConteoPorFecha] = useState({})
+
+  useEffect(() => {
+    const inicio = `${anio}-${pad2(mes + 1)}-01`
+    const ultimoDia = new Date(anio, mes + 1, 0).getDate()
+    const fin = `${anio}-${pad2(mes + 1)}-${pad2(ultimoDia)}`
+    let query = supabase.from('reservas').select('fecha').gte('fecha', inicio).lte('fecha', fin).neq('estado', 'cancelada')
+    if (sala) query = query.eq('sala', sala)
+    query.then(({ data }) => {
+      const mapa = {}
+      ;(data ?? []).forEach((r) => {
+        mapa[r.fecha] = (mapa[r.fecha] ?? 0) + 1
+      })
+      setConteoPorFecha(mapa)
+    })
+  }, [anio, mes, sala])
+
+  function cambiarMes(delta) {
+    let m = mes + delta
+    let a = anio
+    if (m < 0) {
+      m = 11
+      a -= 1
+    } else if (m > 11) {
+      m = 0
+      a += 1
+    }
+    setMes(m)
+    setAnio(a)
+  }
+
+  const primerDiaSemana = new Date(anio, mes, 1).getDay()
+  const diasEnMes = new Date(anio, mes + 1, 0).getDate()
+  const celdas = [...Array(primerDiaSemana).fill(null), ...Array.from({ length: diasEnMes }, (_, i) => i + 1)]
+  const nombreMes = new Date(anio, mes, 1).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })
+  const hoyStr = todayISO()
+
+  return (
+    <div className="bg-ink border border-white/10 rounded-xl p-3">
+      <div className="flex items-center justify-between mb-2">
+        <button type="button" onClick={() => cambiarMes(-1)} className="w-7 h-7 rounded-md border border-white/10 text-paper/60">
+          ‹
+        </button>
+        <div className="text-xs font-head font-semibold capitalize">{nombreMes}</div>
+        <button type="button" onClick={() => cambiarMes(1)} className="w-7 h-7 rounded-md border border-white/10 text-paper/60">
+          ›
+        </button>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[9px] text-paper/35 mb-1">
+        {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((d, i) => (
+          <div key={i}>{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {celdas.map((d, i) => {
+          if (d === null) return <div key={i} />
+          const fechaStr = `${anio}-${pad2(mes + 1)}-${pad2(d)}`
+          const conReserva = (conteoPorFecha[fechaStr] ?? 0) > 0
+          const esHoy = fechaStr === hoyStr
+          const esSeleccionada = fechaStr === fechaSeleccionada
+          return (
+            <button
+              type="button"
+              key={i}
+              onClick={() => onSelectFecha(fechaStr)}
+              title={conReserva ? `${conteoPorFecha[fechaStr]} reserva(s)` : undefined}
+              className={`relative aspect-square rounded-md text-[11px] flex items-center justify-center ${
+                esSeleccionada
+                  ? 'bg-ember text-ink font-bold'
+                  : esHoy
+                  ? 'border border-gold/50 text-gold'
+                  : conReserva
+                  ? 'text-gold font-semibold'
+                  : 'text-paper/40'
+              }`}
+            >
+              {d}
+              {conReserva && !esSeleccionada && <span className="absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-ember" />}
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
 // Panel compacto y autocontenido: fecha + total de personas + lista, filtrado
 // a una sola sala. Usado como columna lateral en /admin/mesas (pantallas
 // anchas) para ver las reservas de la sala que se está editando sin salir
@@ -143,13 +241,8 @@ export function PanelReservasDia({ sala }) {
           <div className="font-head font-bold text-ember text-sm leading-none">{totalPersonas}</div>
         </div>
       </div>
-      <input
-        type="date"
-        value={fecha}
-        onChange={(e) => setFecha(e.target.value)}
-        className="w-full rounded-xl bg-ink border border-white/10 px-3 py-2.5 text-paper text-sm"
-      />
-      <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto pr-0.5">
+      <CalendarioReservas fechaSeleccionada={fecha} onSelectFecha={setFecha} sala={sala} />
+      <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-0.5">
         {cargando && <p className="text-paper/40 text-xs">Cargando…</p>}
         {!cargando && reservas.length === 0 && (
           <p className="text-paper/40 text-xs">Sin reservas para {SALA_LABEL[sala] ?? sala} este día.</p>

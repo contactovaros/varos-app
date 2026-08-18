@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground, MesaShape } from './AdminMesas.jsx'
 import { formatFechaCL } from './AdminReservas.jsx'
-import { todayISO, ReservaCard } from '../components/PanelReservasDia.jsx'
+import { todayISO, ReservaCard, CalendarioReservas } from '../components/PanelReservasDia.jsx'
 
 // Mesa coloreada por estado de reserva (no de edición): disponible = negro +
 // contorno dorado, con reserva = bronce apagado, con el detalle abierto =
@@ -126,12 +126,9 @@ export default function AdminMesaTrabajo() {
         </div>
       </div>
 
-      <input
-        type="date"
-        value={fecha}
-        onChange={(e) => setFecha(e.target.value)}
-        className="w-full rounded-xl bg-inkSoft border border-white/10 px-4 py-3 text-paper mb-4"
-      />
+      <div className="mb-4">
+        <CalendarioReservas fechaSeleccionada={fecha} onSelectFecha={setFecha} />
+      </div>
 
       <div className="flex gap-2 mb-4">
         {Object.entries(ROOMS).map(([key, r]) => (
