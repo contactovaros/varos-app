@@ -276,13 +276,26 @@ export default function Admin() {
       </div>
 
       <Link
+        to="/admin/mesa-trabajo"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">🗂️ Mesa de trabajo</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Reservas del día junto al plano — toca una mesa reservada para ver el cliente y escribirle por WhatsApp
+          </div>
+        </div>
+        <span className="text-ember text-lg">→</span>
+      </Link>
+
+      <Link
         to="/admin/mesas"
         className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
       >
         <div>
-          <div className="font-head font-semibold text-sm">🥂 Comedor Principal</div>
+          <div className="font-head font-semibold text-sm">🥂 Editar planos y mesas</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
-            Editar mesas — elige "Comedor Principal" con el selector arriba del plano (10 × 15 m, reconstruido del video)
+            Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas
           </div>
         </div>
         <span className="text-ember text-lg">→</span>

@@ -6,16 +6,16 @@ function todayISO() {
   return new Date().toISOString().slice(0, 10)
 }
 
-const SALA_LABEL = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
+export const SALA_LABEL = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
 
-const ESTADO_LABEL = {
+export const ESTADO_LABEL = {
   pendiente: 'Pendiente',
   confirmada: 'Confirmada',
   cancelada: 'Cancelada',
   completada: 'Completada',
   no_asistio: 'No asistió'
 }
-const ESTADO_CLASS = {
+export const ESTADO_CLASS = {
   pendiente: 'border-gold/40 text-gold',
   confirmada: 'border-ember/40 text-ember',
   cancelada: 'border-white/10 text-paper/30 line-through',
@@ -23,7 +23,7 @@ const ESTADO_CLASS = {
   no_asistio: 'border-wine/40 text-wineSoft'
 }
 
-function formatFechaCL(iso) {
+export function formatFechaCL(iso) {
   const [y, m, d] = iso.split('-')
   return `${d}/${m}/${y}`
 }

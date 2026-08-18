@@ -8,7 +8,7 @@ import { chairPositions } from '../lib/mesasLayout'
 // la terraza/jardín trasera (tabla `mesas_terraza`, estimada a partir de fotos).
 // Van en tablas separadas para no mezclar las reservas entre salas,
 // pero se editan las tres desde /admin/mesas con el selector de abajo.
-const ROOMS = {
+export const ROOMS = {
   comedor: {
     label: 'Comedor Exterior',
     table: 'mesas',
@@ -50,7 +50,7 @@ function toLocal(dx, dy, angleDeg) {
 // Los nombres de zona (COMEDOR LATERAL, BARRA, etc.) vienen de la tabla
 // `zonas` y se dibujan acá — la geometría fija (muros, columnas, barra, etc.)
 // se queda hardcodeada porque eso no se pidió que fuera editable.
-function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk',Arial,sans-serif", fill = '#FFF8F1', opacity = 0.55 }) {
+export function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk',Arial,sans-serif", fill = '#FFF8F1', opacity = 0.55 }) {
   return (
     <g fontFamily={fontFamily} fontWeight="700" fill={fill}>
       {zonas.map((z) => (
@@ -70,7 +70,7 @@ function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk',Arial,
   )
 }
 
-function ComedorBackground({ zonas }) {
+export function ComedorBackground({ zonas }) {
   return (
     <>
       <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
@@ -81,7 +81,7 @@ function ComedorBackground({ zonas }) {
 
 // Salón de 10 x 15 m reconstruido desde el video de recorrido (agosto 2026).
 // Columnas, barra, cabina telefónica, etc. son solo referencia fija del espacio.
-function SalonBackground({ zonas }) {
+export function SalonBackground({ zonas }) {
   const ROOM_W = 1000
   const ROOM_H = 1500
   return (
@@ -172,7 +172,7 @@ function SalonBackground({ zonas }) {
 // sin medidas reales todavía). 3 zonas apiladas: caminata cubierta con carpas,
 // pista central bajo un arco de truss, y jardín con barra/mesas de barril
 // junto al escenario (objeto arrastrable, ver MesaShape).
-function TerrazaBackground({ zonas }) {
+export function TerrazaBackground({ zonas }) {
   const ROOM_W = 1200
   const ROOM_H = 2000
   return (
@@ -273,7 +273,7 @@ function ParlanteShape({ ancho, alto, isSel }) {
   )
 }
 
-function MesaShape({ mesa, isSel }) {
+export function MesaShape({ mesa, isSel }) {
   if (mesa.tipo === 'escenario') {
     return (
       <path
