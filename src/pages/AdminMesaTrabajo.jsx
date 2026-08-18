@@ -112,6 +112,10 @@ export default function AdminMesaTrabajo() {
     setReservas((prev) => prev.map((x) => (x.id === id ? { ...x, estado: 'confirmada' } : x)))
   }
 
+  function marcarCancelada(id) {
+    setReservas((prev) => prev.filter((x) => x.id !== id))
+  }
+
   return (
     <div className="px-4 pt-8 pb-24">
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -217,7 +221,9 @@ export default function AdminMesaTrabajo() {
           {reservasSeleccionadas.length === 0 ? (
             <p className="text-paper/40 text-xs">Sin reservas para el {formatFechaCL(fecha)}.</p>
           ) : (
-            reservasSeleccionadas.map((r) => <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} />)
+            reservasSeleccionadas.map((r) => (
+              <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} onCancelada={marcarCancelada} />
+            ))
           )}
         </div>
       )}
@@ -232,7 +238,7 @@ export default function AdminMesaTrabajo() {
         {cargando && <p className="text-paper/40 text-xs">Cargando…</p>}
         {!cargando && reservas.length === 0 && <p className="text-paper/40 text-xs">No hay reservas para este día.</p>}
         {reservas.map((r) => (
-          <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} />
+          <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} onCancelada={marcarCancelada} />
         ))}
       </div>
     </div>

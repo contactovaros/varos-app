@@ -46,11 +46,12 @@ export function InsigniaFidelizacion() {
   )
 }
 
-// onConfirmada(id) es opcional: si se pasa, la tarjeta avisa al padre que
-// esta reserva quedó confirmada para que actualice su lista local sin
-// tener que refetchear todo.
-export function ReservaCard({ r, onConfirmada }) {
+// onConfirmada(id) / onCancelada(id) son opcionales: si se pasan, la tarjeta
+// avisa al padre que esta reserva cambió de estado para que actualice su
+// lista local sin tener que refetchear todo.
+export function ReservaCard({ r, onConfirmada, onCancelada }) {
   const [confirmando, setConfirmando] = useState(false)
+  const [cancelando, setCancelando] = useState(false)
   const turno = turnoDe(r.hora?.slice(0, 5))
 
   async function confirmar() {
@@ -62,6 +63,18 @@ export function ReservaCard({ r, onConfirmada }) {
       return
     }
     onConfirmada?.(r.id)
+  }
+
+  async function cancelar() {
+    if (!window.confirm(`¿Cancelar la reserva de ${r.nombre} (${r.mesa_label}, ${r.hora?.slice(0, 5)} hrs)?`)) return
+    setCancelando(true)
+    const { error } = await supabase.from('reservas').update({ estado: 'cancelada' }).eq('id', r.id)
+    setCancelando(false)
+    if (error) {
+      alert('No se pudo cancelar la reserva: ' + error.message)
+      return
+    }
+    onCancelada?.(r.id)
   }
 
   return (
@@ -95,15 +108,24 @@ export function ReservaCard({ r, onConfirmada }) {
           </a>
         </div>
       </div>
-      {r.estado === 'pendiente' && (
+      <div className="flex items-center gap-2 mt-1">
+        {r.estado === 'pendiente' && (
+          <button
+            onClick={confirmar}
+            disabled={confirmando}
+            className="flex-1 py-1.5 rounded-md font-head font-semibold text-[11px] bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+          >
+            {confirmando ? 'Confirmando…' : 'Confirmar (avisa por correo)'}
+          </button>
+        )}
         <button
-          onClick={confirmar}
-          disabled={confirmando}
-          className="mt-1 py-1.5 rounded-md font-head font-semibold text-[11px] bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+          onClick={cancelar}
+          disabled={cancelando}
+          className="py-1.5 px-3 rounded-md font-head font-semibold text-[11px] border border-wine/40 text-wineSoft disabled:opacity-50"
         >
-          {confirmando ? 'Confirmando…' : 'Confirmar (avisa por correo)'}
+          {cancelando ? 'Cancelando…' : 'Cancelar'}
         </button>
-      )}
+      </div>
     </div>
   )
 }
@@ -249,6 +271,7 @@ export function ListaReservasDia({ fecha, sala }) {
             key={r.id}
             r={r}
             onConfirmada={(id) => setReservas((prev) => prev.map((x) => (x.id === id ? { ...x, estado: 'confirmada' } : x)))}
+            onCancelada={(id) => setReservas((prev) => prev.filter((x) => x.id !== id))}
           />
         ))}
       </div>
