@@ -62,10 +62,15 @@ export default function AdminReservas() {
 
   async function cambiarEstado(r, estado) {
     setReservas((prev) => prev.map((x) => (x.id === r.id ? { ...x, estado } : x)))
-    const { error } = await supabase.from('reservas').update({ estado }).eq('id', r.id)
+    // Confirmar pasa por el RPC (además de guardar, le avisa al cliente por
+    // correo) — el resto de los estados solo se guardan, sin correo.
+    const { error } =
+      estado === 'confirmada'
+        ? await supabase.rpc('admin_confirmar_reserva', { p_reserva_id: r.id })
+        : await supabase.from('reservas').update({ estado }).eq('id', r.id)
     if (error) {
       setReservas((prev) => prev.map((x) => (x.id === r.id ? { ...x, estado: r.estado } : x)))
-      alert('No se pudo actualizar la reserva.')
+      alert('No se pudo actualizar la reserva: ' + error.message)
     }
   }
 
@@ -119,7 +124,7 @@ export default function AdminReservas() {
                     onClick={() => cambiarEstado(r, 'confirmada')}
                     className="px-3 py-1.5 rounded-md border border-ember/40 text-ember text-[11px]"
                   >
-                    Confirmar
+                    Confirmar (avisa por correo)
                   </button>
                 )}
                 {r.estado === 'confirmada' && (

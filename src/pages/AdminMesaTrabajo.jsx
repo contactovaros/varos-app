@@ -108,6 +108,10 @@ export default function AdminMesaTrabajo() {
   const reservasSeleccionadas = mesaSeleccionadaId ? reservasPorMesa[mesaSeleccionadaId] ?? [] : []
   const mesaSeleccionada = mesasSala.find((m) => m.id === mesaSeleccionadaId)
 
+  function marcarConfirmada(id) {
+    setReservas((prev) => prev.map((x) => (x.id === id ? { ...x, estado: 'confirmada' } : x)))
+  }
+
   return (
     <div className="px-4 pt-8 pb-24">
       <div className="flex items-start justify-between gap-3 mb-4">
@@ -216,7 +220,7 @@ export default function AdminMesaTrabajo() {
           {reservasSeleccionadas.length === 0 ? (
             <p className="text-paper/40 text-xs">Sin reservas para el {formatFechaCL(fecha)}.</p>
           ) : (
-            reservasSeleccionadas.map((r) => <ReservaCard key={r.id} r={r} />)
+            reservasSeleccionadas.map((r) => <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} />)
           )}
         </div>
       )}
@@ -231,7 +235,7 @@ export default function AdminMesaTrabajo() {
         {cargando && <p className="text-paper/40 text-xs">Cargando…</p>}
         {!cargando && reservas.length === 0 && <p className="text-paper/40 text-xs">No hay reservas para este día.</p>}
         {reservas.map((r) => (
-          <ReservaCard key={r.id} r={r} />
+          <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} />
         ))}
       </div>
     </div>

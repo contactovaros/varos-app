@@ -46,8 +46,24 @@ export function InsigniaFidelizacion() {
   )
 }
 
-export function ReservaCard({ r }) {
+// onConfirmada(id) es opcional: si se pasa, la tarjeta avisa al padre que
+// esta reserva quedó confirmada para que actualice su lista local sin
+// tener que refetchear todo.
+export function ReservaCard({ r, onConfirmada }) {
+  const [confirmando, setConfirmando] = useState(false)
   const turno = turnoDe(r.hora?.slice(0, 5))
+
+  async function confirmar() {
+    setConfirmando(true)
+    const { error } = await supabase.rpc('admin_confirmar_reserva', { p_reserva_id: r.id })
+    setConfirmando(false)
+    if (error) {
+      alert('No se pudo confirmar la reserva: ' + error.message)
+      return
+    }
+    onConfirmada?.(r.id)
+  }
+
   return (
     <div className="bg-ink border border-white/5 rounded-xl p-3 text-xs flex flex-col gap-2">
       <div className="flex justify-between items-start gap-2">
@@ -62,7 +78,7 @@ export function ReservaCard({ r }) {
           {ESTADO_LABEL[r.estado] ?? r.estado}
         </span>
       </div>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-1.5">
         <span className="font-mono text-ember text-[11px]">
           {r.hora?.slice(0, 5)} hrs{turno ? ` · ${turno}` : ''}
         </span>
@@ -79,6 +95,15 @@ export function ReservaCard({ r }) {
           </a>
         </div>
       </div>
+      {r.estado === 'pendiente' && (
+        <button
+          onClick={confirmar}
+          disabled={confirmando}
+          className="mt-1 py-1.5 rounded-md font-head font-semibold text-[11px] bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+        >
+          {confirmando ? 'Confirmando…' : 'Confirmar (avisa por correo)'}
+        </button>
+      )}
     </div>
   )
 }
@@ -130,7 +155,11 @@ export function PanelReservasDia({ sala }) {
           <p className="text-paper/40 text-xs">Sin reservas para {SALA_LABEL[sala] ?? sala} este día.</p>
         )}
         {reservas.map((r) => (
-          <ReservaCard key={r.id} r={r} />
+          <ReservaCard
+            key={r.id}
+            r={r}
+            onConfirmada={(id) => setReservas((prev) => prev.map((x) => (x.id === id ? { ...x, estado: 'confirmada' } : x)))}
+          />
         ))}
       </div>
     </div>
