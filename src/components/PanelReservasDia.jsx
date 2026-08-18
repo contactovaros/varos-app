@@ -206,12 +206,10 @@ export function CalendarioReservas({ fechaSeleccionada, onSelectFecha, sala }) {
   )
 }
 
-// Panel compacto y autocontenido: fecha + total de personas + lista, filtrado
-// a una sola sala. Usado como columna lateral en /admin/mesas (pantallas
-// anchas) para ver las reservas de la sala que se está editando sin salir
-// de esa pantalla.
-export function PanelReservasDia({ sala }) {
-  const [fecha, setFecha] = useState(todayISO())
+// Solo la lista (sin calendario): fecha + total de personas + tarjetas,
+// filtrado a una sola sala. `fecha` la controla quien use este componente
+// (en /admin/mesas es el <CalendarioReservas> de al lado el que la cambia).
+export function ListaReservasDia({ fecha, sala }) {
   const [reservas, setReservas] = useState([])
   const [cargando, setCargando] = useState(true)
 
@@ -241,8 +239,7 @@ export function PanelReservasDia({ sala }) {
           <div className="font-head font-bold text-ember text-sm leading-none">{totalPersonas}</div>
         </div>
       </div>
-      <CalendarioReservas fechaSeleccionada={fecha} onSelectFecha={setFecha} sala={sala} />
-      <div className="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-0.5">
+      <div className="flex flex-col gap-2">
         {cargando && <p className="text-paper/40 text-xs">Cargando…</p>}
         {!cargando && reservas.length === 0 && (
           <p className="text-paper/40 text-xs">Sin reservas para {SALA_LABEL[sala] ?? sala} este día.</p>
