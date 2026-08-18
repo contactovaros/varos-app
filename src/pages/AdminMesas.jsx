@@ -328,6 +328,7 @@ export default function AdminMesas() {
   const [zonas, setZonas] = useState([])
   const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
   const [selectedId, setSelectedId] = useState(null)
+  const [mostrarReservasMobile, setMostrarReservasMobile] = useState(false)
   const svgRef = useRef(null)
   const dragRef = useRef(null)
   const config = ROOMS[room]
@@ -676,6 +677,23 @@ export default function AdminMesas() {
             )
           })}
         </svg>
+      </div>
+
+      <div className="lg:hidden mb-4">
+        <button
+          type="button"
+          onClick={() => setMostrarReservasMobile((v) => !v)}
+          className="w-full flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3"
+        >
+          <span className="text-xs font-head font-semibold">Reservas del día</span>
+          <span className="text-paper/40 text-[11px]">{mostrarReservasMobile ? 'Ocultar ▲' : 'Ver ▼'}</span>
+        </button>
+        {mostrarReservasMobile && (
+          <div className="flex flex-col gap-3 mt-3">
+            <CalendarioReservas fechaSeleccionada={fechaReservas} onSelectFecha={setFechaReservas} sala={room} />
+            <ListaReservasDia fecha={fechaReservas} sala={room} />
+          </div>
+        )}
       </div>
 
       {zonas.length > 0 && (
