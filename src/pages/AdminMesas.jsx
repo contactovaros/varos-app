@@ -533,8 +533,8 @@ export default function AdminMesas() {
   }
 
   return (
-    <div className="px-4 pt-8 pb-24 lg:px-6 lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start">
-      <div>
+    <div className="px-4 pt-8 pb-24 lg:px-6 lg:grid lg:grid-cols-[360px_1fr] lg:gap-6 lg:items-start">
+      <div className="lg:order-2">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
@@ -759,7 +759,7 @@ export default function AdminMesas() {
 
       {/* Panel de reservas del día, solo visible en pantallas anchas — en el
           espacio que antes quedaba vacío al costado del plano en desktop. */}
-      <div className="hidden lg:block lg:sticky lg:top-8">
+      <div className="hidden lg:block lg:sticky lg:top-8 lg:order-1">
         <PanelReservasDia sala={room} />
       </div>
     </div>
