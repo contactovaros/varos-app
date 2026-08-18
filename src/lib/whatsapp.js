@@ -22,7 +22,6 @@ export function mensajeConfirmacionReserva(r) {
     `Hora: ${hora} hrs\n` +
     `Mesa: ${r.mesa_label}\n` +
     `Personas: ${r.personas}` +
-    (r.codigo ? `\nCódigo: ${r.codigo}` : '') +
     `\n\n¡Te esperamos!`
   )
 }
