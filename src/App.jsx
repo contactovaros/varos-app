@@ -41,9 +41,14 @@ export default function App() {
     return <CompletarPerfil />
   }
 
+  // El resto de la app va en una columna de ancho móvil, centrada, incluso en
+  // desktop — /admin/mesas es la excepción: en pantallas anchas se ensancha
+  // para mostrar el panel de reservas del día al costado del plano.
+  const anchoAdminMesas = location.pathname === '/admin/mesas'
+
   return (
     <CartProvider>
-      <div className="max-w-md mx-auto min-h-screen pb-24 relative">
+      <div className={`${anchoAdminMesas ? 'lg:max-w-5xl' : ''} max-w-md mx-auto min-h-screen pb-24 relative`}>
         <Routes>
           <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
           <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />

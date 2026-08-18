@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
+import { PanelReservasDia } from '../components/PanelReservasDia.jsx'
 
 // Tres salas editables desde la misma pantalla: el comedor (tabla `mesas`), el
 // salón de eventos (tabla `mesas_salon`, reconstruido de un video, 10 x 15 m) y
@@ -532,7 +533,8 @@ export default function AdminMesas() {
   }
 
   return (
-    <div className="px-4 pt-8 pb-24">
+    <div className="px-4 pt-8 pb-24 lg:px-6 lg:grid lg:grid-cols-[1fr_360px] lg:gap-6 lg:items-start">
+      <div>
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
@@ -753,6 +755,13 @@ export default function AdminMesas() {
           </div>
         </div>
       )}
+      </div>
+
+      {/* Panel de reservas del día, solo visible en pantallas anchas — en el
+          espacio que antes quedaba vacío al costado del plano en desktop. */}
+      <div className="hidden lg:block lg:sticky lg:top-8">
+        <PanelReservasDia sala={room} />
+      </div>
     </div>
   )
 }

@@ -4,82 +4,8 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground, MesaShape } from './AdminMesas.jsx'
-import { SALA_LABEL, ESTADO_LABEL, ESTADO_CLASS, formatFechaCL } from './AdminReservas.jsx'
-import { IconoWhatsApp } from '../components/TarjetaFidelidad.jsx'
-
-function todayISO() {
-  return new Date().toISOString().slice(0, 10)
-}
-
-// Franjas horarias reales de Varo's: almuerzo 12:30–16:30, cena 19:30–00:00.
-// Una reserva fuera de esas ventanas (poco común) simplemente no lleva etiqueta.
-function turnoDe(hora) {
-  if (!hora) return null
-  const [h, m] = hora.split(':').map(Number)
-  const mins = h * 60 + m
-  if (mins >= 12 * 60 + 30 && mins < 16 * 60 + 30) return 'Almuerzo'
-  if (mins >= 19 * 60 + 30) return 'Cena'
-  return null
-}
-
-// Arma el link de wa.me a partir de lo que la persona haya escrito al reservar
-// (con o sin +56) — wa.me necesita el número completo sin el "+".
-function whatsappHref(telefono) {
-  const digits = (telefono || '').replace(/\D/g, '')
-  const conCodigo = digits.length === 9 && digits.startsWith('9') ? `56${digits}` : digits
-  return `https://wa.me/${conCodigo}`
-}
-
-// Placeholder del cruce con el club de fidelización — a propósito no busca
-// datos reales todavía (no existe forma confiable de cruzar reserva↔socio,
-// ver memoria de arquitectura). Deja el lugar reservado en la UI.
-function InsigniaFidelizacion() {
-  return (
-    <span
-      className="w-6 h-6 rounded-full border border-white/10 text-paper/25 flex items-center justify-center text-[11px] shrink-0"
-      title="Tarjeta de fidelización — cruce automático próximamente"
-    >
-      ★
-    </span>
-  )
-}
-
-function ReservaCard({ r }) {
-  const turno = turnoDe(r.hora?.slice(0, 5))
-  return (
-    <div className="bg-ink border border-white/5 rounded-xl p-3 text-xs flex flex-col gap-2">
-      <div className="flex justify-between items-start gap-2">
-        <div>
-          <div className="font-head font-semibold text-paper">{r.nombre}</div>
-          <div className="text-paper/50 text-[11px] mt-0.5">
-            {r.mesa_label} · {r.personas} personas
-            {r.sala ? ` · ${SALA_LABEL[r.sala] ?? r.sala}` : ''}
-          </div>
-        </div>
-        <span className={`px-2 py-1 rounded-md border text-[10px] whitespace-nowrap ${ESTADO_CLASS[r.estado] ?? ''}`}>
-          {ESTADO_LABEL[r.estado] ?? r.estado}
-        </span>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="font-mono text-ember text-[11px]">
-          {r.hora?.slice(0, 5)} hrs{turno ? ` · ${turno}` : ''}
-        </span>
-        <div className="flex items-center gap-2">
-          <InsigniaFidelizacion />
-          <a
-            href={whatsappHref(r.telefono)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-[#25D366]/40 text-[#25D366] text-[10px] font-semibold whitespace-nowrap"
-          >
-            <IconoWhatsApp />
-            WhatsApp
-          </a>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { formatFechaCL } from './AdminReservas.jsx'
+import { todayISO, ReservaCard } from '../components/PanelReservasDia.jsx'
 
 // Mesa coloreada por estado de reserva (no de edición): disponible = negro +
 // contorno dorado, con reserva = bronce apagado, con el detalle abierto =
