@@ -534,7 +534,7 @@ export default function AdminMesas() {
   }
 
   return (
-    <div className="px-4 pt-8 pb-24 lg:px-6 lg:grid lg:grid-cols-[300px_1fr] lg:gap-6 lg:items-start">
+    <div className="px-4 pt-8 pb-24 lg:px-6 lg:grid lg:grid-cols-[260px_1fr_320px] lg:gap-6 lg:items-start">
       <div className="hidden lg:block lg:sticky lg:top-8">
         <CalendarioReservas fechaSeleccionada={fechaReservas} onSelectFecha={setFechaReservas} sala={room} />
       </div>
@@ -760,12 +760,12 @@ export default function AdminMesas() {
           </div>
         </div>
       )}
-
-      {/* Lista de clientes con reserva ese día, solo en pantallas anchas —
-          el calendario de la izquierda es quien elige la fecha. */}
-      <div className="hidden lg:block mt-6">
-        <ListaReservasDia fecha={fechaReservas} sala={room} />
       </div>
+
+      {/* Lista de clientes con reserva ese día, columna propia a la derecha
+          en pantallas anchas — el calendario de la izquierda elige la fecha. */}
+      <div className="hidden lg:block lg:sticky lg:top-8">
+        <ListaReservasDia fecha={fechaReservas} sala={room} />
       </div>
     </div>
   )
