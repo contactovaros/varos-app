@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground, MesaShape } from './AdminMesas.jsx'
 import { formatFechaCL } from './AdminReservas.jsx'
-import { todayISO, ReservaCard, CalendarioReservas } from '../components/PanelReservasDia.jsx'
+import { todayISO, ReservaCard, CalendarioReservas, buscarSociosPorCorreos } from '../components/PanelReservasDia.jsx'
 
 // Mesa coloreada por estado de reserva (no de edición): disponible = negro +
 // contorno dorado, con reserva = bronce apagado, con el detalle abierto =
@@ -44,6 +44,7 @@ export default function AdminMesaTrabajo() {
   const [room, setRoom] = useState('comedor')
   const [reservas, setReservas] = useState([])
   const [cargando, setCargando] = useState(true)
+  const [sociosPorCorreo, setSociosPorCorreo] = useState({})
   const [mesasPorRoom, setMesasPorRoom] = useState({ comedor: [], salon: [], terraza: [] })
   const [zonasPorRoom, setZonasPorRoom] = useState({ comedor: [], salon: [], terraza: [] })
   const [mesaSeleccionadaId, setMesaSeleccionadaId] = useState(null)
@@ -58,9 +59,11 @@ export default function AdminMesaTrabajo() {
       .eq('fecha', fecha)
       .neq('estado', 'cancelada')
       .order('hora')
-      .then(({ data }) => {
-        setReservas(data ?? [])
+      .then(async ({ data }) => {
+        const lista = data ?? []
+        setReservas(lista)
         setCargando(false)
+        setSociosPorCorreo(await buscarSociosPorCorreos(lista.map((r) => r.email)))
       })
   }, [isAdmin, fecha])
 
@@ -222,7 +225,13 @@ export default function AdminMesaTrabajo() {
             <p className="text-paper/40 text-xs">Sin reservas para el {formatFechaCL(fecha)}.</p>
           ) : (
             reservasSeleccionadas.map((r) => (
-              <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} onCancelada={marcarCancelada} />
+              <ReservaCard
+                key={r.id}
+                r={r}
+                socio={r.email ? sociosPorCorreo[r.email.trim().toLowerCase()] : undefined}
+                onConfirmada={marcarConfirmada}
+                onCancelada={marcarCancelada}
+              />
             ))
           )}
         </div>
@@ -238,7 +247,13 @@ export default function AdminMesaTrabajo() {
         {cargando && <p className="text-paper/40 text-xs">Cargando…</p>}
         {!cargando && reservas.length === 0 && <p className="text-paper/40 text-xs">No hay reservas para este día.</p>}
         {reservas.map((r) => (
-          <ReservaCard key={r.id} r={r} onConfirmada={marcarConfirmada} onCancelada={marcarCancelada} />
+          <ReservaCard
+            key={r.id}
+            r={r}
+            socio={r.email ? sociosPorCorreo[r.email.trim().toLowerCase()] : undefined}
+            onConfirmada={marcarConfirmada}
+            onCancelada={marcarCancelada}
+          />
         ))}
       </div>
     </div>

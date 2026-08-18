@@ -32,16 +32,42 @@ export function whatsappHref(telefono) {
   return `https://wa.me/${conCodigo}`
 }
 
-// Placeholder del cruce con el club de fidelización — a propósito no busca
-// datos reales todavía (no existe forma confiable de cruzar reserva↔socio,
-// ver memoria de arquitectura). Deja el lugar reservado en la UI.
-export function InsigniaFidelizacion() {
+// Cruza los correos de una tanda de reservas contra los socios del club
+// (por correo — los socios se autentican con Google, sin teléfono
+// guardado) usando la función admin-only del backend. Devuelve un mapa
+// { correoEnMinuscula: { full_name, estrellas_actuales, member_number } }.
+export async function buscarSociosPorCorreos(correos) {
+  const unicos = [...new Set(correos.filter(Boolean).map((e) => e.trim().toLowerCase()))]
+  if (unicos.length === 0) return {}
+  const { data, error } = await supabase.rpc('admin_buscar_socio_por_correos', { p_correos: unicos })
+  if (error || !data) return {}
+  const mapa = {}
+  data.forEach((s) => {
+    mapa[s.email.trim().toLowerCase()] = s
+  })
+  return mapa
+}
+
+// Si `socio` viene con datos, muestra sus estrellas reales; si no hay
+// cruce (no es socio, o reservó con un correo distinto al de su cuenta
+// Google), se ve apagada — no depende solo del color, el title lo explica.
+export function InsigniaFidelizacion({ socio }) {
+  if (!socio) {
+    return (
+      <span
+        className="w-6 h-6 rounded-full border border-white/10 text-paper/20 flex items-center justify-center text-[11px] shrink-0"
+        title="No es socio del club (o reservó con otro correo)"
+      >
+        ★
+      </span>
+    )
+  }
   return (
     <span
-      className="w-6 h-6 rounded-full border border-white/10 text-paper/25 flex items-center justify-center text-[11px] shrink-0"
-      title="Tarjeta de fidelización — cruce automático próximamente"
+      className="h-6 px-2 rounded-full border border-gold/50 bg-gold/10 text-gold flex items-center gap-1 text-[10px] font-semibold shrink-0 whitespace-nowrap"
+      title={`${socio.full_name} — socio del club, N° ${socio.member_number ?? '—'}`}
     >
-      ★
+      ★ {socio.estrellas_actuales ?? 0}/5
     </span>
   )
 }
@@ -49,7 +75,7 @@ export function InsigniaFidelizacion() {
 // onConfirmada(id) / onCancelada(id) son opcionales: si se pasan, la tarjeta
 // avisa al padre que esta reserva cambió de estado para que actualice su
 // lista local sin tener que refetchear todo.
-export function ReservaCard({ r, onConfirmada, onCancelada }) {
+export function ReservaCard({ r, onConfirmada, onCancelada, socio }) {
   const [confirmando, setConfirmando] = useState(false)
   const [cancelando, setCancelando] = useState(false)
   const turno = turnoDe(r.hora?.slice(0, 5))
@@ -96,7 +122,7 @@ export function ReservaCard({ r, onConfirmada, onCancelada }) {
           {r.hora?.slice(0, 5)} hrs{turno ? ` · ${turno}` : ''}
         </span>
         <div className="flex items-center gap-2">
-          <InsigniaFidelizacion />
+          <InsigniaFidelizacion socio={socio} />
           <a
             href={whatsappHref(r.telefono)}
             target="_blank"
@@ -234,6 +260,7 @@ export function CalendarioReservas({ fechaSeleccionada, onSelectFecha, sala }) {
 export function ListaReservasDia({ fecha, sala }) {
   const [reservas, setReservas] = useState([])
   const [cargando, setCargando] = useState(true)
+  const [sociosPorCorreo, setSociosPorCorreo] = useState({})
 
   useEffect(() => {
     setCargando(true)
@@ -244,9 +271,11 @@ export function ListaReservasDia({ fecha, sala }) {
       .eq('sala', sala)
       .neq('estado', 'cancelada')
       .order('hora')
-      .then(({ data }) => {
-        setReservas(data ?? [])
+      .then(async ({ data }) => {
+        const lista = data ?? []
+        setReservas(lista)
         setCargando(false)
+        setSociosPorCorreo(await buscarSociosPorCorreos(lista.map((r) => r.email)))
       })
   }, [fecha, sala])
 
@@ -270,6 +299,7 @@ export function ListaReservasDia({ fecha, sala }) {
           <ReservaCard
             key={r.id}
             r={r}
+            socio={r.email ? sociosPorCorreo[r.email.trim().toLowerCase()] : undefined}
             onConfirmada={(id) => setReservas((prev) => prev.map((x) => (x.id === id ? { ...x, estado: 'confirmada' } : x)))}
             onCancelada={(id) => setReservas((prev) => prev.filter((x) => x.id !== id))}
           />
