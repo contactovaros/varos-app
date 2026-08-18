@@ -16,12 +16,13 @@ export function mensajeConfirmacionReserva(r) {
   const [y, m, d] = r.fecha.split('-')
   const hora = r.hora?.slice(0, 5)
   return (
-    `Hola ${r.nombre}! Tu reserva en Varo's fue confirmada ✅\n` +
-    `Mesa: ${r.mesa_label}\n` +
+    `Restaurante Varo's confirma que tu reserva ya fue realizada ✅\n\n` +
+    `Nombre: ${r.nombre}\n` +
     `Fecha: ${d}/${m}/${y}\n` +
     `Hora: ${hora} hrs\n` +
+    `Mesa: ${r.mesa_label}\n` +
     `Personas: ${r.personas}` +
     (r.codigo ? `\nCódigo: ${r.codigo}` : '') +
-    `\n¡Te esperamos!`
+    `\n\n¡Te esperamos!`
   )
 }
