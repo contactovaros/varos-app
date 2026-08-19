@@ -274,6 +274,24 @@ function ParlanteShape({ ancho, alto, isSel }) {
   )
 }
 
+// Jardinera de madera clara sobre ruedas, con follaje asomando por arriba —
+// la del comedor exterior (cinta de metal panelada, lengua de suegra +
+// mata araña). Vista de planta: cajón + ruedas + un par de manchas verdes.
+function JardineraShape({ ancho, alto, isSel }) {
+  const stroke = isSel ? '#FFD9B3' : '#B5732A'
+  return (
+    <g opacity={isSel ? 1 : 0.85}>
+      <g fill="#4a7c3f" opacity="0.75">
+        <ellipse cx={-ancho / 4} cy={-alto / 2 - 2} rx={ancho * 0.22} ry={alto * 0.3} />
+        <ellipse cx={ancho / 6} cy={-alto / 2 - 6} rx={ancho * 0.28} ry={alto * 0.36} />
+      </g>
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="4" fill="#3a2c24" stroke={stroke} strokeWidth={isSel ? 4 : 2} />
+      <circle cx={-ancho / 2 + 9} cy={alto / 2 - 5} r="5" fill="#221A16" stroke={stroke} strokeWidth="1.5" />
+      <circle cx={ancho / 2 - 9} cy={alto / 2 - 5} r="5" fill="#221A16" stroke={stroke} strokeWidth="1.5" />
+    </g>
+  )
+}
+
 export function MesaShape({ mesa, isSel }) {
   if (mesa.tipo === 'escenario') {
     return (
@@ -287,11 +305,9 @@ export function MesaShape({ mesa, isSel }) {
     )
   }
   if (mesa.tipo === 'decor') {
-    return mesa.estilo === 'parlante' ? (
-      <ParlanteShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
-    ) : (
-      <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
-    )
+    if (mesa.estilo === 'parlante') return <ParlanteShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    if (mesa.estilo === 'jardinera') return <JardineraShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    return <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
   }
   if (mesa.tipo === 'round' && mesa.estilo === 'sombrilla') {
     return <SombrillaShape radio={mesa.ancho / 2} isSel={isSel} />
