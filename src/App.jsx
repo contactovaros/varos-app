@@ -13,6 +13,7 @@ import Reservas from './pages/Reservas.jsx'
 import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
 import AdminMesaTrabajo from './pages/AdminMesaTrabajo.jsx'
+import AdminResenas from './pages/AdminResenas.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
@@ -58,6 +59,7 @@ export default function App() {
           <Route path="/admin/mesas" element={<AdminMesas />} />
           <Route path="/admin/reservas" element={<AdminReservas />} />
           <Route path="/admin/mesa-trabajo" element={<AdminMesaTrabajo />} />
+          <Route path="/admin/resenas" element={<AdminResenas />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>

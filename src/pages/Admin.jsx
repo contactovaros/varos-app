@@ -290,12 +290,25 @@ export default function Admin() {
 
       <Link
         to="/admin/mesas"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
       >
         <div>
           <div className="font-head font-semibold text-sm">🥂 Editar planos y mesas</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
             Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas
+          </div>
+        </div>
+        <span className="text-ember text-lg">→</span>
+      </Link>
+
+      <Link
+        to="/admin/resenas"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">⭐ Reseñas de Google</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Puntaje y reseñas de Varo's Restaurant & Eventos
           </div>
         </div>
         <span className="text-ember text-lg">→</span>
