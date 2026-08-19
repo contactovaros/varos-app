@@ -223,11 +223,23 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
         body: JSON.stringify({ title, body, customerId })
       })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json?.error || 'No se pudo enviar el push')
+      // La función puede caerse antes de responder JSON (ej. un crash del runtime
+      // devuelve el stack en texto plano), así que leemos como texto y luego
+      // intentamos parsear — si no, mostramos el cuerpo crudo con el status.
+      const texto = await res.text()
+      let json = null
+      try {
+        json = JSON.parse(texto)
+      } catch {
+        // se queda en null: el cuerpo no era JSON
+      }
+      if (!res.ok) {
+        throw new Error(json?.error || `HTTP ${res.status} — ${texto.slice(0, 300)}`)
+      }
       setPushResultado(`🔔 Enviado a ${json.enviados} de ${json.total} dispositivos suscritos.`)
     } catch (e) {
-      setPushResultado('⚠️ No se pudo enviar el push: ' + e.message)
+      console.error('[push] fallo el envío', e)
+      setPushResultado('⚠️ ' + e.message)
     } finally {
       setEnviandoPush(false)
     }

@@ -1,11 +1,16 @@
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
-webpush.setVapidDetails(
-  'mailto:contacto@varos.cl',
-  process.env.VITE_VAPID_PUBLIC_KEY,
-  process.env.VAPID_PRIVATE_KEY
-)
+// OJO: estas variables tienen que estar cargadas en el dashboard de Netlify
+// (Site configuration → Environment variables). El archivo .env del repo NO
+// sirve acá: Vite lo lee al construir el frontend, pero las funciones corren
+// aparte y solo ven las variables del dashboard.
+const REQUERIDAS = [
+  'VITE_VAPID_PUBLIC_KEY',
+  'VAPID_PRIVATE_KEY',
+  'VITE_SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY'
+]
 
 function jsonResponse(body, status) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -15,6 +20,20 @@ export default async (req) => {
   if (req.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, 405)
   }
+
+  const faltantes = REQUERIDAS.filter((k) => !process.env[k])
+  if (faltantes.length) {
+    return jsonResponse(
+      { error: `Faltan variables de entorno en Netlify: ${faltantes.join(', ')}` },
+      500
+    )
+  }
+
+  webpush.setVapidDetails(
+    'mailto:contacto@varos.cl',
+    process.env.VITE_VAPID_PUBLIC_KEY,
+    process.env.VAPID_PRIVATE_KEY
+  )
 
   const token = (req.headers.get('authorization') || '').replace('Bearer ', '')
   if (!token) return jsonResponse({ error: 'No autorizado' }, 401)
