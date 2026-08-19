@@ -274,25 +274,89 @@ function ParlanteShape({ ancho, alto, isSel }) {
   )
 }
 
-// Jardinera de madera clara sobre ruedas, con follaje asomando por arriba —
-// la del comedor exterior (cinta de metal panelada, lengua de suegra +
-// mata araña). Vista de planta: cajón + ruedas + un par de manchas verdes.
+// Jardinera de madera clara sobre ruedas — foto real: cajón de tablones
+// claros, lengua de suegra (hojas altas y rectas) + mata araña (hojas finas
+// que caen a los costados). Ícono tipo pictograma, no plano ortográfico
+// estricto, igual que el parlante/carrito de al lado.
 function JardineraShape({ ancho, alto, isSel }) {
   const stroke = isSel ? '#FFD9B3' : '#B5732A'
+  const wood = isSel ? '#EAD9B8' : '#D9C6A2'
   return (
-    <g opacity={isSel ? 1 : 0.85}>
-      <g fill="#4a7c3f" opacity="0.75">
-        <ellipse cx={-ancho / 4} cy={-alto / 2 - 2} rx={ancho * 0.22} ry={alto * 0.3} />
-        <ellipse cx={ancho / 6} cy={-alto / 2 - 6} rx={ancho * 0.28} ry={alto * 0.36} />
+    <g opacity={isSel ? 1 : 0.9}>
+      {/* mata araña: hojas finas colgando a los costados del cajón */}
+      <g stroke="#5c9c4a" strokeWidth={Math.max(2, alto * 0.045)} strokeLinecap="round" fill="none" opacity="0.85">
+        <path d={`M${-ancho * 0.34},${-alto * 0.4} q${-ancho * 0.2},${alto * 0.15} ${-ancho * 0.24},${alto * 0.45}`} />
+        <path d={`M${-ancho * 0.3},${-alto * 0.42} q${-ancho * 0.1},${alto * 0.35} ${-ancho * 0.1},${alto * 0.6}`} />
+        <path d={`M${ancho * 0.32},${-alto * 0.4} q${ancho * 0.22},${alto * 0.12} ${ancho * 0.28},${alto * 0.4}`} />
       </g>
-      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="4" fill="#3a2c24" stroke={stroke} strokeWidth={isSel ? 4 : 2} />
+      {/* lengua de suegra: hojas altas, rectas, algunas con curva leve */}
+      <g stroke="#3f6b34" strokeWidth={Math.max(3, alto * 0.06)} strokeLinecap="round" fill="none">
+        <path d={`M${-ancho * 0.2},${-alto * 0.46} q${-ancho * 0.03},${-alto * 0.5} ${ancho * 0.03},${-alto * 0.78}`} />
+        <path d={`M${-ancho * 0.04},${-alto * 0.46} q${ancho * 0.02},${-alto * 0.65} ${-ancho * 0.02},${-alto * 1.0}`} />
+        <path d={`M${ancho * 0.1},${-alto * 0.46} q${ancho * 0.05},${-alto * 0.55} ${ancho * 0.1},${-alto * 0.82}`} />
+        <path d={`M${ancho * 0.22},${-alto * 0.46} q${ancho * 0.06},${-alto * 0.4} ${ancho * 0.16},${-alto * 0.62}`} />
+      </g>
+      {/* cajón de madera clara con líneas de tablones horizontales */}
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="5" fill={wood} stroke={stroke} strokeWidth={isSel ? 4 : 2.5} />
+      <line x1={-ancho / 2 + 5} y1={-alto * 0.08} x2={ancho / 2 - 5} y2={-alto * 0.08} stroke={stroke} strokeWidth="1" opacity="0.45" />
+      <line x1={-ancho / 2 + 5} y1={alto * 0.2} x2={ancho / 2 - 5} y2={alto * 0.2} stroke={stroke} strokeWidth="1" opacity="0.45" />
+      {/* ruedas */}
       <circle cx={-ancho / 2 + 9} cy={alto / 2 - 5} r="5" fill="#221A16" stroke={stroke} strokeWidth="1.5" />
       <circle cx={ancho / 2 - 9} cy={alto / 2 - 5} r="5" fill="#221A16" stroke={stroke} strokeWidth="1.5" />
     </g>
   )
 }
 
-export function MesaShape({ mesa, isSel }) {
+// Puerta de acceso: vano punteado en la pared + hoja + arco de giro, símbolo
+// arquitectónico estándar. Estaba en el layout original y no se migró.
+function EntradaShape({ ancho, isSel }) {
+  const stroke = isSel ? '#FFD9B3' : '#E3B341'
+  const w = ancho
+  return (
+    <g opacity={isSel ? 1 : 0.85}>
+      <line x1={-w / 2} y1="0" x2={w / 2} y2="0" stroke={stroke} strokeWidth={isSel ? 3 : 2} strokeDasharray="6 4" opacity="0.6" />
+      <line x1={-w / 2} y1="0" x2={-w / 2} y2={-w} stroke={stroke} strokeWidth={isSel ? 4 : 3} />
+      <path d={`M${-w / 2},${-w} A${w},${w} 0 0 1 ${w / 2},0`} fill="none" stroke={stroke} strokeWidth="1.5" opacity="0.5" />
+    </g>
+  )
+}
+
+// Rampa de acceso para sillas de ruedas: rectángulo con rayas diagonales
+// (pendiente) + pictograma simplificado. Estaba en el layout original y no
+// se migró.
+function RampaShape({ ancho, alto, isSel }) {
+  const stroke = isSel ? '#FFD9B3' : '#7DD3E8'
+  const r = Math.min(ancho, alto)
+  return (
+    <g opacity={isSel ? 1 : 0.85}>
+      <rect x={-ancho / 2} y={-alto / 2} width={ancho} height={alto} rx="4" fill="none" stroke={stroke} strokeWidth={isSel ? 4 : 2.5} />
+      <g stroke={stroke} strokeWidth="2" opacity="0.5">
+        {[-0.6, -0.3, 0, 0.3, 0.6].map((f, i) => (
+          <line key={i} x1={-ancho / 2 + f * ancho} y1={alto / 2} x2={-ancho / 2 + f * ancho + alto} y2={-alto / 2} />
+        ))}
+      </g>
+      <circle cx="0" cy={alto * 0.1} r={r * 0.22} fill="none" stroke={stroke} strokeWidth="2.5" />
+      <circle cx={-r * 0.05} cy={-alto * 0.28} r={r * 0.12} fill={stroke} />
+    </g>
+  )
+}
+
+// Mesa elegante del Comedor Principal, inspirada en la foto real: mantel
+// negro, borde dorado tipo plato base, y un marcador de centro de mesa
+// (flor). Solo se usa ahí — el resto de las salas mantiene el círculo liso.
+function MesaEleganteShape({ radio, isSel }) {
+  const rim = isSel ? '#FFD9B3' : '#E3B341'
+  return (
+    <g>
+      <circle r={radio} fill="#15100D" stroke={rim} strokeWidth={isSel ? 5 : 3} />
+      <circle r={radio * 0.84} fill="none" stroke={rim} strokeWidth="1.5" opacity="0.5" />
+      <circle r={radio * 0.16} fill="#E3B341" />
+      {isSel && <circle r={radio + 4} fill="none" stroke="#FF7A1A" strokeWidth="2" opacity="0.6" />}
+    </g>
+  )
+}
+
+export function MesaShape({ mesa, isSel, elegante }) {
   if (mesa.tipo === 'escenario') {
     return (
       <path
@@ -307,10 +371,15 @@ export function MesaShape({ mesa, isSel }) {
   if (mesa.tipo === 'decor') {
     if (mesa.estilo === 'parlante') return <ParlanteShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
     if (mesa.estilo === 'jardinera') return <JardineraShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
+    if (mesa.estilo === 'entrada') return <EntradaShape ancho={mesa.ancho} isSel={isSel} />
+    if (mesa.estilo === 'rampa') return <RampaShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
     return <CarritoShape ancho={mesa.ancho} alto={mesa.alto} isSel={isSel} />
   }
   if (mesa.tipo === 'round' && mesa.estilo === 'sombrilla') {
     return <SombrillaShape radio={mesa.ancho / 2} isSel={isSel} />
+  }
+  if (mesa.tipo === 'round' && elegante) {
+    return <MesaEleganteShape radio={mesa.ancho / 2} isSel={isSel} />
   }
   if (mesa.tipo === 'round') {
     return (
@@ -548,6 +617,29 @@ export default function AdminMesas() {
     }
   }
 
+  // Clona el elemento seleccionado (mesa u objeto decorativo) con un id
+  // nuevo, levemente desplazado para que no quede encimado con el original.
+  async function duplicarMesa() {
+    if (!selected) return
+    const vb = config.viewBox
+    const offset = 40
+    const nueva = {
+      ...selected,
+      id: `${config.idPrefix}${Date.now()}`,
+      x: Math.min(vb.x + vb.w, Math.max(vb.x, selected.x + offset)),
+      y: Math.min(vb.y + vb.h, Math.max(vb.y, selected.y + offset)),
+      orden: mesas.length + 1
+    }
+    const { data, error } = await supabase.from(config.table).insert(nueva).select().single()
+    if (!error && data) {
+      setMesas((prev) => [...prev, data])
+      setSelectedId(data.id)
+    } else if (error) {
+      console.error('No se pudo duplicar:', error)
+      alert('No se pudo duplicar (revisa tu conexión) — vuelve a intentarlo.')
+    }
+  }
+
   async function eliminarMesa() {
     if (!selected) return
     if (!window.confirm(`¿Eliminar ${selected.etiqueta}?`)) return
@@ -656,7 +748,7 @@ export default function AdminMesas() {
                 ))}
 
                 <g onPointerDown={(e) => onPointerDownMesa(e, mesa)} className="cursor-move">
-                  <MesaShape mesa={mesa} isSel={isSel} />
+                  <MesaShape mesa={mesa} isSel={isSel} elegante={room === 'salon'} />
                   <text
                     textAnchor="middle"
                     dy="8"
@@ -668,7 +760,7 @@ export default function AdminMesas() {
                   </text>
                 </g>
 
-                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'escenario') && (
+                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'escenario' || mesa.tipo === 'decor') && (
                   <>
                     <line x1="0" y1={-mesa.alto / 2} x2="0" y2={-mesa.alto / 2 - 45} stroke="#7DD3E8" strokeWidth="3" strokeDasharray="4 4" />
                     <circle
@@ -748,9 +840,14 @@ export default function AdminMesas() {
         <div className="bg-inkSoft border border-ember/20 rounded-2xl p-4 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div className="font-head font-semibold text-sm">{selected.etiqueta}</div>
-            <button onClick={eliminarMesa} className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px]">
-              Eliminar
-            </button>
+            <div className="flex gap-1.5">
+              <button onClick={duplicarMesa} className="px-2 py-1 rounded-md border border-ember/40 text-ember text-[10px]">
+                Duplicar
+              </button>
+              <button onClick={eliminarMesa} className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px]">
+                Eliminar
+              </button>
+            </div>
           </div>
           {selected.tipo !== 'escenario' && selected.tipo !== 'decor' && (
             <div className="flex items-center justify-between text-xs text-paper/60">
