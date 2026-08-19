@@ -32,7 +32,9 @@ export default function Admin() {
   const [savingPremio, setSavingPremio] = useState(false)
   const [checkinUrl, setCheckinUrl] = useState(`${window.location.origin}/checkin`)
   const [newDish, setNewDish] = useState({ name: '', description: '', price_clp: '', category: 'Platos principales' })
-  const [newPromo, setNewPromo] = useState({ title: '', message: '', target_customer_id: '' })
+  const [newPromo, setNewPromo] = useState({ title: '', message: '', target_customer_id: '', enviarPush: false })
+  const [enviandoPush, setEnviandoPush] = useState(false)
+  const [pushResultado, setPushResultado] = useState('')
   const [savingDish, setSavingDish] = useState(false)
   const [locationAlerts, setLocationAlerts] = useState([])
   const [newAlert, setNewAlert] = useState({ titulo: '', mensaje: '', lat: '', lng: '' })
@@ -204,7 +206,30 @@ export default function Admin() {
     const { data, error } = await supabase.from('promotions').insert(payload).select().single()
     if (!error && data) {
       setPromotions((prev) => [data, ...prev])
-      setNewPromo({ title: '', message: '', target_customer_id: '' })
+      if (newPromo.enviarPush) {
+        await enviarPushCampana(newPromo.title, newPromo.message, newPromo.target_customer_id || null)
+      }
+      setNewPromo({ title: '', message: '', target_customer_id: '', enviarPush: false })
+    }
+  }
+
+  async function enviarPushCampana(title, body, customerId) {
+    setEnviandoPush(true)
+    setPushResultado('')
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch('/.netlify/functions/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+        body: JSON.stringify({ title, body, customerId })
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json?.error || 'No se pudo enviar el push')
+      setPushResultado(`🔔 Enviado a ${json.enviados} de ${json.total} dispositivos suscritos.`)
+    } catch (e) {
+      setPushResultado('⚠️ No se pudo enviar el push: ' + e.message)
+    } finally {
+      setEnviandoPush(false)
     }
   }
 
@@ -521,9 +546,22 @@ export default function Admin() {
               <option key={c.id} value={c.id}>{c.full_name}</option>
             ))}
           </select>
-          <button onClick={addPromo} className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink">
-            + Enviar campaña
+          <label className="flex items-center gap-2 text-[11px] text-paper/60 px-1">
+            <input
+              type="checkbox"
+              checked={newPromo.enviarPush}
+              onChange={(e) => setNewPromo({ ...newPromo, enviarPush: e.target.checked })}
+            />
+            🔔 Enviar también como notificación push (a quienes las activaron)
+          </label>
+          <button
+            onClick={addPromo}
+            disabled={enviandoPush}
+            className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+          >
+            {enviandoPush ? 'Enviando push…' : '+ Enviar campaña'}
           </button>
+          {pushResultado && <p className="text-[11px] text-paper/50">{pushResultado}</p>}
         </div>
         {promotions.map((p) => (
           <div key={p.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
