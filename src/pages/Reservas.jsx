@@ -185,6 +185,7 @@ export default function Reservas() {
   const [hora, setHora] = useState('20:00')
   const [personas, setPersonas] = useState(2)
   const [zona, setZona] = useState('cualquiera')
+  const [zonaError, setZonaError] = useState(false)
 
   const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
   const [zonas, setZonas] = useState([])
@@ -316,6 +317,15 @@ export default function Reservas() {
   const libres = mesas.filter((m) => !estaReservada(m))
   const candidatosSolos = libres.filter((m) => esCompatible(m)).sort((a, b) => a.capacidad - b.capacidad)
   const necesitaCombo = candidatosSolos.length === 0
+
+  // Preselecciona la mesa con menos sillas que le entre al grupo, dentro de
+  // la sala que el cliente ya eligió (zona es obligatoria) — sigue pudiendo
+  // tocar otra mesa del plano para cambiarla a mano.
+  useEffect(() => {
+    if (step === 'plano' && !mesaId && !comboIds && !necesitaCombo && candidatosSolos.length > 0) {
+      setMesaId(candidatosSolos[0].id)
+    }
+  }, [step, reservasDelDia, holdsDelDia])
 
   function mejorCombo() {
     let mejor = null
@@ -462,6 +472,10 @@ export default function Reservas() {
         <form
           onSubmit={(e) => {
             e.preventDefault()
+            if (zona === 'cualquiera') {
+              setZonaError(true)
+              return
+            }
             verPlano()
           }}
           className="w-full max-w-md flex flex-col gap-3"
@@ -518,7 +532,7 @@ export default function Reservas() {
           </label>
 
           <div>
-            <span className="text-xs tracking-wide text-gold/70">Zona (opcional)</span>
+            <span className="text-xs tracking-wide text-gold/70">Zona</span>
             <div className="mt-1.5 flex gap-2 flex-wrap">
               {zonaOptions
                 .filter((z) => z !== 'cualquiera')
@@ -526,7 +540,10 @@ export default function Reservas() {
                   <button
                     key={z}
                     type="button"
-                    onClick={() => setZona(zona === z ? 'cualquiera' : z)}
+                    onClick={() => {
+                      setZona(zona === z ? 'cualquiera' : z)
+                      setZonaError(false)
+                    }}
                     className={`px-3.5 py-2 rounded-full text-xs border transition-colors ${
                       zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
                     }`}
@@ -535,6 +552,7 @@ export default function Reservas() {
                   </button>
                 ))}
             </div>
+            {zonaError && <p className="text-xs text-wineSoft mt-2">Elige una sala para ver el plano y las mesas disponibles.</p>}
             {salas.comedor?.activo === false && salas.salon?.activo === false && salas.terraza?.activo === false && (
               <p className="text-xs text-wineSoft mt-2">Hoy no hay salas disponibles para reserva online — escríbenos por WhatsApp.</p>
             )}
