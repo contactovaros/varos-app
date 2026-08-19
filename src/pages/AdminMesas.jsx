@@ -449,7 +449,13 @@ export default function AdminMesas() {
     const p = svgPoint(svgRef.current, e.clientX, e.clientY)
 
     if (drag.mode === 'move') {
-      updateLocal(mesa.id, { x: drag.origX + (p.x - drag.startX), y: drag.origY + (p.y - drag.startY) })
+      // Sin este límite una mesa se puede arrastrar fuera del viewBox y
+      // desaparecer por completo de la pantalla (pasó con Mesa R1) —
+      // se acota el centro al recuadro visible del plano.
+      const vb = config.viewBox
+      const x = Math.min(vb.x + vb.w, Math.max(vb.x, drag.origX + (p.x - drag.startX)))
+      const y = Math.min(vb.y + vb.h, Math.max(vb.y, drag.origY + (p.y - drag.startY)))
+      updateLocal(mesa.id, { x, y })
     } else if (drag.mode === 'rotate') {
       const angle = (Math.atan2(p.y - mesa.y, p.x - mesa.x) * 180) / Math.PI + 90
       const snapped = e.shiftKey ? Math.round(angle / 15) * 15 : angle
