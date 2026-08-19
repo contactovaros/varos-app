@@ -39,17 +39,32 @@ export async function activarNotificaciones(customerId) {
     })
   }
 
+  // Usamos el id de la sesión activa en este momento (no el que llegó por parámetro)
+  // para evitar guardar una fila con un customer_id desincronizado del auth.uid()
+  // real que RLS va a evaluar en el insert.
+  const { data: userData, error: userError } = await supabase.auth.getUser()
+  if (userError || !userData?.user) {
+    throw new Error('No hay sesión activa — vuelve a iniciar sesión e intenta de nuevo.')
+  }
+  const idReal = userData.user.id
+  if (idReal !== customerId) {
+    console.warn('[push] customerId recibido no coincide con la sesión activa', { customerId, idReal })
+  }
+
   const json = sub.toJSON()
   const { error } = await supabase.from('push_subscriptions').upsert(
     {
-      customer_id: customerId,
+      customer_id: idReal,
       endpoint: json.endpoint,
       p256dh: json.keys.p256dh,
       auth: json.keys.auth
     },
     { onConflict: 'endpoint' }
   )
-  if (error) throw error
+  if (error) {
+    console.error('[push] error al guardar la suscripción', error)
+    throw error
+  }
 
   return sub
 }
