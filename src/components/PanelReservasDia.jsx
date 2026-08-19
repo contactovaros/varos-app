@@ -117,6 +117,11 @@ export function ReservaCard({ r, onConfirmada, onCancelada, socio }) {
           {ESTADO_LABEL[r.estado] ?? r.estado}
         </span>
       </div>
+      {r.alergias && (
+        <div className="text-[10px] text-gold bg-gold/10 border border-gold/25 rounded-lg px-2 py-1">
+          ⚠ {r.alergias}
+        </div>
+      )}
       <div className="flex items-center justify-between flex-wrap gap-1.5">
         <span className="font-mono text-ember text-[11px]">
           {r.hora?.slice(0, 5)} hrs{turno ? ` · ${turno}` : ''}

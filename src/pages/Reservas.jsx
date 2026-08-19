@@ -7,6 +7,13 @@ const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
 const HOLD_MIN = 5 // minutos que se retiene una mesa mientras el cliente completa sus datos
 
+// Horario de atención: martes a domingo, 12:30 a 16:30 (solo almuerzo).
+// El administrador puede habilitar también horario de cena desde /admin/reservas
+// (tabla configuracion_reservas.cena_habilitada) — mientras esté apagado, /reservas
+// no deja pedir una hora fuera de este rango.
+const ALMUERZO_INICIO = '12:30'
+const ALMUERZO_FIN = '16:30'
+
 const SALON_ROOM_W = 1000
 const SALON_ROOM_H = 1500
 const TERRAZA_ROOM_W = 1200
@@ -101,6 +108,18 @@ function telefonoValido(t) {
   return t.replace(/\D/g, '').length >= 9
 }
 
+// getDay(): 0=domingo ... 1=lunes. El restaurante atiende martes a domingo,
+// así que el único día cerrado es el lunes.
+function esLunes(fechaISO) {
+  const [y, m, d] = fechaISO.split('-').map(Number)
+  return new Date(y, m - 1, d).getDay() === 1
+}
+
+function horaFueraDeAlmuerzo(hora) {
+  const mins = horaToMin(hora)
+  return mins < horaToMin(ALMUERZO_INICIO) || mins > horaToMin(ALMUERZO_FIN)
+}
+
 function IconCalendario(props) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" {...props}>
@@ -182,12 +201,15 @@ function TituloReserva({ children }) {
 export default function Reservas() {
   const [step, setStep] = useState('filtros') // filtros | plano | contacto | ok
   const [fecha, setFecha] = useState(todayISO())
-  const [hora, setHora] = useState('20:00')
+  const [hora, setHora] = useState(ALMUERZO_INICIO)
   const [personas, setPersonas] = useState(2)
   const [zona, setZona] = useState('cualquiera')
   const [zonaError, setZonaError] = useState(false)
+  const [fechaError, setFechaError] = useState('')
+  const [horaError, setHoraError] = useState('')
 
   const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
+  const [cenaHabilitada, setCenaHabilitada] = useState(false)
   const [zonas, setZonas] = useState([])
   const [mesas, setMesas] = useState([])
   const [reservasDelDia, setReservasDelDia] = useState([])
@@ -200,6 +222,7 @@ export default function Reservas() {
   const [nombre, setNombre] = useState('')
   const [telefono, setTelefono] = useState('')
   const [email, setEmail] = useState('')
+  const [alergias, setAlergias] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [codigoReserva, setCodigoReserva] = useState('')
@@ -221,6 +244,12 @@ export default function Reservas() {
       .select('*')
       .order('orden')
       .then(({ data }) => setZonas(data ?? []))
+    supabase
+      .from('configuracion_reservas')
+      .select('cena_habilitada')
+      .eq('id', 1)
+      .maybeSingle()
+      .then(({ data }) => setCenaHabilitada(data?.cena_habilitada ?? false))
   }, [])
 
   useEffect(() => {
@@ -393,7 +422,7 @@ export default function Reservas() {
     const codigo = codigoData ?? ''
 
     const sala = mesaSeleccionada?.sala ?? comboSeleccionado?.[0]?.sala
-    const base = { nombre, telefono, email, fecha, hora, personas, sala, codigo }
+    const base = { nombre, telefono, email, fecha, hora, personas, sala, codigo, alergias: alergias.trim() || null }
     let error
     let mesaLabelFinal
     if (comboSeleccionado) {
@@ -472,6 +501,18 @@ export default function Reservas() {
         <form
           onSubmit={(e) => {
             e.preventDefault()
+            setFechaError('')
+            setHoraError('')
+            let ok = true
+            if (esLunes(fecha)) {
+              setFechaError('Los lunes el restaurante está cerrado. Elige otro día.')
+              ok = false
+            }
+            if (!cenaHabilitada && horaFueraDeAlmuerzo(hora)) {
+              setHoraError(`Por ahora la reserva online solo está disponible en horario de almuerzo (${ALMUERZO_INICIO} a ${ALMUERZO_FIN}).`)
+              ok = false
+            }
+            if (!ok) return
             if (zona === 'cualquiera') {
               setZonaError(true)
               return
@@ -480,6 +521,10 @@ export default function Reservas() {
           }}
           className="w-full max-w-md flex flex-col gap-3"
         >
+          <p className="text-[11px] text-paper/45 -mb-1">
+            Atención martes a domingo, de {ALMUERZO_INICIO} a {ALMUERZO_FIN} hrs.
+          </p>
+
           <div className="flex gap-3">
             <label className="text-xs tracking-wide text-gold/70 flex-1">
               Fecha
@@ -490,7 +535,10 @@ export default function Reservas() {
                   type="date"
                   min={todayISO()}
                   value={fecha}
-                  onChange={(e) => setFecha(e.target.value)}
+                  onChange={(e) => {
+                    setFecha(e.target.value)
+                    setFechaError('')
+                  }}
                   className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 />
               </div>
@@ -502,13 +550,25 @@ export default function Reservas() {
                 <input
                   required
                   type="time"
+                  min={cenaHabilitada ? undefined : ALMUERZO_INICIO}
+                  max={cenaHabilitada ? undefined : ALMUERZO_FIN}
                   value={hora}
-                  onChange={(e) => setHora(e.target.value)}
+                  onChange={(e) => {
+                    setHora(e.target.value)
+                    setHoraError('')
+                  }}
                   className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 />
               </div>
             </label>
           </div>
+          {fechaError && <p className="text-xs text-wineSoft -mt-1">{fechaError}</p>}
+          {horaError && <p className="text-xs text-wineSoft -mt-1">{horaError}</p>}
+          {!cenaHabilitada && !horaError && (
+            <p className="text-[10px] text-paper/35 -mt-1">
+              Reserva online solo de almuerzo por ahora. ¿Cena? Escríbenos por WhatsApp.
+            </p>
+          )}
 
           <label className="text-xs tracking-wide text-gold/70">
             Personas
@@ -924,6 +984,16 @@ export default function Reservas() {
               onChange={(e) => setEmail(e.target.value)}
               className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
               placeholder="tucorreo@ejemplo.com"
+            />
+          </label>
+          <label className="text-xs tracking-wide text-gold/70">
+            ¿Alguna alergia o intolerancia alimentaria? (opcional)
+            <textarea
+              value={alergias}
+              onChange={(e) => setAlergias(e.target.value)}
+              rows={2}
+              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
+              placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
             />
           </label>
 

@@ -33,6 +33,7 @@ export default function AdminReservas() {
   const { isAdmin, loading: authLoading } = useAuth()
   const [reservas, setReservas] = useState([])
   const [loading, setLoading] = useState(true)
+  const [cenaHabilitada, setCenaHabilitada] = useState(false)
 
   async function cargar() {
     const { data } = await supabase
@@ -45,9 +46,27 @@ export default function AdminReservas() {
     setLoading(false)
   }
 
+  async function cargarConfig() {
+    const { data } = await supabase.from('configuracion_reservas').select('cena_habilitada').eq('id', 1).maybeSingle()
+    setCenaHabilitada(data?.cena_habilitada ?? false)
+  }
+
   useEffect(() => {
-    if (isAdmin) cargar()
+    if (isAdmin) {
+      cargar()
+      cargarConfig()
+    }
   }, [isAdmin])
+
+  async function toggleCena() {
+    const nuevo = !cenaHabilitada
+    setCenaHabilitada(nuevo)
+    const { error } = await supabase.from('configuracion_reservas').upsert({ id: 1, cena_habilitada: nuevo })
+    if (error) {
+      setCenaHabilitada(!nuevo)
+      alert('No se pudo actualizar el horario: ' + error.message)
+    }
+  }
 
   if (authLoading) return null
 
@@ -94,6 +113,23 @@ export default function AdminReservas() {
         <p className="text-xs text-paper/50 mt-1">De hoy en adelante, ordenadas por fecha y hora.</p>
       </div>
 
+      <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-6">
+        <div>
+          <div className="text-xs text-paper/70">Reserva online en horario de cena</div>
+          <div className="text-[10px] text-paper/40">
+            Atención martes a domingo, 12:30–16:30. Si la activas, /reservas también deja pedir hora fuera de ese rango.
+          </div>
+        </div>
+        <button
+          onClick={toggleCena}
+          className={`px-4 py-2 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${
+            cenaHabilitada ? 'border-ember/40 text-ember bg-ember/10' : 'border-white/10 text-paper/40'
+          }`}
+        >
+          {cenaHabilitada ? 'Habilitada' : 'Solo almuerzo'}
+        </button>
+      </div>
+
       {loading && <p className="text-paper/40 text-sm">Cargando…</p>}
       {!loading && reservas.length === 0 && <p className="text-paper/40 text-sm">No hay reservas próximas.</p>}
 
@@ -119,6 +155,11 @@ export default function AdminReservas() {
               <span>{r.email || 'sin correo'}</span>
               <span>{r.codigo}</span>
             </div>
+            {r.alergias && (
+              <div className="text-[11px] text-gold bg-gold/10 border border-gold/25 rounded-lg px-2.5 py-1.5 mb-3">
+                ⚠ Alergia/intolerancia: {r.alergias}
+              </div>
+            )}
             {r.created_at && (
               <div className="text-[10px] text-paper/30 mb-2">
                 Creada {new Date(r.created_at).toLocaleString('es-CL')}
