@@ -729,7 +729,7 @@ export default function AdminMesas() {
             return (
               <g
                 key={mesa.id}
-                transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.tipo !== 'round' ? mesa.angulo : 0})`}
+                transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.angulo})`}
                 opacity={mesa.activa === false ? 0.45 : 1}
               >
                 {chairs.map((c, i) => (
@@ -760,19 +760,24 @@ export default function AdminMesas() {
                   </text>
                 </g>
 
-                {isSel && (mesa.tipo === 'rect' || mesa.tipo === 'escenario' || mesa.tipo === 'decor') && (
-                  <>
-                    <line x1="0" y1={-mesa.alto / 2} x2="0" y2={-mesa.alto / 2 - 45} stroke="#7DD3E8" strokeWidth="3" strokeDasharray="4 4" />
-                    <circle
-                      cx="0"
-                      cy={-mesa.alto / 2 - 45}
-                      r="14"
-                      fill="#7DD3E8"
-                      onPointerDown={(e) => onPointerDownRotate(e, mesa)}
-                      className="cursor-grab"
-                    />
-                  </>
-                )}
+                {isSel && (() => {
+                  // Las redondas no tienen `alto` (es null) — el brazo del
+                  // handle de giro se apoya en el radio en ese caso.
+                  const brazo = mesa.tipo === 'round' ? mesa.ancho / 2 : mesa.alto / 2
+                  return (
+                    <>
+                      <line x1="0" y1={-brazo} x2="0" y2={-brazo - 45} stroke="#7DD3E8" strokeWidth="3" strokeDasharray="4 4" />
+                      <circle
+                        cx="0"
+                        cy={-brazo - 45}
+                        r="14"
+                        fill="#7DD3E8"
+                        onPointerDown={(e) => onPointerDownRotate(e, mesa)}
+                        className="cursor-grab"
+                      />
+                    </>
+                  )
+                })()}
 
                 {isSel && (
                   <rect
