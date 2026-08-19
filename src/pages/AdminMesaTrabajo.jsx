@@ -192,7 +192,7 @@ export default function AdminMesaTrabajo() {
                 ) : (
                   <MesaShape mesa={mesa} isSel={false} />
                 )}
-                <text textAnchor="middle" dy="8" fontSize={mesa.tipo === 'round' ? 30 : 26} fontWeight="700" fill={isSel ? '#15100D' : '#FFF8F1'}>
+                <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${-mesa.angulo})`} fontSize={mesa.tipo === 'round' ? 30 : 26} fontWeight="700" fill={isSel ? '#15100D' : '#FFF8F1'}>
                   {mesa.etiqueta.replace('Mesa ', '')}
                 </text>
                 {tieneReserva && !isSel && <circle cx={mesa.ancho / 2 - 4} cy={-(mesa.alto ?? mesa.ancho) / 2 + 4} r="9" fill="#E3B341" />}

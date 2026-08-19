@@ -753,7 +753,7 @@ export default function Reservas() {
                       ) : (
                         <CarritoShape ancho={m.ancho} alto={m.alto} />
                       )}
-                      <text textAnchor="middle" dy="8" fontSize="22" fontWeight="700" fill="#FFF8F1" opacity="0.7">
+                      <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${-m.angulo})`} fontSize="22" fontWeight="700" fill="#FFF8F1" opacity="0.7">
                         {m.etiqueta.replace('Mesa ', '')}
                       </text>
                     </g>
@@ -787,7 +787,7 @@ export default function Reservas() {
                           strokeDasharray="6 5"
                         />
                       )}
-                      <text textAnchor="middle" dy="8" fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill="#FFF8F1">
+                      <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${-m.angulo})`} fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill="#FFF8F1">
                         {m.etiqueta.replace('Mesa ', '')}
                       </text>
                     </g>
@@ -859,7 +859,7 @@ export default function Reservas() {
                           strokeWidth={seleccionada ? 6 : 3}
                         />
                       )}
-                      <text textAnchor="middle" dy="8" fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill={seleccionada ? '#15100D' : '#FFF8F1'}>
+                      <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${-m.angulo})`} fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill={seleccionada ? '#15100D' : '#FFF8F1'}>
                         {m.etiqueta.replace('Mesa ', '')}
                       </text>
                     </g>

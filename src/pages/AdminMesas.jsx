@@ -686,7 +686,7 @@ export default function AdminMesas() {
           <button
             key={key}
             onClick={() => setRoom(key)}
-            className={`flex-1 py-2.5 rounded-xl font-head font-semibold text-xs border ${
+            className={`flex-1 min-h-[44px] px-1 flex items-center justify-center text-center leading-tight rounded-xl font-head font-semibold text-xs border ${
               room === key ? 'border-ember text-ember bg-ember/10' : 'border-white/10 text-paper/50'
             }`}
           >
@@ -698,7 +698,7 @@ export default function AdminMesas() {
       <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-4">
         <div>
           <div className="text-xs text-paper/70">Disponible para reservas online</div>
-          <div className="text-[10px] text-paper/40">Si la apagas, {config.label} no aparece en /reservas</div>
+          <div className="text-[10px] text-paper/40">Si la apagas, los clientes no pueden reservar en {config.label}</div>
         </div>
         <button
           onClick={toggleSalaActiva}
@@ -749,9 +749,12 @@ export default function AdminMesas() {
 
                 <g onPointerDown={(e) => onPointerDownMesa(e, mesa)} className="cursor-move">
                   <MesaShape mesa={mesa} isSel={isSel} elegante={room === 'salon'} />
+                  {/* El número se contra-rota: identifica la mesa, así que debe
+                      leerse derecho aunque la mesa esté girada 90° o 180°. */}
                   <text
                     textAnchor="middle"
-                    dy="8"
+                    dominantBaseline="central"
+                    transform={`rotate(${-mesa.angulo})`}
                     fontSize={mesa.tipo === 'escenario' || mesa.tipo === 'decor' ? 22 : 30}
                     fontWeight="700"
                     fill={isSel ? '#15100D' : '#FFF8F1'}
