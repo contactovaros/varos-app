@@ -104,14 +104,16 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
 
   return (
     <>
-      <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase mb-1">Varo's</div>
-      <h1 className="font-head text-3xl text-paper font-semibold mb-1">Hola, {primerNombre}</h1>
-      <p className="text-wineSoft font-medium mb-1">Tu tarjeta de fidelización</p>
-      <Ornamento />
+      <h1 className="font-serif text-4xl text-paper mb-1">Hola, {primerNombre}</h1>
+      <p className="text-gold/70 text-sm mb-1">Qué bueno tenerte de vuelta</p>
 
-      <div className="w-full max-w-xs rounded-[26px] border-[3px] border-gold bg-inkSoft p-1.5 mt-4 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
+      <div className="w-full max-w-xs rounded-[26px] border-[3px] border-gold bg-inkSoft p-1.5 mt-5 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
         <div className="rounded-[20px] border border-gold/40 p-6 text-center">
-          <div className="font-display text-2xl text-gold leading-tight">Varo's</div>
+          <img
+            src="/logo-varos.png"
+            alt="Varo's Restaurant"
+            className="w-24 h-24 mx-auto -mt-1 mb-1"
+          />
           <Ornamento />
 
           <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
@@ -122,7 +124,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             )}
           </div>
           <div className="font-head font-semibold text-xl text-paper mb-1">{customer.full_name}</div>
-          {cumpleanos && <p className="text-paper/50 text-sm mb-2">🎂 {cumpleanos}</p>}
+          {cumpleanos && <p className="text-paper/45 text-xs tracking-wide mb-2">Cumple el {cumpleanos}</p>}
 
           <div className="flex gap-1.5 justify-center mb-3 mt-2">
             {Array.from({ length: 5 }).map((_, i) => (
