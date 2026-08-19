@@ -11,11 +11,23 @@ export function pushSoportado() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
+// "Activas" significa dos cosas a la vez: que el navegador esté suscrito Y que
+// esa suscripción esté guardada en Supabase. Si solo se cumple lo primero, el
+// push nunca llegaría (el servidor no sabe a qué endpoint mandarlo), así que
+// devolvemos false para que el cliente pueda reintentar desde el botón.
 export async function notificacionesActivas() {
   if (!pushSoportado()) return false
   const registro = await navigator.serviceWorker.ready
   const sub = await registro.pushManager.getSubscription()
-  return !!sub
+  if (!sub) return false
+
+  const { data } = await supabase
+    .from('push_subscriptions')
+    .select('endpoint')
+    .eq('endpoint', sub.toJSON().endpoint)
+    .maybeSingle()
+
+  return !!data
 }
 
 export async function activarNotificaciones(customerId) {
