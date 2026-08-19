@@ -4,6 +4,21 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 
+function Seccion({ titulo, subtitulo, children }) {
+  return (
+    <details className="group bg-inkSoft border border-white/5 rounded-2xl mb-4">
+      <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <div>
+          <div className="font-head font-semibold text-sm">{titulo}</div>
+          {subtitulo && <div className="text-[11px] text-paper/40 mt-0.5">{subtitulo}</div>}
+        </div>
+        <span className="text-ember text-sm shrink-0 transition-transform duration-200 group-open:rotate-180">▾</span>
+      </summary>
+      <div className="px-4 pb-4">{children}</div>
+    </details>
+  )
+}
+
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth()
   const [customers, setCustomers] = useState([])
@@ -315,63 +330,64 @@ export default function Admin() {
       </Link>
 
       {/* ---- QR DE CHECK-IN DEL LOCAL (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2">QR de bienvenida del local</h3>
-      <div className="bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6 flex flex-col items-center text-center gap-3">
-        <p className="text-xs text-paper/55 max-w-xs">
-          Imprime este código y ponlo en tus mesas o en la entrada. Cada cliente lo escanea con la cámara
-          de su celular, entra con su email y su visita queda registrada automáticamente (+1 estrella ⭐).
-        </p>
-        <div className="bg-white p-3 rounded-xl">
-          <QRCodeSVG value={checkinUrl} size={160} />
+      <Seccion titulo="📱 QR de bienvenida del local">
+        <div className="flex flex-col items-center text-center gap-3">
+          <p className="text-xs text-paper/55 max-w-xs">
+            Imprime este código y ponlo en tus mesas o en la entrada. Cada cliente lo escanea con la cámara
+            de su celular, entra con su email y su visita queda registrada automáticamente (+1 estrella ⭐).
+          </p>
+          <div className="bg-white p-3 rounded-xl">
+            <QRCodeSVG value={checkinUrl} size={160} />
+          </div>
+          <input
+            value={checkinUrl}
+            onChange={(e) => setCheckinUrl(e.target.value)}
+            className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-center"
+          />
+          <p className="text-[10px] text-paper/35">
+            Ahora mismo apunta a tu dirección local — cuando publiques la app (paso 6 del README), reemplaza este texto
+            por tu URL final (ej. https://club.varos.cl/checkin) antes de imprimir el QR definitivo.
+          </p>
         </div>
-        <input
-          value={checkinUrl}
-          onChange={(e) => setCheckinUrl(e.target.value)}
-          className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-center"
-        />
-        <p className="text-[10px] text-paper/35">
-          Ahora mismo apunta a tu dirección local — cuando publiques la app (paso 6 del README), reemplaza este texto
-          por tu URL final (ej. https://club.varos.cl/checkin) antes de imprimir el QR definitivo.
-        </p>
-      </div>
+      </Seccion>
 
       {/* ---- PREMIO DE 5 ESTRELLAS (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2">Premio por 5 estrellas</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6 flex flex-col gap-2">
-        <p className="text-[11px] text-paper/45">
-          Lo que gana el cliente al completar sus 5 visitas. Se muestra en su ticket ganador.
-        </p>
-        <div className="flex gap-2">
-          <input
-            value={premioEstrellas}
-            onChange={(e) => setPremioEstrellas(e.target.value)}
-            placeholder="Ej: Postre a elección"
-            className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          />
-          <button
-            onClick={guardarPremioEstrellas}
-            disabled={savingPremio}
-            className="px-4 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
-          >
-            {savingPremio ? 'Guardando…' : 'Guardar'}
-          </button>
-          <button
-            onClick={toggleVisiblePremio}
-            className={`px-3 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${premioVisible ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-          >
-            {premioVisible ? 'Visible' : 'No visible'}
-          </button>
+      <Seccion titulo="🎁 Premio por 5 estrellas">
+        <div className="flex flex-col gap-2">
+          <p className="text-[11px] text-paper/45">
+            Lo que gana el cliente al completar sus 5 visitas. Se muestra en su ticket ganador.
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={premioEstrellas}
+              onChange={(e) => setPremioEstrellas(e.target.value)}
+              placeholder="Ej: Postre a elección"
+              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+            />
+            <button
+              onClick={guardarPremioEstrellas}
+              disabled={savingPremio}
+              className="px-4 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+            >
+              {savingPremio ? 'Guardando…' : 'Guardar'}
+            </button>
+            <button
+              onClick={toggleVisiblePremio}
+              className={`px-3 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${premioVisible ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+            >
+              {premioVisible ? 'Visible' : 'No visible'}
+            </button>
+          </div>
+          <p className="text-[10px] text-paper/35">
+            {premioVisible
+              ? 'El cliente ve el nombre del premio en su ticket ganador.'
+              : 'El cliente NO ve el nombre del premio — solo el garzón sabrá cuál es.'}
+          </p>
         </div>
-        <p className="text-[10px] text-paper/35">
-          {premioVisible
-            ? 'El cliente ve el nombre del premio en su ticket ganador.'
-            : 'El cliente NO ve el nombre del premio — solo el garzón sabrá cuál es.'}
-        </p>
-      </div>
+      </Seccion>
 
       {/* ---- CLIENTES Y SU PREMIO POR ESTRELLAS (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2">Clientes — premio al llegar a 5 estrellas</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="⭐ Clientes — premio al llegar a 5 estrellas" subtitulo={`${customers.length} clientes`}>
         {customers.map((c) => (
           <div key={c.id} className="flex flex-col gap-1.5 py-2 border-b border-white/5 last:border-b-0 text-xs">
             <div className="flex justify-between items-center gap-2">
@@ -407,11 +423,10 @@ export default function Admin() {
           </div>
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
-      </div>
+      </Seccion>
 
       {/* ---- MENÚ (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2">Menú del restaurante</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-3">
+      <Seccion titulo="🍽️ Menú del restaurante" subtitulo={`${menuItems.length} platos`}>
         <div className="flex flex-col gap-2 mb-3">
           <input
             placeholder="Nombre del plato"
@@ -476,11 +491,10 @@ export default function Admin() {
           ))}
           {menuItems.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no has agregado platos — usa el formulario de arriba.</p>}
         </div>
-      </div>
+      </Seccion>
 
       {/* ---- CAMPAÑAS / NOTIFICACIONES (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2 mt-6">Campañas y notificaciones</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="📣 Campañas y notificaciones" subtitulo={`${promotions.length} campañas`}>
         <p className="text-[11px] text-paper/45 mb-2">
           Escribe un título y un mensaje, elige a quién va dirigido, y aparecerá dentro de la app del cliente en su Club Varo's.
         </p>
@@ -534,11 +548,10 @@ export default function Admin() {
           </div>
         ))}
         {promotions.length === 0 && <p className="text-paper/35 text-xs">Sin campañas creadas.</p>}
-      </div>
+      </Seccion>
 
       {/* ---- ALERTAS POR CERCANÍA / GPS (nuevo) ---- */}
-      <h3 className="font-head font-semibold text-sm mb-2">Alertas por cercanía (GPS)</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="📍 Alertas por cercanía (GPS)" subtitulo={`${locationAlerts.length} alertas`}>
         <p className="text-[11px] text-paper/45 mb-3">
           Un mensaje distinto según en qué coordenada esté el cliente. Ojo: NO es una notificación push del celular
           (eso requiere una app nativa) — es un aviso que aparece dentro de la app cuando el cliente la tiene abierta
@@ -639,18 +652,18 @@ export default function Admin() {
           </div>
         ))}
         {locationAlerts.length === 0 && <p className="text-paper/35 text-xs">Sin alertas configuradas.</p>}
-      </div>
+      </Seccion>
 
-      <h3 className="font-head font-semibold text-sm mb-2">Regla de puntos</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6 flex items-center gap-2 text-xs">
-        <span>Cada</span>
-        <input type="number" value={rule} onChange={(e) => updateRule(Number(e.target.value))} className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember" />
-        <span>CLP = 1 punto</span>
-      </div>
+      <Seccion titulo="💰 Regla de puntos" subtitulo={`Cada ${rule} CLP = 1 punto`}>
+        <div className="flex items-center gap-2 text-xs">
+          <span>Cada</span>
+          <input type="number" value={rule} onChange={(e) => updateRule(Number(e.target.value))} className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember" />
+          <span>CLP = 1 punto</span>
+        </div>
+      </Seccion>
 
-      <h3 className="font-head font-semibold text-sm mb-2">Recompensas</h3>
-      <p className="text-[11px] text-paper/40 mb-2">Elige qué recompensas ven tus clientes en "Canjea tus puntos".</p>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="🏆 Recompensas" subtitulo={`${rewards.length} recompensas`}>
+        <p className="text-[11px] text-paper/40 mb-2">Elige qué recompensas ven tus clientes en "Canjea tus puntos".</p>
         {rewards.map((r) => (
           <div key={r.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span className={r.active ? 'text-paper' : 'text-paper/30 line-through'}>{r.icon} {r.name}</span>
@@ -669,10 +682,9 @@ export default function Admin() {
           </div>
         ))}
         {rewards.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no tienes recompensas creadas.</p>}
-      </div>
+      </Seccion>
 
-      <h3 className="font-head font-semibold text-sm mb-2">Ranking de clientes</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="📊 Ranking de clientes">
         {customers.slice(0, 8).map((c, i) => (
           <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span><span className="font-mono text-ember mr-2">{i + 1}</span>{c.full_name}</span>
@@ -680,10 +692,9 @@ export default function Admin() {
           </div>
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs">Sin datos aún.</p>}
-      </div>
+      </Seccion>
 
-      <h3 className="font-head font-semibold text-sm mb-2">Clientes inactivos (+30 días)</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-6">
+      <Seccion titulo="😴 Clientes inactivos (+30 días)" subtitulo={`${inactive.length} clientes`}>
         {inactive.map((c) => (
           <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span>{c.full_name}</span>
@@ -693,10 +704,9 @@ export default function Admin() {
           </div>
         ))}
         {inactive.length === 0 && <p className="text-paper/35 text-xs">No hay clientes inactivos por ahora.</p>}
-      </div>
+      </Seccion>
 
-      <h3 className="font-head font-semibold text-sm mb-2">Historial de canjes</h3>
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
+      <Seccion titulo="🧾 Historial de canjes" subtitulo={`${redemptions.length} canjes`}>
         {redemptions.map((r) => (
           <div key={r.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span>{r.customers?.full_name} — {r.rewards?.name}</span>
@@ -704,7 +714,7 @@ export default function Admin() {
           </div>
         ))}
         {redemptions.length === 0 && <p className="text-paper/35 text-xs">Sin canjes todavía.</p>}
-      </div>
+      </Seccion>
     </div>
   )
 }
