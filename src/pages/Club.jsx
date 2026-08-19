@@ -47,7 +47,7 @@ export default function Club() {
   const estrellas = customer.estrellas_actuales ?? 0
 
   return (
-    <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 py-10">
+    <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 py-6">
       <AlertaCercania />
       <CampanaPopup campanas={campanas} />
       <TarjetaFidelidad customer={customer} estrellas={estrellas} />
@@ -56,19 +56,18 @@ export default function Club() {
         <button
           onClick={handleActivarPush}
           disabled={activandoPush}
-          className="mt-6 px-6 py-3 rounded-xl text-sm font-head font-semibold bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+          className="mt-4 px-6 py-2.5 rounded-xl text-sm font-head font-semibold bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
         >
-          {activandoPush ? 'Activando…' : '🔔 Activar notificaciones'}
+          {activandoPush ? 'Activando…' : 'Activar notificaciones'}
         </button>
       )}
       {pushActivo && (
-        <p className="mt-6 text-[11px] text-paper/40">🔔 Notificaciones activas</p>
+        <p className="mt-4 text-[11px] text-paper/40">Notificaciones activas</p>
       )}
 
-      <button
-        onClick={signOut}
-        className="mt-4 px-6 py-3 rounded-xl text-sm font-head font-semibold border border-white/10 text-paper/60"
-      >
+      {/* Enlace discreto y no botón: nadie entra a la app para cerrar sesión, y
+          como botón competía en peso con la acción principal. */}
+      <button onClick={signOut} className="mt-2.5 text-xs text-paper/40 underline">
         Cerrar sesión
       </button>
     </div>

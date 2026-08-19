@@ -74,7 +74,7 @@ export function BotonRedSocial({ href, label, children }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gold/50 text-gold"
+      className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gold/50 text-gold"
     >
       {children}
     </a>
@@ -104,55 +104,52 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
 
   return (
     <>
-      <h1 className="font-serif text-4xl text-paper mb-1">Hola, {primerNombre}</h1>
-      <p className="text-gold/70 text-sm mb-1">Qué bueno tenerte de vuelta</p>
+      {/* El emblema encabeza la pantalla en vez de ir dentro de la tarjeta: adentro
+          competía con la foto del socio (dos círculos apilados) y empujaba el pie
+          de la tarjeta fuera de la pantalla en un celular. */}
+      <img src="/logo-varos.png" alt="Varo's Restaurant" className="w-14 h-14 mb-2" />
+      <h1 className="font-serif text-3xl text-paper leading-tight">Hola, {primerNombre}</h1>
+      <p className="text-gold/70 text-xs mb-1">Qué bueno tenerte de vuelta</p>
 
-      <div className="w-full max-w-xs rounded-[26px] border-[3px] border-gold bg-inkSoft p-1.5 mt-5 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
-        <div className="rounded-[20px] border border-gold/40 p-6 text-center">
-          <img
-            src="/logo-varos.png"
-            alt="Varo's Restaurant"
-            className="w-24 h-24 mx-auto -mt-1 mb-1"
-          />
-          <Ornamento />
-
-          <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
+      <div className="w-full max-w-xs rounded-[22px] border-2 border-gold bg-inkSoft p-1.5 mt-4 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
+        <div className="rounded-[17px] border border-gold/40 px-5 py-5 text-center">
+          <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
             {customer.avatar_url ? (
               <img src={customer.avatar_url} alt={customer.full_name} className="w-full h-full object-cover" />
             ) : (
-              <span className="font-head font-bold text-2xl text-gold">{customer.full_name?.[0]}</span>
+              <span className="font-head font-bold text-xl text-gold">{customer.full_name?.[0]}</span>
             )}
           </div>
-          <div className="font-head font-semibold text-xl text-paper mb-1">{customer.full_name}</div>
-          {cumpleanos && <p className="text-paper/45 text-xs tracking-wide mb-2">Cumple el {cumpleanos}</p>}
+          <div className="font-head font-semibold text-lg text-paper leading-tight">{customer.full_name}</div>
+          {cumpleanos && <p className="text-paper/45 text-[11px] tracking-wide mb-2">Cumple el {cumpleanos}</p>}
 
-          <div className="flex gap-1.5 justify-center mb-3 mt-2">
+          <div className="flex gap-1 justify-center mb-2">
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={`text-3xl ${i < estrellas ? 'text-gold' : 'text-gold/20'}`}>
+              <span key={i} className={`text-2xl ${i < estrellas ? 'text-gold' : 'text-gold/20'}`}>
                 {i < estrellas ? '★' : '☆'}
               </span>
             ))}
           </div>
-          <p className="text-paper text-base mb-1">{estrellas} de 5 visitas</p>
-          {mensajePremio && <p className="text-gold/80 text-sm mb-2">{mensajePremio}</p>}
+          <p className="text-paper text-sm">{estrellas} de 5 visitas</p>
+          {mensajePremio && <p className="text-gold/80 text-xs mb-1">{mensajePremio}</p>}
 
           {mensaje && (
-            <div className="border-t border-gold/20 pt-4 mt-3">
-              <p className="text-paper/85 text-base leading-relaxed">{mensaje}</p>
+            <div className="border-t border-gold/20 pt-3 mt-2">
+              <p className="text-paper/85 text-sm leading-relaxed">{mensaje}</p>
             </div>
           )}
 
           {mostrarQR && (
-            <div className="bg-paper p-3 rounded-2xl border-2 border-gold/60 inline-block mt-4">
-              <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={130} />
+            <div className="bg-paper p-2.5 rounded-2xl border-2 border-gold/60 inline-block mt-3">
+              <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={112} />
             </div>
           )}
 
-          <div className="border-t border-gold/20 mt-5 pt-3 text-sm text-gold/50 tracking-wide">
+          <div className="border-t border-gold/20 mt-3 pt-2.5 text-xs text-gold/50 tracking-wide">
             contacto@varos.cl
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-3">
+          <div className="flex items-center justify-center gap-2 mt-2.5">
             <BotonRedSocial href="https://www.instagram.com/varosrestaurant/?hl=es" label="Síguenos en Instagram">
               <IconoInstagram />
             </BotonRedSocial>
