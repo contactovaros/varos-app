@@ -30,7 +30,7 @@ export async function notificacionesActivas() {
   return !!data
 }
 
-export async function activarNotificaciones(customerId) {
+export async function activarNotificaciones() {
   if (!pushSoportado()) {
     throw new Error(
       'Este navegador no soporta notificaciones push. En iPhone, primero agrega Varo\'s Club a tu pantalla de inicio (compartir → "Agregar a inicio") y ábrela desde ahí.'
@@ -51,28 +51,16 @@ export async function activarNotificaciones(customerId) {
     })
   }
 
-  // Usamos el id de la sesión activa en este momento (no el que llegó por parámetro)
-  // para evitar guardar una fila con un customer_id desincronizado del auth.uid()
-  // real que RLS va a evaluar en el insert.
-  const { data: userData, error: userError } = await supabase.auth.getUser()
-  if (userError || !userData?.user) {
-    throw new Error('No hay sesión activa — vuelve a iniciar sesión e intenta de nuevo.')
-  }
-  const idReal = userData.user.id
-  if (idReal !== customerId) {
-    console.warn('[push] customerId recibido no coincide con la sesión activa', { customerId, idReal })
-  }
-
+  // El guardado va por RPC (security definer) en vez de un upsert directo: un
+  // endpoint pertenece al navegador, no a la cuenta, y si ya estaba registrado
+  // bajo otro usuario el upsert chocaba contra la policy de update. La función
+  // lo reasigna al auth.uid() actual. Ver fix_guardar_suscripcion_push.sql.
   const json = sub.toJSON()
-  const { error } = await supabase.from('push_subscriptions').upsert(
-    {
-      customer_id: idReal,
-      endpoint: json.endpoint,
-      p256dh: json.keys.p256dh,
-      auth: json.keys.auth
-    },
-    { onConflict: 'endpoint' }
-  )
+  const { error } = await supabase.rpc('guardar_suscripcion_push', {
+    p_endpoint: json.endpoint,
+    p_p256dh: json.keys.p256dh,
+    p_auth: json.keys.auth
+  })
   if (error) {
     console.error('[push] error al guardar la suscripción', error)
     throw error

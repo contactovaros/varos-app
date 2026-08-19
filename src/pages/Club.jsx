@@ -31,7 +31,7 @@ export default function Club() {
   async function handleActivarPush() {
     setActivandoPush(true)
     try {
-      await activarNotificaciones(customer.id)
+      await activarNotificaciones()
       setPushActivo(true)
     } catch (e) {
       alert(e.message)
