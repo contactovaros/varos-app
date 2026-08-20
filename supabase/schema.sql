@@ -284,18 +284,12 @@ create trigger on_auth_user_created
 -- =========================================================
 alter table public.customers add column if not exists visit_count int not null default 0;
 
-create or replace function public.register_visit(p_customer_id uuid)
-returns void as $$
-begin
-  if auth.uid() <> p_customer_id then
-    raise exception 'No autorizado';
-  end if;
-
-  update public.customers
-    set visit_count = visit_count + 1,
-        last_visit_at = now()
-    where id = p_customer_id;
-
-  perform public.add_points(p_customer_id, 20, 'visita');
-end;
-$$ language plpgsql security definer;
+-- ⚠️ register_visit (el check-in por QR) YA NO SE DEFINE ACÁ.
+--
+-- La versión que había en este archivo devolvía void, no tocaba las estrellas
+-- y repartía puntos. Quedó obsoleta: la función viva suma estrellas, entrega el
+-- premio al llegar a 5 y tiene candado de una vez por día. Como `create or
+-- replace` pisa sin avisar, dejar acá la vieja significaba que volver a correr
+-- este archivo apagaba el motor del club en silencio.
+--
+-- Definición vigente: supabase/add_register_visit_estrellas.sql
