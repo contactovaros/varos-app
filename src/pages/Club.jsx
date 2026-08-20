@@ -4,12 +4,13 @@ import { supabase } from '../lib/supabase'
 import TarjetaFidelidad from '../components/TarjetaFidelidad.jsx'
 import AlertaCercania from '../components/AlertaCercania.jsx'
 import CampanaPopup from '../components/CampanaPopup.jsx'
-import { pushSoportado, notificacionesActivas, activarNotificaciones } from '../lib/pushNotifications.js'
+import { estadoNotificaciones, activarNotificaciones } from '../lib/pushNotifications.js'
 
 export default function Club() {
   const { customer, signOut } = useAuth()
   const [campanas, setCampanas] = useState([])
-  const [pushActivo, setPushActivo] = useState(false)
+  // 'no-soportado' | 'activa' | 'inactiva' | 'desconocida' | null (aún cargando)
+  const [estadoPush, setEstadoPush] = useState(null)
   const [activandoPush, setActivandoPush] = useState(false)
 
   useEffect(() => {
@@ -25,14 +26,14 @@ export default function Club() {
 
   useEffect(() => {
     if (!customer) return
-    notificacionesActivas().then(setPushActivo)
+    estadoNotificaciones().then(setEstadoPush)
   }, [customer?.id])
 
   async function handleActivarPush() {
     setActivandoPush(true)
     try {
       await activarNotificaciones()
-      setPushActivo(true)
+      setEstadoPush('activa')
     } catch (e) {
       alert(e.message)
     } finally {
@@ -52,7 +53,11 @@ export default function Club() {
       <CampanaPopup campanas={campanas} />
       <TarjetaFidelidad customer={customer} estrellas={estrellas} />
 
-      {pushSoportado() && !pushActivo && (
+      {/* Mientras el estado es null todavía se está comprobando: no mostramos nada,
+          para no parpadear entre "Activar" y "Notificaciones activas". Ante
+          'desconocida' ofrecemos el botón igual (activar es idempotente), pero sin
+          afirmar que están apagadas. */}
+      {(estadoPush === 'inactiva' || estadoPush === 'desconocida') && (
         <button
           onClick={handleActivarPush}
           disabled={activandoPush}
@@ -61,7 +66,7 @@ export default function Club() {
           {activandoPush ? 'Activando…' : 'Activar notificaciones'}
         </button>
       )}
-      {pushActivo && (
+      {estadoPush === 'activa' && (
         <p className="mt-4 text-[11px] text-paper/40">Notificaciones activas</p>
       )}
 

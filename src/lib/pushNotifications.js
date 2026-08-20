@@ -11,23 +11,44 @@ export function pushSoportado() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window
 }
 
-// "Activas" significa dos cosas a la vez: que el navegador esté suscrito Y que
-// esa suscripción esté guardada en Supabase. Si solo se cumple lo primero, el
-// push nunca llegaría (el servidor no sabe a qué endpoint mandarlo), así que
-// devolvemos false para que el cliente pueda reintentar desde el botón.
-export async function notificacionesActivas() {
-  if (!pushSoportado()) return false
-  const registro = await navigator.serviceWorker.ready
-  const sub = await registro.pushManager.getSubscription()
-  if (!sub) return false
+// Estado de las notificaciones para esta cuenta en este navegador. Devuelve uno de:
+//
+//   'no-soportado' — el navegador no puede recibir push (típico: iPhone fuera de
+//                    la pantalla de inicio).
+//   'activa'       — el navegador está suscrito Y la suscripción está guardada.
+//   'inactiva'     — falta alguna de las dos. Incluye el caso de que el endpoint
+//                    esté guardado a nombre de OTRA cuenta: un endpoint pertenece
+//                    al navegador, así que al entrar con otra cuenta en el mismo
+//                    aparato, esta deja de tenerlo (y RLS no se lo deja ver).
+//   'desconocida'  — no se pudo comprobar (sesión a medio cargar, red caída).
+//
+// La distinción entre 'inactiva' y 'desconocida' importa: antes cualquier fallo
+// de la consulta se mostraba como "no está activo", afirmando algo que no
+// sabíamos. Activar es idempotente, así que ante la duda igual ofrecemos el
+// botón — pero sin dar por hecho que está apagado.
+export async function estadoNotificaciones() {
+  if (!pushSoportado()) return 'no-soportado'
 
-  const { data } = await supabase
-    .from('push_subscriptions')
-    .select('endpoint')
-    .eq('endpoint', sub.toJSON().endpoint)
-    .maybeSingle()
+  try {
+    const registro = await navigator.serviceWorker.ready
+    const sub = await registro.pushManager.getSubscription()
+    if (!sub) return 'inactiva'
 
-  return !!data
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .select('endpoint')
+      .eq('endpoint', sub.toJSON().endpoint)
+      .maybeSingle()
+
+    if (error) {
+      console.warn('[push] no se pudo comprobar la suscripción', error)
+      return 'desconocida'
+    }
+    return data ? 'activa' : 'inactiva'
+  } catch (e) {
+    console.warn('[push] no se pudo comprobar la suscripción', e)
+    return 'desconocida'
+  }
 }
 
 export async function activarNotificaciones() {
