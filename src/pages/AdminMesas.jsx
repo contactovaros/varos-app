@@ -9,28 +9,63 @@ import { CalendarioReservas, ListaReservasDia, todayISO } from '../components/Pa
 // la terraza/jardín trasera (tabla `mesas_terraza`, estimada a partir de fotos).
 // Van en tablas separadas para no mezclar las reservas entre salas,
 // pero se editan las tres desde /admin/mesas con el selector de abajo.
+import { PlanoDefs, Recinto, Piso, Cota, FranjaLabel, NotaPlano, PuertaDoble, C as PC } from '../lib/planoSalas.jsx'
+
+// Contorno interior libre de cada sala, en cm.
+export const COMEDOR_PATH = 'M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z'
+export const SALON_W = 1000
+export const SALON_H = 1500
+export const TERRAZA_W = 1200
+export const TERRAZA_H = 2000
+
 export const ROOMS = {
   comedor: {
     label: 'Comedor Exterior',
     table: 'mesas',
     idPrefix: 't',
-    viewBox: { x: -40, y: -40, w: 1420, h: 1780 },
+    viewBox: { x: -190, y: -170, w: 1710, h: 2010 },
+    // El arrastre se limita a la sala, no al viewBox: si no, una mesa se puede
+    // dejar en el margen de las cotas, fuera del recinto. `huecos` saca el
+    // recorte en L del Comedor Exterior.
+    limite: { x0: 0, y0: 0, x1: 1314, y1: 1700 },
+    huecos: [{ x0: 324, y0: 0, x1: 1314, y1: 550 }],
     nuevaMesa: { x: 690, y: 1080, ancho: 120, capacidad: 8 }
   },
   salon: {
     label: 'Comedor Principal',
     table: 'mesas_salon',
     idPrefix: 'sm',
-    viewBox: { x: -40, y: -40, w: 1080, h: 1580 },
+    viewBox: { x: -190, y: -170, w: 1400, h: 1880 },
+    limite: { x0: 0, y0: 0, x1: 1000, y1: 1500 },
     nuevaMesa: { x: 500, y: 750, ancho: 120, capacidad: 4 }
   },
   terraza: {
     label: 'Terraza',
     table: 'mesas_terraza',
     idPrefix: 'tz',
-    viewBox: { x: -40, y: -40, w: 1280, h: 2080 },
+    viewBox: { x: -190, y: -170, w: 1600, h: 2380 },
+    limite: { x0: 0, y0: 0, x1: 1200, y1: 2000 },
     nuevaMesa: { x: 400, y: 1700, ancho: 70, capacidad: 2 }
   }
+}
+
+// Acota un punto al interior de la sala, empujándolo fuera de los recortes
+// (el Comedor Exterior es una L, no un rectángulo).
+export function limitarASala(config, x, y) {
+  const l = config.limite
+  if (!l) return { x, y }
+  let nx = Math.min(l.x1, Math.max(l.x0, x))
+  let ny = Math.min(l.y1, Math.max(l.y0, y))
+  ;(config.huecos || []).forEach((h) => {
+    if (nx > h.x0 && nx < h.x1 && ny > h.y0 && ny < h.y1) {
+      // se sale por el borde más cercano del hueco
+      const dIzq = nx - h.x0
+      const dAbajo = h.y1 - ny
+      if (dIzq <= dAbajo) nx = h.x0
+      else ny = h.y1
+    }
+  })
+  return { x: nx, y: ny }
 }
 
 function svgPoint(svg, clientX, clientY) {
@@ -74,8 +109,19 @@ export function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk'
 export function ComedorBackground({ zonas }) {
   return (
     <>
-      <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#B5732A" strokeWidth="10" />
-      <ZonaLabels zonas={zonas} opacity={0.6} />
+      <PlanoDefs />
+      <Recinto d={COMEDOR_PATH} piso="slDeck" />
+
+      {/* cotas: el recorte en L se lee con la medida corta arriba */}
+      <Cota x1={0} y1={-70} x2={324} y2={-70} />
+      <Cota x1={0} y1={1770} x2={1314} y2={1770} />
+      <Cota x1={-90} y1={0} x2={-90} y2={1700} />
+      <Cota x1={1384} y1={550} x2={1384} y2={1700} />
+
+      <FranjaLabel x={1384} y0={0} y1={550} texto="ACCESO" sub="vereda" />
+
+      <ZonaLabels zonas={zonas} opacity={0.75} />
+      <NotaPlano x={0} y={-110} texto="COMEDOR EXTERIOR · deck de madera" />
     </>
   )
 }
@@ -83,13 +129,22 @@ export function ComedorBackground({ zonas }) {
 // Salón de 10 x 15 m reconstruido desde el video de recorrido (agosto 2026).
 // Columnas, barra, cabina telefónica, etc. son solo referencia fija del espacio.
 export function SalonBackground({ zonas }) {
-  const ROOM_W = 1000
-  const ROOM_H = 1500
+  const ROOM_W = SALON_W
+  const ROOM_H = SALON_H
   return (
     <>
-      <rect x="0" y="0" width={ROOM_W} height={ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
+      <PlanoDefs />
+      <Recinto d={`M0,0 H${ROOM_W} V${ROOM_H} H0 Z`} piso="slPulido" />
 
-      <g stroke="#B5732A" strokeWidth="2" strokeDasharray="2 14" opacity="0.4">
+      <Cota x1={0} y1={-70} x2={ROOM_W} y2={-70} />
+      <Cota x1={-90} y1={0} x2={-90} y2={ROOM_H} />
+
+      <FranjaLabel x={ROOM_W + 70} y0={0} y1={250} texto="RECEPCIÓN" />
+      <FranjaLabel x={ROOM_W + 70} y0={250} y1={900} texto="SALÓN PRINCIPAL" sub="mesas de evento" />
+      <FranjaLabel x={ROOM_W + 70} y0={900} y1={1100} texto="BARRA" />
+      <FranjaLabel x={ROOM_W + 70} y0={1100} y1={ROOM_H} texto="LOUNGE" />
+
+      <g stroke={PC.bronze} strokeWidth="2" strokeDasharray="2 14" opacity="0.4">
         <line x1="0" y1="250" x2={ROOM_W} y2="250" />
         <line x1="0" y1="900" x2={ROOM_W} y2="900" />
         <line x1="0" y1="1100" x2={ROOM_W} y2="1100" />
@@ -97,41 +152,51 @@ export function SalonBackground({ zonas }) {
 
       <ZonaLabels zonas={zonas.filter((z) => z.id !== 's_barra_letrero' && z.id !== 's_terraza' && z.texto)} />
 
-      {/* puerta de acceso */}
-      <line x1="350" y1="0" x2="650" y2="0" stroke="#221A16" strokeWidth="10" />
-      <line x1="350" y1="0" x2="650" y2="0" stroke="#E3B341" strokeWidth="3" />
+      {/* acceso principal, doble hoja abriendo hacia adentro */}
+      <PuertaDoble cx={500} y={0} ancho={300} dir={1} />
 
       {/* columnas doradas junto al acceso */}
-      <circle cx="330" cy="60" r="16" fill="#E3B341" />
-      <circle cx="670" cy="60" r="16" fill="#E3B341" />
+      <circle cx="330" cy="60" r="16" fill={PC.gold} />
+      <circle cx="670" cy="60" r="16" fill={PC.gold} />
 
-      {/* cordones rojos de acceso */}
-      <g stroke="#E3B341" strokeWidth="2" opacity="0.6">
+      {/* cordones de acceso */}
+      <g stroke={PC.gold} strokeWidth="2" opacity="0.6">
         <line x1="140" y1="120" x2="140" y2="200" />
         <line x1="860" y1="120" x2="860" y2="200" />
       </g>
-      <circle cx="140" cy="120" r="8" fill="#7A1620" stroke="#E3B341" strokeWidth="1.5" />
-      <circle cx="140" cy="200" r="8" fill="#7A1620" stroke="#E3B341" strokeWidth="1.5" />
-      <circle cx="860" cy="120" r="8" fill="#7A1620" stroke="#E3B341" strokeWidth="1.5" />
-      <circle cx="860" cy="200" r="8" fill="#7A1620" stroke="#E3B341" strokeWidth="1.5" />
+      <circle cx="140" cy="120" r="8" fill={PC.wine} stroke={PC.gold} strokeWidth="1.5" />
+      <circle cx="140" cy="200" r="8" fill={PC.wine} stroke={PC.gold} strokeWidth="1.5" />
+      <circle cx="860" cy="120" r="8" fill={PC.wine} stroke={PC.gold} strokeWidth="1.5" />
+      <circle cx="860" cy="200" r="8" fill={PC.wine} stroke={PC.gold} strokeWidth="1.5" />
 
-      {/* panel de bienvenida, pared izquierda */}
-      <rect x="0" y="140" width="16" height="70" fill="#221A16" stroke="#E3B341" strokeWidth="2" />
+      <g filter="url(#slSombra)">
+        {/* panel de bienvenida, pared izquierda */}
+        <rect x="0" y="140" width="16" height="70" fill="#221A16" stroke={PC.gold} strokeWidth="2" />
 
-      {/* pared espejada + esferas colgantes, pared derecha del salón */}
-      <rect x={ROOM_W - 16} y="420" width="16" height="260" fill="#221A16" stroke="#6FD4D9" strokeWidth="2" />
-      <circle cx={ROOM_W - 40} cy="450" r="10" fill="#E3B341" opacity="0.85" />
-      <circle cx={ROOM_W - 40} cy="540" r="10" fill="#E3B341" opacity="0.85" />
-      <circle cx={ROOM_W - 40} cy="630" r="10" fill="#E3B341" opacity="0.85" />
+        {/* pared espejada, pared derecha del salón */}
+        <rect x={ROOM_W - 16} y="420" width="16" height="260" fill="#221A16" stroke={PC.diamond} strokeWidth="2" />
 
-      {/* marco dorado de fotos, pared derecha */}
-      <rect x={ROOM_W - 16} y="330" width="16" height="50" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
+        {/* marco dorado de fotos, pared derecha */}
+        <rect x={ROOM_W - 16} y="330" width="16" height="50" fill="#221A16" stroke={PC.gold} strokeWidth="2.5" />
 
-      {/* mueble/cava, pared izquierda */}
-      <rect x="0" y="700" width="16" height="140" fill="#221A16" stroke="#9AA1A9" strokeWidth="1.5" />
+        {/* mueble/cava, pared izquierda */}
+        <rect x="0" y="700" width="16" height="140" fill="#221A16" stroke={PC.silver} strokeWidth="1.5" />
 
-      {/* barra, pared derecha */}
-      <rect x={ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
+        {/* barra, pared derecha */}
+        <rect x={ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke={PC.gold} strokeWidth="2.5" />
+
+        {/* cabina telefónica, pared izquierda del lounge */}
+        <rect x="0" y="1160" width="90" height="90" fill={PC.wine} stroke={PC.gold} strokeWidth="3" />
+
+        {/* banqueta lounge, pared derecha */}
+        <rect x={ROOM_W - 60} y="1180" width="60" height="180" rx="14" fill={PC.wine} opacity="0.55" stroke={PC.gold} strokeWidth="2" />
+      </g>
+
+      {/* esferas colgantes sobre la pared espejada */}
+      <circle cx={ROOM_W - 40} cy="450" r="10" fill={PC.gold} opacity="0.85" />
+      <circle cx={ROOM_W - 40} cy="540" r="10" fill={PC.gold} opacity="0.85" />
+      <circle cx={ROOM_W - 40} cy="630" r="10" fill={PC.gold} opacity="0.85" />
+
       {zonas
         .filter((z) => z.id === 's_barra_letrero' && z.texto)
         .map((z) => (
@@ -142,29 +207,24 @@ export function SalonBackground({ zonas }) {
             textAnchor="middle"
             fontSize={z.tam || 22}
             fontWeight="700"
-            fill="#E3B341"
+            fill={PC.gold}
             transform={`rotate(${z.angulo} ${z.x} ${z.y})`}
           >
             {z.texto}
           </text>
         ))}
 
-      {/* cabina telefónica, pared izquierda del lounge */}
-      <rect x="0" y="1160" width="90" height="90" fill="#7A1620" stroke="#E3B341" strokeWidth="3" />
-
-      {/* banqueta lounge, pared derecha */}
-      <rect x={ROOM_W - 60} y="1180" width="60" height="180" rx="14" fill="#7A1620" opacity="0.55" stroke="#E3B341" strokeWidth="2" />
-
       {/* puerta trasera hacia terraza / piscina */}
-      <line x1="400" y1={ROOM_H} x2="600" y2={ROOM_H} stroke="#221A16" strokeWidth="10" />
-      <line x1="400" y1={ROOM_H} x2="600" y2={ROOM_H} stroke="#6FD4D9" strokeWidth="2.5" strokeDasharray="6 5" />
+      <PuertaDoble cx={500} y={ROOM_H} ancho={200} dir={-1} color={PC.diamond} />
       {zonas
         .filter((z) => z.id === 's_terraza' && z.texto)
         .map((z) => (
-          <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill="#6FD4D9" opacity="0.7">
+          <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill={PC.diamond} opacity="0.7">
             {z.texto}
           </text>
         ))}
+
+      <NotaPlano x={0} y={-110} texto="COMEDOR PRINCIPAL · 10,00 × 15,00 m" />
     </>
   )
 }
@@ -174,13 +234,25 @@ export function SalonBackground({ zonas }) {
 // pista central bajo un arco de truss, y jardín con barra/mesas de barril
 // junto al escenario (objeto arrastrable, ver MesaShape).
 export function TerrazaBackground({ zonas }) {
-  const ROOM_W = 1200
-  const ROOM_H = 2000
+  const ROOM_W = TERRAZA_W
+  const ROOM_H = TERRAZA_H
   return (
     <>
-      <rect x="0" y="0" width={ROOM_W} height={ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
+      <PlanoDefs />
+      {/* El piso base es el deck de la caminata; las otras dos franjas se
+          parchan encima porque el material del piso cambia de verdad. */}
+      <Recinto d={`M0,0 H${ROOM_W} V${ROOM_H} H0 Z`} piso="slDeck" />
+      <Piso x={0} y={650} w={ROOM_W} h={700} piso="slPiedra" />
+      <Piso x={0} y={1350} w={ROOM_W} h={ROOM_H - 1350} piso="slPasto" />
 
-      <g stroke="#B5732A" strokeWidth="2" strokeDasharray="2 14" opacity="0.4">
+      <Cota x1={0} y1={-70} x2={ROOM_W} y2={-70} />
+      <Cota x1={-90} y1={0} x2={-90} y2={ROOM_H} />
+
+      <FranjaLabel x={ROOM_W + 70} y0={0} y1={650} texto="CAMINATA CUBIERTA" sub="carpas pagoda" />
+      <FranjaLabel x={ROOM_W + 70} y0={650} y1={1350} texto="PISTA" sub="pavimento · arco de truss" />
+      <FranjaLabel x={ROOM_W + 70} y0={1350} y1={ROOM_H} texto="JARDÍN Y BARRA" sub="piscina cubierta" />
+
+      <g stroke={PC.bronze} strokeWidth="2" strokeDasharray="2 14" opacity="0.45">
         <line x1="0" y1="650" x2={ROOM_W} y2="650" />
         <line x1="0" y1="1350" x2={ROOM_W} y2="1350" />
       </g>
@@ -188,16 +260,20 @@ export function TerrazaBackground({ zonas }) {
       <ZonaLabels zonas={zonas} />
 
       {/* carpas tipo pagoda sobre la caminata cubierta */}
-      <g fill="#FFF8F1" opacity="0.12">
+      <g fill={PC.muro} opacity="0.1">
         <path d="M0,0 L150,-40 L300,0 Z" />
         <path d="M300,0 L450,-40 L600,0 Z" />
       </g>
-      <line x1="0" y1="0" x2="600" y2="0" stroke="#B5732A" strokeWidth="4" opacity="0.5" />
+      <line x1="0" y1="0" x2="600" y2="0" stroke={PC.bronze} strokeWidth="4" opacity="0.5" />
 
       {/* arco de truss que marca el ingreso a la pista */}
-      <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
-      <line x1="0" y1="600" x2={ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
-      <line x1={ROOM_W} y1="600" x2={ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
+      <g filter="url(#slSombra)">
+        <line x1="0" y1="700" x2="0" y2="600" stroke={PC.silver} strokeWidth="6" />
+        <line x1="0" y1="600" x2={ROOM_W} y2="600" stroke={PC.silver} strokeWidth="6" />
+        <line x1={ROOM_W} y1="600" x2={ROOM_W} y2="700" stroke={PC.silver} strokeWidth="6" />
+      </g>
+
+      <NotaPlano x={0} y={-110} texto="TERRAZA · medidas estimadas de fotos, sin relevamiento" />
     </>
   )
 }
@@ -518,13 +594,12 @@ export default function AdminMesas() {
     const p = svgPoint(svgRef.current, e.clientX, e.clientY)
 
     if (drag.mode === 'move') {
-      // Sin este límite una mesa se puede arrastrar fuera del viewBox y
-      // desaparecer por completo de la pantalla (pasó con Mesa R1) —
-      // se acota el centro al recuadro visible del plano.
-      const vb = config.viewBox
-      const x = Math.min(vb.x + vb.w, Math.max(vb.x, drag.origX + (p.x - drag.startX)))
-      const y = Math.min(vb.y + vb.h, Math.max(vb.y, drag.origY + (p.y - drag.startY)))
-      updateLocal(mesa.id, { x, y })
+      // Sin este límite una mesa se puede arrastrar fuera del plano y
+      // desaparecer de la pantalla (pasó con Mesa R1). Se acota al recinto
+      // real de la sala — antes se acotaba al viewBox, que ahora es más
+      // ancho porque tiene que dar lugar a las cotas del margen.
+      const pos = limitarASala(config, drag.origX + (p.x - drag.startX), drag.origY + (p.y - drag.startY))
+      updateLocal(mesa.id, pos)
     } else if (drag.mode === 'rotate') {
       const angle = (Math.atan2(p.y - mesa.y, p.x - mesa.x) * 180) / Math.PI + 90
       const snapped = e.shiftKey ? Math.round(angle / 15) * 15 : angle

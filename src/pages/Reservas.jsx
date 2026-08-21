@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
+import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
 import { BotonRedSocial, IconoInstagram, IconoFacebook, IconoSitioWeb, IconoWhatsApp, IconoResena } from '../components/TarjetaFidelidad.jsx'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
@@ -647,13 +648,10 @@ export default function Reservas() {
 
           <div className="w-full max-w-md bg-inkSoft rounded-2xl p-3 mb-4">
             <svg
-              viewBox={
-                salaMostrada === 'salon'
-                  ? `-40 -40 ${SALON_ROOM_W + 80} ${SALON_ROOM_H + 80}`
-                  : salaMostrada === 'terraza'
-                  ? `-40 -40 ${TERRAZA_ROOM_W + 80} ${TERRAZA_ROOM_H + 80}`
-                  : '-40 -40 1420 1780'
-              }
+              viewBox={(() => {
+                const vb = ROOMS[salaMostrada]?.viewBox || ROOMS.comedor.viewBox
+                return `${vb.x} ${vb.y} ${vb.w} ${vb.h}`
+              })()}
               className="w-full h-auto"
               role="img"
               aria-label={`Plano de ${ROOM_LABELS[salaMostrada]}, elige una mesa`}
@@ -668,78 +666,9 @@ export default function Reservas() {
                 </filter>
               </defs>
 
-              {salaMostrada === 'comedor' && (
-                <>
-                  <path d="M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z" fill="none" stroke="#E3B341" strokeWidth="8" opacity="0.85" />
-                  {zonasVisibles.map((z) => (
-                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 30} fill="#E3B341" opacity="0.65">
-                      {z.texto}
-                    </text>
-                  ))}
-                </>
-              )}
-
-              {salaMostrada === 'salon' && (
-                <>
-                  <rect x="0" y="0" width={SALON_ROOM_W} height={SALON_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
-                  {zonasVisibles
-                    .filter((z) => z.id !== 's_barra_letrero' && z.id !== 's_terraza')
-                    .map((z) => (
-                      <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
-                        {z.texto}
-                      </text>
-                    ))}
-
-                  {/* columnas doradas junto al acceso */}
-                  <circle cx="330" cy="60" r="16" fill="#E3B341" />
-                  <circle cx="670" cy="60" r="16" fill="#E3B341" />
-
-                  {/* pared espejada, referencia */}
-                  <rect x={SALON_ROOM_W - 16} y="420" width="16" height="260" fill="#221A16" stroke="#6FD4D9" strokeWidth="2" />
-
-                  {/* barra */}
-                  <rect x={SALON_ROOM_W - 70} y="920" width="70" height="150" fill="#221A16" stroke="#E3B341" strokeWidth="2.5" />
-                  {zonasVisibles
-                    .filter((z) => z.id === 's_barra_letrero')
-                    .map((z) => (
-                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 22} fontWeight="700" fill="#E3B341" transform={`rotate(${z.angulo} ${z.x} ${z.y})`}>
-                        {z.texto}
-                      </text>
-                    ))}
-
-                  {/* cabina telefónica */}
-                  <rect x="0" y="1160" width="90" height="90" fill="#7A1620" stroke="#E3B341" strokeWidth="3" />
-
-                  {/* banqueta lounge */}
-                  <rect x={SALON_ROOM_W - 60} y="1180" width="60" height="180" rx="14" fill="#7A1620" opacity="0.55" stroke="#E3B341" strokeWidth="2" />
-
-                  {/* puerta trasera */}
-                  <line x1="400" y1={SALON_ROOM_H} x2="600" y2={SALON_ROOM_H} stroke="#6FD4D9" strokeWidth="2.5" strokeDasharray="6 5" />
-                  {zonasVisibles
-                    .filter((z) => z.id === 's_terraza')
-                    .map((z) => (
-                      <text key={z.id} x={z.x} y={z.y} textAnchor="middle" fontSize={z.tam || 18} fill="#6FD4D9" opacity="0.7">
-                        {z.texto}
-                      </text>
-                    ))}
-                </>
-              )}
-
-              {salaMostrada === 'terraza' && (
-                <>
-                  <rect x="0" y="0" width={TERRAZA_ROOM_W} height={TERRAZA_ROOM_H} fill="none" stroke="#B5732A" strokeWidth="10" />
-                  {zonasVisibles.map((z) => (
-                    <text key={z.id} x={z.x} y={z.y} fontFamily="'Space Grotesk',Arial,sans-serif" fontWeight="700" fontSize={z.tam || 26} fill="#FFF8F1" opacity="0.5">
-                      {z.texto}
-                    </text>
-                  ))}
-
-                  {/* arco de truss que marca el ingreso a la pista */}
-                  <line x1="0" y1="700" x2="0" y2="600" stroke="#9AA1A9" strokeWidth="6" />
-                  <line x1="0" y1="600" x2={TERRAZA_ROOM_W} y2="600" stroke="#9AA1A9" strokeWidth="6" />
-                  <line x1={TERRAZA_ROOM_W} y1="600" x2={TERRAZA_ROOM_W} y2="700" stroke="#9AA1A9" strokeWidth="6" />
-                </>
-              )}
+              {salaMostrada === 'comedor' && <ComedorBackground zonas={zonasVisibles} />}
+              {salaMostrada === 'salon' && <SalonBackground zonas={zonasVisibles} />}
+              {salaMostrada === 'terraza' && <TerrazaBackground zonas={zonasVisibles} />}
 
               {mesasVisibles.map((m) => {
                 if (m.tipo === 'escenario' || m.tipo === 'decor') {
