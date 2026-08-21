@@ -354,6 +354,19 @@ export default function Admin() {
       </Link>
 
       <Link
+        to="/admin/plano"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">📐 Plano de la terraza</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Recinto de 9 × 24 m — mover, girar y medir cada mesa y equipo, y publicarlo cuando quieras
+          </div>
+        </div>
+        <span className="text-ember text-lg">→</span>
+      </Link>
+
+      <Link
         to="/admin/resenas"
         className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
       >

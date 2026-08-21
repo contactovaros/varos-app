@@ -14,6 +14,8 @@ import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
 import AdminMesaTrabajo from './pages/AdminMesaTrabajo.jsx'
 import AdminResenas from './pages/AdminResenas.jsx'
+import AdminPlano from './pages/AdminPlano.jsx'
+import Plano from './pages/Plano.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
@@ -28,6 +30,17 @@ export default function App() {
   // hacerlo sin crear cuenta ni iniciar sesión.
   if (location.pathname === '/reservas') {
     return <Reservas />
+  }
+
+  // Un plano publicado también es público: se comparte por enlace y no debe
+  // exigir cuenta. La RLS de `public.planos` es la que decide si hay algo que
+  // mostrar — si está en borrador, la pantalla dice "no disponible".
+  if (location.pathname.startsWith('/plano/')) {
+    return (
+      <Routes>
+        <Route path="/plano/:id" element={<Plano />} />
+      </Routes>
+    )
   }
 
   // Si alguien entra a un link directo (QR del local, /admin/mesas, etc.) sin
@@ -45,7 +58,7 @@ export default function App() {
   // El resto de la app va en una columna de ancho móvil, centrada, incluso en
   // desktop — /admin/mesas es la excepción: en pantallas anchas se ensancha
   // para mostrar el panel de reservas del día al costado del plano.
-  const anchoAdminMesas = location.pathname === '/admin/mesas'
+  const anchoAdminMesas = location.pathname === '/admin/mesas' || location.pathname === '/admin/plano'
 
   return (
     <CartProvider>
@@ -60,6 +73,7 @@ export default function App() {
           <Route path="/admin/reservas" element={<AdminReservas />} />
           <Route path="/admin/mesa-trabajo" element={<AdminMesaTrabajo />} />
           <Route path="/admin/resenas" element={<AdminResenas />} />
+          <Route path="/admin/plano" element={<AdminPlano />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>
