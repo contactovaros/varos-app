@@ -236,9 +236,20 @@ export default function AdminPlano() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); deshacer(); return }
       if (!sel) return
       const s = e.shiftKey ? 0.25 : 0.05
+      const esPuerta = SPECS[sel.type].kind === 'puerta'
       const mover = (dx, dy) => {
         guardarHistorial()
-        aplicar(items.map((i) => (i.id === sel.id ? clampItem({ ...i, x: i.x + dx, y: i.y + dy }) : i)))
+        aplicar(items.map((i) => {
+          if (i.id !== sel.id) return i
+          // Una puerta no se mueve en x/y: se corre a lo largo de su muro.
+          // Sin esto las flechas no harían nada, porque ajustarPuerta vuelve a
+          // derivar x/y desde (muro, corrimiento) y pisaría el desplazamiento.
+          if (esPuerta) {
+            const avance = MUROS[i.muro].eje === 'h' ? dx : dy
+            return ajustarPuerta({ ...i, corrimiento: i.corrimiento + avance })
+          }
+          return clampItem({ ...i, x: i.x + dx, y: i.y + dy })
+        }))
       }
       switch (e.key) {
         case 'ArrowLeft': e.preventDefault(); mover(-s, 0); break
@@ -248,7 +259,12 @@ export default function AdminPlano() {
         case 'r': case 'R': {
           e.preventDefault()
           guardarHistorial()
-          aplicar(items.map((i) => (i.id === sel.id ? clampItem({ ...i, rot: (i.rot + (e.shiftKey ? -15 : 15) + 360) % 360 }) : i)))
+          aplicar(items.map((i) => {
+            if (i.id !== sel.id) return i
+            // En una puerta el giro lo manda el muro, así que R invierte la mano.
+            if (esPuerta) return ajustarPuerta({ ...i, mano: i.mano === 1 ? -1 : 1 })
+            return clampItem({ ...i, rot: (i.rot + (e.shiftKey ? -15 : 15) + 360) % 360 })
+          }))
           break
         }
         case 'Delete': case 'Backspace': e.preventDefault(); eliminar(); break
