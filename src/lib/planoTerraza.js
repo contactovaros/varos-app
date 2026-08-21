@@ -62,7 +62,21 @@ export const SPECS = {
   repisa:      { label: 'REPISA 1,00 × 0,50',w: 1,    h: 0.5,  kind: 'repisa', req: 'repisa' },
   lavaplatos:  { label: 'LAVAPLATOS 0,50',   w: 0.5,  h: 0.5,  kind: 'lava',   req: 'lava', out: true },
   despacho:    { label: 'BARRA DE DESPACHO', w: 3.6,  h: 0.6,  kind: 'desp',   req: 'desp'   },
-  maceta:      { label: 'MACETA',            w: 0.6,  h: 0.6,  kind: 'planta', req: 'maceta', out: true }
+  maceta:      { label: 'MACETA',            w: 0.6,  h: 0.6,  kind: 'planta', req: 'maceta', out: true },
+  // Los accesos viven EN el muro: no se posicionan por x/y libre sino por
+  // (muro, corrimiento a lo largo de ese muro). Ver ajustarPuerta().
+  puertaDoble:  { label: 'ACCESO PRINCIPAL',   w: 1.8, h: RECINTO.WALL, kind: 'puerta', req: 'puerta' },
+  puertaSimple: { label: 'ACCESO DE SERVICIO', w: 0.9, h: RECINTO.WALL, kind: 'puerta', req: 'puerta' }
+}
+
+// Cada muro, con la coordenada fija de su eje central y hacia dónde queda el
+// interior del recinto. `giro` orienta el dibujo de la puerta: el eje X local
+// corre a lo largo del muro y el eje Y local apunta hacia adentro.
+export const MUROS = {
+  norte: { eje: 'h', fijo: RECINTO.WALL / 2,             giro: 0,   nombre: 'Muro norte (fondo)' },
+  sur:   { eje: 'h', fijo: RECINTO.H - RECINTO.WALL / 2, giro: 180, nombre: 'Muro sur (frente)' },
+  oeste: { eje: 'v', fijo: RECINTO.WALL / 2,             giro: 270, nombre: 'Muro oeste (izq.)' },
+  este:  { eje: 'v', fijo: RECINTO.W - RECINTO.WALL / 2, giro: 90,  nombre: 'Muro este (der.)' }
 }
 
 // El programa pedido por el cliente. La pantalla compara contra esto en vivo.
@@ -80,6 +94,7 @@ export const REQUERIDOS = [
 ]
 
 export const COMPLEMENTARIOS = [
+  { req: 'puerta', name: 'Accesos (puertas)' },
   { req: 'lava',   name: 'Lavaplatos 0,50' },
   { req: 'desp',   name: 'Barra de despacho' },
   { req: 'maceta', name: 'Maceta / vegetación' }
@@ -90,7 +105,8 @@ export const PALETA_AGREGAR = [
   { cat: 'Frío', list: [['visi', 'Visi Cooler', '0,90 × 0,75'], ['congeladora', 'Congeladora', '1,30 × 0,75']] },
   { cat: 'Cocción', list: [['horno', 'Horno', '0,80 × 0,75'], ['cocina', 'Cocina 2 fogones', '0,90 × 0,60']] },
   { cat: 'Mesones y trabajo', list: [['meson300', 'Mesón 3,00', '3,00 × 0,50'], ['meson180', 'Mesón 1,80', '1,80 × 0,40'], ['mesatrabajo', 'Mesa de trabajo', '1,50 × 0,70'], ['lavaplatos', 'Lavaplatos', '0,50 × 0,50']] },
-  { cat: 'Almacenamiento y despacho', list: [['repisa', 'Repisa', '1,00 × 0,50'], ['despacho', 'Barra despacho', '3,60 × 0,60']] }
+  { cat: 'Almacenamiento y despacho', list: [['repisa', 'Repisa', '1,00 × 0,50'], ['despacho', 'Barra despacho', '3,60 × 0,60']] },
+  { cat: 'Accesos', list: [['puertaDoble', 'Puerta doble', '1,80 m'], ['puertaSimple', 'Puerta simple', '0,90 m']] }
 ]
 
 let contador = 1
@@ -99,6 +115,27 @@ export function nuevoId() { return 'e' + (contador++) + '_' + Math.random().toSt
 function mk(type, x, y, rot, label) {
   const s = SPECS[type]
   return { id: nuevoId(), type, x, y, w: s.w, h: s.h, rot: rot || 0, label: label || s.label }
+}
+
+// Una puerta se define por el muro donde vive y su corrimiento a lo largo de
+// ese muro; x/y/rot se derivan de eso en ajustarPuerta().
+export function mkPuerta(type, muro, corrimiento, opciones) {
+  const s = SPECS[type]
+  const o = opciones || {}
+  return ajustarPuerta({
+    id: nuevoId(),
+    type,
+    muro,
+    corrimiento,
+    x: 0,
+    y: 0,
+    w: o.w || s.w,
+    h: RECINTO.WALL,
+    rot: 0,
+    hojas: o.hojas || (type === 'puertaDoble' ? 2 : 1),
+    mano: o.mano || 1,
+    label: o.label || s.label
+  })
 }
 
 // Distribución inicial: cocina al fondo, clientes hacia el acceso.
@@ -139,6 +176,9 @@ export function layoutInicial() {
   it.push(mk('maceta', 8.4, 7.55, 0))
   it.push(mk('maceta', 0.6, 23.1, 0))
   it.push(mk('maceta', 8.4, 23.1, 0))
+  // accesos: el principal en el frente, el de servicio junto a la zona de frío
+  it.push(mkPuerta('puertaDoble', 'sur', 4.5))
+  it.push(mkPuerta('puertaSimple', 'norte', 4.1))
   return it
 }
 
@@ -155,7 +195,37 @@ export function halfExtents(w, h, rot) {
 
 // Ningún objeto puede salir del rectángulo, ni siquiera girado: se compara la
 // caja envolvente ya rotada contra la cara interior de los muros.
+// Una puerta no se clampea contra el interior: vive dentro del espesor del
+// muro. Se limita el corrimiento para que el vano no se coma las esquinas.
+export function ajustarPuerta(p) {
+  const m = MUROS[p.muro] || MUROS.sur
+  const largoMuro = m.eje === 'h' ? RECINTO.W : RECINTO.H
+  p.w = Math.min(Math.max(0.6, p.w), largoMuro - 2 * RECINTO.WALL - 0.3)
+  p.h = RECINTO.WALL
+  const min = RECINTO.WALL + p.w / 2 + 0.05
+  const max = largoMuro - RECINTO.WALL - p.w / 2 - 0.05
+  p.corrimiento = Math.min(Math.max(p.corrimiento, min), max)
+  if (m.eje === 'h') { p.x = p.corrimiento; p.y = m.fijo } else { p.x = m.fijo; p.y = p.corrimiento }
+  p.rot = m.giro
+  return p
+}
+
+// Al arrastrar, la puerta se pega al muro más cercano y se desliza por él.
+export function pegarPuertaA(p, punto) {
+  const d = {
+    norte: Math.abs(punto.y - MUROS.norte.fijo),
+    sur: Math.abs(punto.y - MUROS.sur.fijo),
+    oeste: Math.abs(punto.x - MUROS.oeste.fijo),
+    este: Math.abs(punto.x - MUROS.este.fijo)
+  }
+  const muro = Object.keys(d).reduce((a, b) => (d[a] <= d[b] ? a : b))
+  p.muro = muro
+  p.corrimiento = MUROS[muro].eje === 'h' ? punto.x : punto.y
+  return ajustarPuerta(p)
+}
+
 export function clampItem(it) {
+  if (SPECS[it.type] && SPECS[it.type].kind === 'puerta') return ajustarPuerta(it)
   const roomW = LIMITES.x1 - LIMITES.x0
   const roomH = LIMITES.y1 - LIMITES.y0
   let { hw, hh } = halfExtents(it.w, it.h, it.rot)
@@ -203,6 +273,19 @@ export function buscarHueco(items, type) {
 }
 
 export function crearItem(items, type) {
+  if (SPECS[type].kind === 'puerta') {
+    const puertas = items.filter((i) => SPECS[i.type].kind === 'puerta')
+    const ancho = SPECS[type].w
+    // se busca un tramo libre recorriendo los muros en orden
+    for (const muro of ['sur', 'este', 'oeste', 'norte']) {
+      const largo = MUROS[muro].eje === 'h' ? RECINTO.W : RECINTO.H
+      for (let c = RECINTO.WALL + ancho / 2 + 0.05; c <= largo - RECINTO.WALL - ancho / 2; c += 0.4) {
+        const choca = puertas.some((q) => q.muro === muro && Math.abs(q.corrimiento - c) < (q.w + ancho) / 2 + 0.2)
+        if (!choca) return mkPuerta(type, muro, c)
+      }
+    }
+    return mkPuerta(type, 'sur', 4.5)
+  }
   const p = buscarHueco(items, type)
   const it = mk(type, p.x, p.y, 0)
   if (type === 'mesa') it.label = 'MESA ' + String(items.filter((i) => i.type === 'mesa').length + 1).padStart(2, '0')
@@ -257,10 +340,9 @@ function cota(x1, y1, x2, y2, text) {
     ${label}</g>`
 }
 
-export function svgShell(show) {
+export function svgShell(show, puertas) {
   const { W, H, WALL, COCINA_FIN } = RECINTO
-  const puertaPpal = { x0: 3.6, x1: 5.4 }
-  const puertaServ = { x0: 3.65, x1: 4.55 }
+  const vanos = puertas || []
   let s = ''
 
   // pisos
@@ -278,29 +360,17 @@ export function svgShell(show) {
   s += `<path fill-rule="evenodd" fill="${P.ink}" d="
       M0 0 H${W} V${H} H0 Z
       M${LIMITES.x0} ${LIMITES.y0} H${LIMITES.x1} V${LIMITES.y1} H${LIMITES.x0} Z"/>`
-  s += `<rect x="${puertaPpal.x0}" y="${H - WALL - 0.01}" width="${puertaPpal.x1 - puertaPpal.x0}" height="${WALL + 0.02}" fill="${P.paper}"/>`
-  s += `<rect x="${puertaServ.x0}" y="-0.01" width="${puertaServ.x1 - puertaServ.x0}" height="${WALL + 0.02}" fill="${P.paper}"/>`
-
-  // puerta principal de doble hoja, abriendo hacia adentro
-  const yD = H - WALL
-  s += `<g stroke="${P.ink}" fill="none" stroke-width="0.035">
-      <path d="M${puertaPpal.x0} ${yD} L${puertaPpal.x0} ${yD - 0.9}"/>
-      <path d="M${puertaPpal.x0} ${yD - 0.9} A0.9 0.9 0 0 1 ${puertaPpal.x0 + 0.9} ${yD}" stroke-dasharray="0.14 0.1" opacity=".6"/>
-      <path d="M${puertaPpal.x1} ${yD} L${puertaPpal.x1} ${yD - 0.9}"/>
-      <path d="M${puertaPpal.x1} ${yD - 0.9} A0.9 0.9 0 0 0 ${puertaPpal.x1 - 0.9} ${yD}" stroke-dasharray="0.14 0.1" opacity=".6"/>
-    </g>`
-  s += `<g stroke="${P.ink}" fill="none" stroke-width="0.035">
-      <path d="M${puertaServ.x0} ${WALL} L${puertaServ.x0} ${WALL + 0.9}"/>
-      <path d="M${puertaServ.x0} ${WALL + 0.9} A0.9 0.9 0 0 0 ${puertaServ.x0 + 0.9} ${WALL}" stroke-dasharray="0.14 0.1" opacity=".6"/>
-    </g>`
-
-  // rótulos de acceso
-  s += `<text x="4.5" y="${H - 1.28}" text-anchor="middle" font-size="0.26" font-weight="600" font-family="${F_ROT}"
-        letter-spacing="0.014" fill="${P.accent}" paint-order="stroke" stroke="${P.paper}" stroke-width="0.07">ACCESO PRINCIPAL</text>`
-  s += `<text x="4.5" y="${H - 1}" text-anchor="middle" font-size="0.2" font-family="${F_NUM}" fill="${P.ink3}"
-        paint-order="stroke" stroke="${P.paper}" stroke-width="0.06">1,80 m · doble hoja</text>`
-  s += `<text x="${(puertaServ.x0 + puertaServ.x1) / 2}" y="${WALL + 1.2}" text-anchor="middle" font-size="0.19"
-        font-family="${F_ROT}" fill="${P.ink3}" paint-order="stroke" stroke="${P.paper}" stroke-width="0.06">ACCESO DE SERVICIO 0,90</text>`
+  // Vanos: se borra el poché del muro donde va cada puerta. Las hojas y el
+  // arco de barrido se dibujan junto al objeto puerta, no acá, para que
+  // acompañen a la puerta cuando el admin la mueve.
+  vanos.forEach((v) => {
+    const m = MUROS[v.muro] || MUROS.sur
+    if (m.eje === 'h') {
+      s += `<rect x="${v.x - v.w / 2}" y="${m.fijo - WALL / 2 - 0.01}" width="${v.w}" height="${WALL + 0.02}" fill="${P.paper}"/>`
+    } else {
+      s += `<rect x="${m.fijo - WALL / 2 - 0.01}" y="${v.y - v.w / 2}" width="${WALL + 0.02}" height="${v.w}" fill="${P.paper}"/>`
+    }
+  })
 
   // cotas exteriores
   if (show.dims) {
@@ -415,6 +485,28 @@ function cuerpo(it) {
       return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.03"/>
               <rect x="${x}" y="${y}" width="${w}" height="${h * 0.28}" fill="url(#gSteel)" stroke="${P.steelLine}" stroke-width="0.025"/>
               <line x1="${x + 0.06}" y1="${y + h - 0.07}" x2="${x + w - 0.06}" y2="${y + h - 0.07}" stroke="${P.woodLine}" stroke-width="0.02" opacity=".7"/>`
+    case 'puerta': {
+      // Marco local: X corre a lo largo del muro, +Y apunta hacia adentro.
+      const hojas = it.hojas === 2 ? 2 : 1
+      const L = hojas === 2 ? w / 2 : w        // largo de cada hoja
+      const mano = it.mano === -1 ? -1 : 1
+      let g = `<rect x="${-w / 2}" y="${-h / 2}" width="${w}" height="${h}" fill="${P.paper}"/>`
+      // jambas
+      g += `<path d="M${-w / 2} ${-h / 2} V${h / 2} M${w / 2} ${-h / 2} V${h / 2}"
+              stroke="${P.ink}" stroke-width="0.03"/>`
+      const hoja = (xg, dir) => {
+        // hoja abatida hacia adentro desde la jamba xg, y su barrido punteado
+        const tip = { x: xg, y: L }
+        const cierre = { x: xg + dir * L, y: 0 }
+        const sweep = dir > 0 ? 0 : 1
+        return `<path d="M${xg} 0 L${tip.x} ${tip.y}" stroke="${P.ink}" stroke-width="0.05" fill="none"/>
+                <path d="M${tip.x} ${tip.y} A${L} ${L} 0 0 ${sweep} ${cierre.x} ${cierre.y}"
+                  stroke="${P.ink}" stroke-width="0.03" fill="none" stroke-dasharray="0.14 0.1" opacity=".65"/>`
+      }
+      if (hojas === 2) { g += hoja(-w / 2, 1); g += hoja(w / 2, -1) }
+      else { g += hoja((-w / 2) * mano, mano) }
+      return g
+    }
     case 'planta': {
       const R = Math.min(w, h) / 2
       let hojas = ''
@@ -465,6 +557,22 @@ export function svgLabel(it, show) {
     ? `Ø${fmt(Math.min(1.1, it.w * 0.5))} · 5 SILLAS`
     : `${fmt(it.w)} × ${fmt(it.h)}`
 
+  // El acceso rotula hacia el interior del recinto, siempre horizontal.
+  if (s.kind === 'puerta') {
+    const m = MUROS[it.muro] || MUROS.sur
+    const dentro = { norte: [0, 1], sur: [0, -1], oeste: [1, 0], este: [-1, 0] }[it.muro] || [0, -1]
+    const L = (it.hojas === 2 ? it.w / 2 : it.w) + 0.42
+    const lx = it.x + dentro[0] * L
+    const ly = it.y + dentro[1] * L
+    const detalle = `${fmt(it.w)} m · ${it.hojas === 2 ? 'doble hoja' : 'una hoja'}`
+    return `<g pointer-events="none">
+      <text x="${lx}" y="${ly}" text-anchor="middle" font-size="0.24" font-weight="600" font-family="${F_ROT}"
+        letter-spacing="0.014" fill="${P.accent}" paint-order="stroke" stroke="${P.paper}" stroke-width="0.075">${name}</text>
+      <text x="${lx}" y="${ly + 0.26}" text-anchor="middle" font-size="0.19" font-family="${F_NUM}"
+        fill="${P.ink3}" paint-order="stroke" stroke="${P.paper}" stroke-width="0.065">${detalle}</text>
+    </g>`
+  }
+
   // Las mesas llevan el rótulo siempre horizontal, debajo del conjunto.
   if (s.kind === 'mesa') {
     const y = it.y + it.w / 2 + 0.32
@@ -512,6 +620,9 @@ export function svgLabel(it, show) {
 
 export function svgSeleccion(it) {
   if (!it) return ''
+  // El giro de una puerta lo define el muro, así que no lleva manija de giro:
+  // se mueve arrastrándola de muro en muro y se ensancha por las esquinas.
+  const esPuerta = SPECS[it.type] && SPECS[it.type].kind === 'puerta'
   const hx = it.w / 2
   const hy = it.h / 2
   const hs = 0.2
@@ -522,10 +633,11 @@ export function svgSeleccion(it) {
       x="${c[0] * hx - hs / 2}" y="${c[1] * hy - hs / 2}" width="${hs}" height="${hs}"
       fill="${P.paper}" stroke="${P.accent}" stroke-width="0.035"/>`
   })
+  const alto = esPuerta ? Math.max(it.h, 0.34) : it.h
   return `<g transform="translate(${it.x},${it.y}) rotate(${it.rot})">
-    <rect x="${-hx}" y="${-hy}" width="${it.w}" height="${it.h}" fill="none" stroke="${P.accent}" stroke-width="0.035" stroke-dasharray="0.16 0.12"/>
-    <line x1="0" y1="${-hy}" x2="0" y2="${-hy - 0.55}" stroke="${P.accent}" stroke-width="0.03"/>
-    <circle class="pl-handle" data-handle="rot" cx="0" cy="${-hy - 0.55}" r="0.16" fill="${P.accent}" stroke="${P.paper}" stroke-width="0.04"/>
+    <rect x="${-hx}" y="${-alto / 2}" width="${it.w}" height="${alto}" fill="none" stroke="${P.accent}" stroke-width="0.035" stroke-dasharray="0.16 0.12"/>
+    ${esPuerta ? '' : `<line x1="0" y1="${-hy}" x2="0" y2="${-hy - 0.55}" stroke="${P.accent}" stroke-width="0.03"/>
+    <circle class="pl-handle" data-handle="rot" cx="0" cy="${-hy - 0.55}" r="0.16" fill="${P.accent}" stroke="${P.paper}" stroke-width="0.04"/>`}
     ${handles}
   </g>`
 }
@@ -536,7 +648,18 @@ export function sanear(datos) {
   if (!Array.isArray(datos) || datos.length === 0) return layoutInicial()
   const limpio = datos
     .filter((d) => d && SPECS[d.type])
-    .map((d) => clampItem({
+    .map((d) => clampItem(SPECS[d.type].kind === 'puerta' ? {
+      id: d.id || nuevoId(),
+      type: d.type,
+      muro: MUROS[d.muro] ? d.muro : 'sur',
+      corrimiento: Number(d.corrimiento) || 4.5,
+      x: 0, y: 0, rot: 0,
+      w: Math.max(0.6, Number(d.w) || SPECS[d.type].w),
+      h: RECINTO.WALL,
+      hojas: d.hojas === 2 ? 2 : 1,
+      mano: d.mano === -1 ? -1 : 1,
+      label: String(d.label || SPECS[d.type].label)
+    } : {
       id: d.id || nuevoId(),
       type: d.type,
       x: Number(d.x) || 0,
@@ -546,5 +669,14 @@ export function sanear(datos) {
       rot: Number(d.rot) || 0,
       label: String(d.label || SPECS[d.type].label)
     }))
-  return limpio.length ? limpio : layoutInicial()
+  if (!limpio.length) return layoutInicial()
+  // Un layout guardado antes de que las puertas fueran objetos no las trae:
+  // se le reponen los accesos por defecto para que el plano no quede sin
+  // entrada. La UI impide borrar el último acceso, así que esto solo se
+  // dispara con datos viejos, nunca porque el admin los haya eliminado.
+  if (!limpio.some((d) => SPECS[d.type].kind === 'puerta')) {
+    limpio.push(mkPuerta('puertaDoble', 'sur', 4.5))
+    limpio.push(mkPuerta('puertaSimple', 'norte', 4.1))
+  }
+  return limpio
 }

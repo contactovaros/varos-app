@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase.js'
 import {
   SPECS, REQUERIDOS, COMPLEMENTARIOS, PALETA_AGREGAR, VIEWBOX, PPM,
   layoutInicial, sanear, clampItem, halfExtents, rotar, snap, contar, crearItem,
-  svgDefs, svgShell, svgItem, svgLabel, svgSeleccion
+  svgDefs, svgShell, svgItem, svgLabel, svgSeleccion, MUROS, pegarPuertaA, ajustarPuerta
 } from '../lib/planoTerraza.js'
 
 const PLANO_ID = 'terraza-centenario'
@@ -184,8 +184,10 @@ export default function AdminPlano() {
       const n = { ...it }
 
       if (d.mode === 'move') {
-        n.x = snap(o.x + (p.x - d.start.x), paso)
-        n.y = snap(o.y + (p.y - d.start.y), paso)
+        const destino = { x: snap(o.x + (p.x - d.start.x), paso), y: snap(o.y + (p.y - d.start.y), paso) }
+        if (SPECS[it.type].kind === 'puerta') return pegarPuertaA(n, destino)
+        n.x = destino.x
+        n.y = destino.y
       } else if (d.mode === 'rot') {
         const a0 = Math.atan2(d.start.y - o.y, d.start.x - o.x)
         const a1 = Math.atan2(p.y - o.y, p.x - o.x)
@@ -209,6 +211,12 @@ export default function AdminPlano() {
         const cl = rotar({ x: (sx * nw) / 2, y: (sy * nh) / 2 }, o.rot)
         n.x = ancla.x + cl.x
         n.y = ancla.y + cl.y
+        // En una puerta la esquina solo ensancha el vano; el corrimiento se
+        // recalcula para que crezca desde el borde que se está arrastrando.
+        if (SPECS[it.type].kind === 'puerta') {
+          n.corrimiento = MUROS[n.muro].eje === 'h' ? n.x : n.y
+          return ajustarPuerta(n)
+        }
       }
       return clampItem(n)
     }))
@@ -261,6 +269,11 @@ export default function AdminPlano() {
 
   function eliminar() {
     if (!sel) return
+    // Un plano sin ninguna entrada no es un plano: se impide borrar el último.
+    if (SPECS[sel.type].kind === 'puerta' && puertas.length <= 1) {
+      mostrarAviso('El plano necesita al menos un acceso')
+      return
+    }
     guardarHistorial()
     aplicar(items.filter((i) => i.id !== sel.id))
     setSelId(null)
@@ -272,6 +285,19 @@ export default function AdminPlano() {
     const copia = clampItem({ ...sel, id: 'e' + Date.now().toString(36), x: sel.x + 0.45, y: sel.y + 0.45 })
     aplicar([...items, copia])
     setSelId(copia.id)
+  }
+
+  // Las puertas se editan por sus propios campos (muro, corrimiento, hojas):
+  // x/y/rot salen de ahí, no al revés.
+  function editarPuerta(cambios) {
+    guardarHistorial()
+    aplicar(items.map((i) => {
+      if (i.id !== sel.id) return i
+      const n = { ...i, ...cambios }
+      if (cambios.w !== undefined && Number.isNaN(cambios.w)) return i
+      if (cambios.corrimiento !== undefined && Number.isNaN(cambios.corrimiento)) return i
+      return ajustarPuerta(n)
+    }))
   }
 
   function editarSel(campo, valor) {
@@ -290,10 +316,11 @@ export default function AdminPlano() {
   }
 
   // ------------------------------------------------------------ dibujo
-  const base = useMemo(() => svgDefs() + svgShell(show), [show])
+  const puertas = useMemo(() => items.filter((i) => SPECS[i.type].kind === 'puerta'), [items])
   const markup = useMemo(
-    () => base + items.map(svgItem).join('') + items.map((i) => svgLabel(i, show)).join('') + svgSeleccion(sel),
-    [base, items, show, sel]
+    () => svgDefs() + svgShell(show, puertas) + items.map(svgItem).join('') +
+      items.map((i) => svgLabel(i, show)).join('') + svgSeleccion(sel),
+    [items, puertas, show, sel]
   )
 
   const urlPublica = typeof window !== 'undefined'
@@ -451,6 +478,43 @@ export default function AdminPlano() {
             ) : (
               <>
                 <div className="mb-3 font-head text-sm font-semibold">{sel.label}</div>
+
+                {SPECS[sel.type].kind === 'puerta' ? (
+                  <div key={sel.id} className="space-y-2">
+                    <label className="flex flex-col gap-1">
+                      <span className="font-mono text-[9px] uppercase tracking-[0.15em] text-paper/35">Muro</span>
+                      <select
+                        value={sel.muro}
+                        onChange={(e) => editarPuerta({ muro: e.target.value })}
+                        className="w-full rounded-lg border border-white/10 bg-ink px-2 py-1.5 text-xs text-paper focus:border-ember focus:outline-none"
+                      >
+                        {Object.keys(MUROS).map((m) => (
+                          <option key={m} value={m}>{MUROS[m].nombre}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Campo label="Ancho vano (m)" value={sel.w.toFixed(2)} onChange={(v) => editarPuerta({ w: parseFloat(v) })} />
+                      <Campo label="Corrimiento (m)" value={sel.corrimiento.toFixed(2)} onChange={(v) => editarPuerta({ corrimiento: parseFloat(v) })} />
+                      <Campo label="Rótulo" tipo="text" value={sel.label} onChange={(v) => editarPuerta({ label: v })} />
+                    </div>
+                    <div className="flex gap-2">
+                      <BtnChico onClick={() => editarPuerta({ hojas: sel.hojas === 2 ? 1 : 2 })}>
+                        {sel.hojas === 2 ? 'Pasar a una hoja' : 'Pasar a doble hoja'}
+                      </BtnChico>
+                      {sel.hojas === 1 && (
+                        <BtnChico onClick={() => editarPuerta({ mano: sel.mano === 1 ? -1 : 1 })}>Cambiar mano</BtnChico>
+                      )}
+                    </div>
+                    <p className="text-[10px] leading-relaxed text-paper/35">
+                      Arrastra la puerta para deslizarla por el muro — si la llevas cerca de otro muro, salta a ese.
+                    </p>
+                    <div className="flex gap-2">
+                      <BtnChico onClick={eliminar} peligro>Eliminar acceso</BtnChico>
+                    </div>
+                  </div>
+                ) : (
+                <>
                 <div key={sel.id} className="grid grid-cols-2 gap-2">
                   <Campo label="X (m)" value={sel.x.toFixed(2)} onChange={(v) => editarSel('x', v)} />
                   <Campo label="Y (m)" value={sel.y.toFixed(2)} onChange={(v) => editarSel('y', v)} />
@@ -471,6 +535,8 @@ export default function AdminPlano() {
                   <BtnChico onClick={() => editarSel('rot', String((sel.rot + 90) % 360))}>Girar 90°</BtnChico>
                   <BtnChico onClick={eliminar} peligro>Eliminar</BtnChico>
                 </div>
+                </>
+                )}
               </>
             )}
           </Bloque>

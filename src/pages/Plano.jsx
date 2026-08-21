@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import {
-  VIEWBOX, PPM, sanear, svgDefs, svgShell, svgItem, svgLabel
+  VIEWBOX, PPM, SPECS, sanear, svgDefs, svgShell, svgItem, svgLabel
 } from '../lib/planoTerraza.js'
 
 // Vista pública de un plano publicado. No pide sesión: la RLS de `public.planos`
@@ -35,7 +35,8 @@ export default function Plano() {
   const markup = useMemo(() => {
     if (!plano) return ''
     const items = sanear(plano.datos)
-    return svgDefs() + svgShell(show) + items.map(svgItem).join('') +
+    const puertas = items.filter((i) => SPECS[i.type].kind === 'puerta')
+    return svgDefs() + svgShell(show, puertas) + items.map(svgItem).join('') +
       items.map((i) => svgLabel(i, show)).join('')
   }, [plano, show])
 
