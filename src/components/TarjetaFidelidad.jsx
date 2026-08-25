@@ -85,6 +85,7 @@ export function BotonRedSocial({ href, label, children }) {
 // para identificar al cliente que está por completar su tarjeta.
 export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
   const [premio, setPremio] = useState(null)
+  const [porCanjear, setPorCanjear] = useState(null)
 
   useEffect(() => {
     supabase
@@ -94,6 +95,23 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
       .single()
       .then(({ data }) => setPremio(data))
   }, [])
+
+  // Premio ganado y todavía no entregado. Antes esto solo se anunciaba en la
+  // pantalla del check-in, en el instante del escaneo: si el cliente la cerraba
+  // no volvía nunca, y su tarjeta ya mostraba 0 estrellas (el contador se
+  // reinicia al ganar). Quedaba sin ninguna constancia de que había ganado.
+  useEffect(() => {
+    if (!customer?.id) return
+    supabase
+      .from('premios_ganados')
+      .select('id, producto, fecha_ganado')
+      .eq('customer_id', customer.id)
+      .eq('canjeado', false)
+      .order('fecha_ganado', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+      .then(({ data }) => setPorCanjear(data))
+  }, [customer?.id, estrellas])
 
   const primerNombre = customer.full_name?.split(' ')[0] ?? ''
   const cumpleanos = formatearCumpleanos(customer.birthday)
@@ -132,6 +150,18 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
           </div>
           <p className="text-paper text-sm">{estrellas} de 5 visitas</p>
           {mensajePremio && <p className="text-gold/80 text-xs mb-1">{mensajePremio}</p>}
+
+          {/* El ticket queda acá hasta que el garzón marque la entrega. Es la
+              constancia que antes se perdía al cerrar la pantalla del check-in. */}
+          {porCanjear && (
+            <div className="mt-3 rounded-xl border border-dashed border-gold/70 bg-gold/10 px-3 py-3">
+              <p className="font-head text-[10px] tracking-[0.2em] uppercase text-gold/80">Tienes un premio esperando</p>
+              <p className="font-head font-bold text-base text-gold mt-1 leading-tight">
+                {premio?.visible === false ? 'Pregúntale a tu garzón cuál es' : porCanjear.producto}
+              </p>
+              <p className="text-paper/50 text-[10px] mt-1.5">Muéstrale esta tarjeta para retirarlo</p>
+            </div>
+          )}
 
           {mensaje && (
             <div className="border-t border-gold/20 pt-3 mt-2">

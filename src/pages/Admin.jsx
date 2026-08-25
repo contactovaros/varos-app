@@ -4,6 +4,11 @@ import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 
+function formatFechaCorta(iso) {
+  if (!iso) return ''
+  return new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
+}
+
 function Seccion({ titulo, subtitulo, children }) {
   return (
     <details className="group bg-inkSoft border border-white/5 rounded-2xl mb-4">
@@ -27,6 +32,7 @@ export default function Admin() {
   const [menuItems, setMenuItems] = useState([])
   const [promotions, setPromotions] = useState([])
   const [rule, setRule] = useState(100)
+  const [premiosGanados, setPremiosGanados] = useState([])
   const [premioEstrellas, setPremioEstrellas] = useState('')
   const [premioVisible, setPremioVisible] = useState(true)
   const [savingPremio, setSavingPremio] = useState(false)
@@ -40,7 +46,7 @@ export default function Admin() {
   const [newAlert, setNewAlert] = useState({ titulo: '', mensaje: '', lat: '', lng: '' })
 
   async function loadAll() {
-    const [c, r, rd, mi, pr, promo, premio, alerts] = await Promise.all([
+    const [c, r, rd, mi, pr, promo, premio, alerts, ganados] = await Promise.all([
       supabase.from('customers').select('*').order('points', { ascending: false }).limit(30),
       supabase.from('rewards').select('*').order('cost_points'),
       supabase.from('redemptions').select('*, customers(full_name), rewards(name)').order('created_at', { ascending: false }).limit(20),
@@ -48,7 +54,16 @@ export default function Admin() {
       supabase.from('points_rules').select('*').eq('id', 1).single(),
       supabase.from('promotions').select('*').order('starts_at', { ascending: false }).limit(10),
       supabase.from('config_recompensa_estrellas').select('*').eq('id', 1).single(),
-      supabase.from('location_alerts').select('*').order('created_at', { ascending: false })
+      supabase.from('location_alerts').select('*').order('created_at', { ascending: false }),
+      // Premios de 5 estrellas, los pendientes primero. Sin esto la tabla se
+      // escribía sola y nadie podía verla: el aviso de que alguien ganó vivía
+      // solo en la pantalla del check-in y se perdía al cerrarla.
+      supabase
+        .from('premios_ganados')
+        .select('*, customers(full_name, member_number)')
+        .order('canjeado')
+        .order('fecha_ganado', { ascending: false })
+        .limit(50)
     ])
     setCustomers(c.data ?? [])
     setRewards(r.data ?? [])
@@ -59,6 +74,23 @@ export default function Admin() {
     setPremioEstrellas(premio.data?.producto ?? '')
     setPremioVisible(premio.data?.visible ?? true)
     setLocationAlerts(alerts.data ?? [])
+    setPremiosGanados(ganados.data ?? [])
+  }
+
+  async function entregarPremio(premio) {
+    const nombre = premio.customers?.full_name ?? 'este cliente'
+    if (!window.confirm(`¿Confirmas que le entregaste "${premio.producto}" a ${nombre}?`)) return
+    const { data, error } = await supabase.rpc('admin_entregar_premio', { p_premio_id: premio.id })
+    if (error) {
+      alert('No se pudo marcar la entrega: ' + error.message)
+      return
+    }
+    if (data === false) {
+      alert('Ese premio ya figuraba como entregado.')
+    }
+    setPremiosGanados((prev) =>
+      prev.map((p) => (p.id === premio.id ? { ...p, canjeado: true, fecha_canjeado: new Date().toISOString() } : p))
+    )
   }
 
   useEffect(() => {
@@ -79,6 +111,7 @@ export default function Admin() {
 
   const now = Date.now()
   const inactive = customers.filter((c) => c.last_visit_at && now - new Date(c.last_visit_at).getTime() > 30 * 86400000)
+  const pendientes = premiosGanados.filter((p) => !p.canjeado)
 
   async function updateRewardCost(id, cost) {
     setRewards((prev) => prev.map((r) => (r.id === id ? { ...r, cost_points: cost } : r)))
@@ -380,6 +413,37 @@ export default function Admin() {
       </Link>
 
       {/* ---- QR DE CHECK-IN DEL LOCAL (nuevo) ---- */}
+      {/* Premios pendientes: va abierto y arriba de todo, y no dentro de un
+          acordeón, porque es lo único del panel que tiene a una persona
+          esperando algo. Si no hay ninguno pendiente, desaparece. */}
+      {pendientes.length > 0 && (
+        <div className="bg-gold/10 border border-gold/40 rounded-2xl p-4 mb-4">
+          <div className="font-head font-semibold text-sm text-gold mb-0.5">
+            {pendientes.length === 1 ? 'Hay un premio por entregar' : `Hay ${pendientes.length} premios por entregar`}
+          </div>
+          <p className="text-[11px] text-paper/50 mb-3">
+            Completaron sus 5 visitas. Marca la entrega cuando se lo hayas dado.
+          </p>
+          {pendientes.map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 py-2 border-t border-gold/15 text-xs">
+              <div className="min-w-0">
+                <div className="text-paper truncate">{p.customers?.full_name ?? 'Cliente eliminado'}</div>
+                <div className="text-gold/80 truncate">{p.producto || 'Sin premio configurado'}</div>
+                <div className="text-paper/35 text-[10px]">
+                  {p.customers?.member_number} · {formatFechaCorta(p.fecha_ganado)}
+                </div>
+              </div>
+              <button
+                onClick={() => entregarPremio(p)}
+                className="shrink-0 px-3 py-2 rounded-lg font-head font-semibold text-[11px] text-ink bg-gradient-to-br from-gold to-bronze"
+              >
+                Entregado
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       <Seccion titulo="📱 QR de bienvenida del local">
         <div className="flex flex-col items-center text-center gap-3">
           <p className="text-xs text-paper/55 max-w-xs">
