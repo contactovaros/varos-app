@@ -28,6 +28,19 @@ export default {
       },
       boxShadow: {
         glow: '0 0 24px rgba(255,122,26,0.35)'
+      },
+      keyframes: {
+        // Haz de luz que cruza una superficie dorada. El barrido ocupa solo el
+        // primer tercio del ciclo y el resto es descanso: un destello continuo
+        // se lee barato, uno cada varios segundos se lee como reflejo sobre
+        // metal. El skew lo vuelve diagonal, que es como pega la luz de verdad.
+        haz: {
+          '0%': { transform: 'translateX(-220%) skewX(-18deg)' },
+          '34%, 100%': { transform: 'translateX(420%) skewX(-18deg)' }
+        }
+      },
+      animation: {
+        haz: 'haz 5s cubic-bezier(0.4, 0, 0.2, 1) infinite'
       }
     }
   },
