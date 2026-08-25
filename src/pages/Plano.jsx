@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase.js'
 import {
-  VIEWBOX, PPM, SPECS, sanear, svgDefs, svgShell, svgItem, svgLabel
+  VIEWBOX, PPM, SPECS, sanear, svgDefs, svgShell, svgItem, svgLabel,
+  setRecinto, extraerConfig, fmt
 } from '../lib/planoTerraza.js'
 
 // Vista pública de un plano publicado. No pide sesión: la RLS de `public.planos`
@@ -21,7 +22,7 @@ export default function Plano() {
       setCargando(true)
       const { data } = await supabase
         .from('planos')
-        .select('nombre, datos, publicado, actualizado_en')
+        .select('nombre, ancho, largo, datos, publicado, actualizado_en')
         .eq('id', id)
         .maybeSingle()
       if (cancelado) return
@@ -32,12 +33,19 @@ export default function Plano() {
     return () => { cancelado = true }
   }, [id])
 
-  const markup = useMemo(() => {
-    if (!plano) return ''
-    const items = sanear(plano.datos)
-    const puertas = items.filter((i) => SPECS[i.type].kind === 'puerta')
-    return svgDefs() + svgShell(show, puertas) + items.map(svgItem).join('') +
-      items.map((i) => svgLabel(i, show)).join('')
+  // El recinto viaja con el plano: cada comedor tiene su propio ancho y largo,
+  // así que hay que fijarlo ANTES de sanear y dibujar.
+  const { markup, medidas } = useMemo(() => {
+    if (!plano) return { markup: '', medidas: null }
+    const cfg = extraerConfig(plano.datos)
+    const med = setRecinto({ ancho: plano.ancho, largo: plano.largo, corte: cfg.corte })
+    const items = sanear(cfg.items, [])
+    const puertas = items.filter((i) => SPECS[i.type] && SPECS[i.type].kind === 'puerta')
+    return {
+      markup: svgDefs() + svgShell(show, puertas, items) + items.map(svgItem).join('') +
+        items.map((i) => svgLabel(i, show)).join(''),
+      medidas: med
+    }
   }, [plano, show])
 
   if (cargando) {
@@ -70,7 +78,8 @@ export default function Plano() {
           <div className="font-mono text-[10px] uppercase tracking-[0.3em] text-ember">Varo's · Arquitectura</div>
           <h1 className="mt-1 font-head text-2xl font-semibold text-paper">{plano.nombre}</h1>
           <p className="mt-1 font-mono text-[11px] text-paper/40">
-            Planta general · 9,00 × 24,00 m · 216 m²{fecha ? ` · actualizado ${fecha}` : ''}
+            Planta general{medidas ? ` · ${fmt(medidas.ancho)} × ${fmt(medidas.largo)} m · ${fmt(medidas.ancho * medidas.largo)} m²` : ''}
+            {fecha ? ` · actualizado ${fecha}` : ''}
           </p>
           {!plano.publicado && (
             <p className="mt-3 inline-block rounded-lg border border-gold/40 bg-gold/10 px-2.5 py-1 text-[11px] text-gold">

@@ -11,17 +11,68 @@
 // para que las dos pantallas dibujen exactamente lo mismo.
 // =============================================================================
 
-export const RECINTO = { W: 9, H: 24, WALL: 0.15, COCINA_FIN: 6.9 }
+// El recinto ya NO es fijo: el admin cambia ancho y largo desde el editor.
+// RECINTO, LIMITES, MUROS y VIEWBOX se MUTAN en su lugar (setRecinto) en vez de
+// reasignarse, para que todo lo que ya los tiene importados —flujoOperativo.js
+// y las tres pantallas— siga leyendo valores vivos sin recibir el recinto por
+// parámetro en cada llamada. La llamada inicial a setRecinto está al final del
+// archivo, después de que MUROS exista.
+export const MEDIDAS = { min: 3, max: 60 }
 
-export const LIMITES = {
-  x0: RECINTO.WALL,
-  y0: RECINTO.WALL,
-  x1: RECINTO.W - RECINTO.WALL,
-  y1: RECINTO.H - RECINTO.WALL
+export const RECINTO = { W: 9, H: 24, WALL: 0.15, COCINA_FIN: 6.9 }
+export const LIMITES = { x0: 0, y0: 0, x1: 0, y1: 0 }
+export const VIEWBOX = { x: -1.55, y: -1.35, w: 0, h: 0 }
+export const PPM = 30 // píxeles por metro a zoom 1
+
+const acotar = (v, min, max) => Math.min(Math.max(v, min), max)
+
+function recalcularRecinto() {
+  LIMITES.x0 = RECINTO.WALL
+  LIMITES.y0 = RECINTO.WALL
+  LIMITES.x1 = RECINTO.W - RECINTO.WALL
+  LIMITES.y1 = RECINTO.H - RECINTO.WALL
+  MUROS.norte.fijo = RECINTO.WALL / 2
+  MUROS.sur.fijo = RECINTO.H - RECINTO.WALL / 2
+  MUROS.oeste.fijo = RECINTO.WALL / 2
+  MUROS.este.fijo = RECINTO.W - RECINTO.WALL / 2
+  // margen fijo alrededor: cotas a la izquierda y arriba, rótulos de zona a la
+  // derecha. Los mismos números que tenía el recinto original de 9 × 24.
+  VIEWBOX.w = RECINTO.W + 3.15
+  VIEWBOX.h = RECINTO.H + 2.4
 }
 
-export const VIEWBOX = { x: -1.55, y: -1.35, w: 12.15, h: 26.4 }
-export const PPM = 30 // píxeles por metro a zoom 1
+// `corte` es la línea que separa cocina de salón. En 0 el plano no tiene zona
+// de cocina: es un comedor entero, que es el caso normal de un salón nuevo.
+export function setRecinto(cfg) {
+  const c = cfg || {}
+  const num = (v) => (v === undefined || v === null || v === '' || Number.isNaN(Number(v)) ? null : Number(v))
+  const ancho = num(c.ancho)
+  const largo = num(c.largo)
+  if (ancho !== null) RECINTO.W = acotar(ancho, MEDIDAS.min, MEDIDAS.max)
+  if (largo !== null) RECINTO.H = acotar(largo, MEDIDAS.min, MEDIDAS.max)
+  const corte = num(c.corte)
+  if (corte !== null) RECINTO.COCINA_FIN = corte < 0.5 ? 0 : acotar(corte, 1, RECINTO.H - 1)
+  else if (RECINTO.COCINA_FIN > 0) RECINTO.COCINA_FIN = acotar(RECINTO.COCINA_FIN, 1, RECINTO.H - 1)
+  recalcularRecinto()
+  return recintoActual()
+}
+
+export function recintoActual() {
+  return { ancho: RECINTO.W, largo: RECINTO.H, corte: RECINTO.COCINA_FIN }
+}
+
+// Un plano guardado antes de esta versión trae `datos` como array pelado; los
+// nuevos guardan { items, corte } para no perder la línea de zonificación.
+export function extraerConfig(datos) {
+  if (datos && !Array.isArray(datos) && typeof datos === 'object') {
+    return { items: Array.isArray(datos.items) ? datos.items : [], corte: datos.corte }
+  }
+  return { items: Array.isArray(datos) ? datos : [], corte: undefined }
+}
+
+export function empaquetar(items, corte) {
+  return { items, corte }
+}
 
 // Paleta: valores literales del design system de Varo's (tailwind.config.js).
 // El SVG no puede usar clases de Tailwind, así que van los hex a mano.
@@ -50,12 +101,32 @@ export const P = {
 const F_ROT = "'Space Grotesk', sans-serif"
 const F_NUM = "'JetBrains Mono', monospace"
 
+// `sillas` es el número de sillas que el objeto dibuja a su alrededor (el admin
+// lo cambia por objeto). `fogones` hace lo mismo con las bocas de una cocina.
+// Las medidas w × h son el mueble en sí; las sillas se dibujan por fuera y se
+// tienen en cuenta al encerrar el objeto dentro del recinto (ver clampItem).
 export const SPECS = {
-  mesa:        { label: 'MESA',              w: 2.2,  h: 2.2,  kind: 'mesa',   req: 'mesa'   },
+  mesa:        { label: 'MESA',              w: 2.2,  h: 2.2,  kind: 'mesa',   req: 'mesa', sillas: 5 },
+  mesaRedonda: { label: 'MESA REDONDA',      w: 1.1,  h: 1.1,  kind: 'mesaR',  req: 'mesa', sillas: 4 },
+  mesaCuadrada:{ label: 'MESA CUADRADA',     w: 0.8,  h: 0.8,  kind: 'mesaC',  req: 'mesa', sillas: 4 },
+  mesaRect:    { label: 'MESA 1,60 × 0,80',  w: 1.6,  h: 0.8,  kind: 'mesaC',  req: 'mesa', sillas: 6 },
+  mesaLarga:   { label: 'MESA LARGA',        w: 2.4,  h: 0.9,  kind: 'mesaC',  req: 'mesa', sillas: 8 },
+  silla:       { label: 'SILLA',             w: 0.45, h: 0.45, kind: 'silla',  req: 'silla', out: true },
+  barra:       { label: 'BARRA',             w: 3,    h: 0.6,  kind: 'barra',  req: 'barra', sillas: 4 },
+  bar:         { label: 'BAR',               w: 2.6,  h: 1.2,  kind: 'bar',    req: 'barra' },
   visi:        { label: 'VISI COOLER',       w: 0.9,  h: 0.75, kind: 'visi',   req: 'visi'   },
   congeladora: { label: 'CONGELADORA',       w: 1.3,  h: 0.75, kind: 'cong',   req: 'cong'   },
   horno:       { label: 'HORNO',             w: 0.8,  h: 0.75, kind: 'horno',  req: 'horno'  },
-  cocina:      { label: 'COCINA 2 FOGONES',  w: 0.9,  h: 0.6,  kind: 'cocina', req: 'cocina' },
+  hornoDoble:  { label: 'HORNO DOBLE',       w: 0.9,  h: 0.95, kind: 'horno',  req: 'horno'  },
+  // Una sola familia de cocinas: cambia el número de fogones y la medida.
+  cocina:      { label: 'COCINA 2 FOGONES',  w: 0.9,  h: 0.6,  kind: 'cocina', req: 'cocina', fogones: 2 },
+  cocina1:     { label: 'COCINA 1 FOGÓN',    w: 0.5,  h: 0.6,  kind: 'cocina', req: 'cocina', fogones: 1 },
+  cocina2:     { label: 'COCINA 2 FOGONES',  w: 0.9,  h: 0.6,  kind: 'cocina', req: 'cocina', fogones: 2 },
+  cocina3:     { label: 'COCINA 3 FOGONES',  w: 1.2,  h: 0.6,  kind: 'cocina', req: 'cocina', fogones: 3 },
+  cocina4:     { label: 'COCINA 4 FOGONES',  w: 0.9,  h: 0.8,  kind: 'cocina', req: 'cocina', fogones: 4 },
+  cocina5:     { label: 'COCINA 5 FOGONES',  w: 1.2,  h: 0.8,  kind: 'cocina', req: 'cocina', fogones: 5 },
+  cocina6:     { label: 'COCINA 6 FOGONES',  w: 1.2,  h: 0.8,  kind: 'cocina', req: 'cocina', fogones: 6 },
+  meson:       { label: 'MESÓN',             w: 2,    h: 0.7,  kind: 'meson',  req: 'meson'  },
   meson300:    { label: 'MESÓN 3,00 × 0,50', w: 3,    h: 0.5,  kind: 'meson',  req: 'm300'   },
   meson180:    { label: 'MESÓN 1,80 × 0,40', w: 1.8,  h: 0.4,  kind: 'meson',  req: 'm180'   },
   mesatrabajo: { label: 'MESA 1,50 × 0,70',  w: 1.5,  h: 0.7,  kind: 'meson',  req: 'mtrab'  },
@@ -97,24 +168,75 @@ export const COMPLEMENTARIOS = [
   { req: 'puerta', name: 'Accesos (puertas)' },
   { req: 'lava',   name: 'Lavaplatos 0,50' },
   { req: 'desp',   name: 'Barra de despacho' },
+  { req: 'barra',  name: 'Barras y bar' },
+  { req: 'meson',  name: 'Mesones libres' },
   { req: 'maceta', name: 'Maceta / vegetación' }
 ]
 
 export const PALETA_AGREGAR = [
-  { cat: 'Zona de clientes', list: [['mesa', 'Mesa + quitasol', 'Ø2,20 · 5 sillas'], ['maceta', 'Vegetación', 'Ø0,60']] },
+  { cat: 'Mesas', list: [
+    ['mesa', 'Mesa + quitasol', 'Ø2,20 · 5 sillas'],
+    ['mesaRedonda', 'Mesa redonda', 'Ø1,10 · 4 sillas'],
+    ['mesaCuadrada', 'Mesa cuadrada', '0,80 × 0,80 · 4'],
+    ['mesaRect', 'Mesa rectangular', '1,60 × 0,80 · 6'],
+    ['mesaLarga', 'Mesa larga', '2,40 × 0,90 · 8'],
+    ['silla', 'Silla suelta', '0,45 × 0,45']
+  ] },
+  { cat: 'Bar y barras', list: [
+    ['barra', 'Barra recta', '3,00 × 0,60'],
+    ['bar', 'Bar (isla)', '2,60 × 1,20'],
+    ['despacho', 'Barra despacho', '3,60 × 0,60']
+  ] },
+  { cat: 'Cocción', list: [
+    ['cocina1', 'Cocina 1 fogón', '0,50 × 0,60'],
+    ['cocina2', 'Cocina 2 fogones', '0,90 × 0,60'],
+    ['cocina3', 'Cocina 3 fogones', '1,20 × 0,60'],
+    ['cocina4', 'Cocina 4 fogones', '0,90 × 0,80'],
+    ['cocina5', 'Cocina 5 fogones', '1,20 × 0,80'],
+    ['cocina6', 'Cocina 6 fogones', '1,20 × 0,80'],
+    ['horno', 'Horno', '0,80 × 0,75'],
+    ['hornoDoble', 'Horno doble', '0,90 × 0,95']
+  ] },
   { cat: 'Frío', list: [['visi', 'Visi Cooler', '0,90 × 0,75'], ['congeladora', 'Congeladora', '1,30 × 0,75']] },
-  { cat: 'Cocción', list: [['horno', 'Horno', '0,80 × 0,75'], ['cocina', 'Cocina 2 fogones', '0,90 × 0,60']] },
-  { cat: 'Mesones y trabajo', list: [['meson300', 'Mesón 3,00', '3,00 × 0,50'], ['meson180', 'Mesón 1,80', '1,80 × 0,40'], ['mesatrabajo', 'Mesa de trabajo', '1,50 × 0,70'], ['lavaplatos', 'Lavaplatos', '0,50 × 0,50']] },
-  { cat: 'Almacenamiento y despacho', list: [['repisa', 'Repisa', '1,00 × 0,50'], ['despacho', 'Barra despacho', '3,60 × 0,60']] },
+  { cat: 'Mesones y trabajo', list: [
+    ['meson', 'Mesón libre', '2,00 × 0,70'],
+    ['meson300', 'Mesón 3,00', '3,00 × 0,50'],
+    ['meson180', 'Mesón 1,80', '1,80 × 0,40'],
+    ['mesatrabajo', 'Mesa de trabajo', '1,50 × 0,70'],
+    ['lavaplatos', 'Lavaplatos', '0,50 × 0,50']
+  ] },
+  { cat: 'Almacenamiento y verde', list: [['repisa', 'Repisa', '1,00 × 0,50'], ['maceta', 'Vegetación', 'Ø0,60']] },
   { cat: 'Accesos', list: [['puertaDoble', 'Puerta doble', '1,80 m'], ['puertaSimple', 'Puerta simple', '0,90 m']] }
 ]
+
+// Todo lo que se puede rodear de sillas. El resto ignora el campo.
+export const CON_SILLAS = ['mesa', 'mesaR', 'mesaC', 'barra']
+
+export function sillasDe(it) {
+  const s = SPECS[it.type]
+  if (!s) return 0
+  if (s.kind === 'silla') return 1
+  if (!CON_SILLAS.includes(s.kind)) return 0
+  const n = it.sillas === undefined || it.sillas === null ? s.sillas : it.sillas
+  return Math.max(0, Math.min(24, Math.round(Number(n) || 0)))
+}
+
+export function fogonesDe(it) {
+  const s = SPECS[it.type]
+  if (!s || s.kind !== 'cocina') return 0
+  const n = it.fogones === undefined || it.fogones === null ? s.fogones : it.fogones
+  return Math.max(1, Math.min(6, Math.round(Number(n) || 1)))
+}
 
 let contador = 1
 export function nuevoId() { return 'e' + (contador++) + '_' + Math.random().toString(36).slice(2, 6) }
 
 function mk(type, x, y, rot, label) {
   const s = SPECS[type]
-  return { id: nuevoId(), type, x, y, w: s.w, h: s.h, rot: rot || 0, label: label || s.label }
+  const it = { id: nuevoId(), type, x, y, w: s.w, h: s.h, rot: rot || 0, label: label || s.label }
+  if (s.sillas !== undefined) it.sillas = s.sillas
+  if (s.fogones !== undefined) it.fogones = s.fogones
+  return it
 }
 
 // Una puerta se define por el muro donde vive y su corrimiento a lo largo de
@@ -182,6 +304,11 @@ export function layoutInicial() {
   return it
 }
 
+// Un comedor nuevo arranca vacío: sólo el acceso, para dibujarlo desde cero.
+export function layoutVacio() {
+  return [mkPuerta('puertaDoble', 'sur', RECINTO.W / 2)]
+}
+
 // ---------------------------------------------------------------- geometría
 const rad = (d) => (d * Math.PI) / 180
 export const fmt = (v) => Number(v).toFixed(2).replace('.', ',')
@@ -224,16 +351,29 @@ export function pegarPuertaA(p, punto) {
   return ajustarPuerta(p)
 }
 
+// Las sillas de una mesa nueva se dibujan POR FUERA del mueble (a diferencia de
+// la mesa con quitasol, donde w es el conjunto entero). Para que no queden
+// metidas dentro del muro, el encierro usa la caja del mueble más esa banda.
+export const BANDA_SILLA = 0.52
+const KINDS_BANDA = ['mesaR', 'mesaC', 'barra']
+
+export function bandaDe(it) {
+  const s = SPECS[it.type]
+  if (!s || !KINDS_BANDA.includes(s.kind)) return 0
+  return sillasDe(it) > 0 ? BANDA_SILLA : 0
+}
+
 export function clampItem(it) {
   if (SPECS[it.type] && SPECS[it.type].kind === 'puerta') return ajustarPuerta(it)
   const roomW = LIMITES.x1 - LIMITES.x0
   const roomH = LIMITES.y1 - LIMITES.y0
-  let { hw, hh } = halfExtents(it.w, it.h, it.rot)
+  const banda = bandaDe(it)
+  let { hw, hh } = halfExtents(it.w + 2 * banda, it.h + 2 * banda, it.rot)
   if (hw * 2 > roomW || hh * 2 > roomH) {
     const k = Math.min(roomW / (hw * 2), roomH / (hh * 2))
-    it.w *= k
-    it.h *= k
-    const he = halfExtents(it.w, it.h, it.rot)
+    it.w = Math.max(0.25, it.w * k)
+    it.h = Math.max(0.25, it.h * k)
+    const he = halfExtents(it.w + 2 * banda, it.h + 2 * banda, it.rot)
     hw = he.hw
     hh = he.hh
   }
@@ -249,14 +389,32 @@ export function rotar(p, deg) {
 }
 
 export function contar(items, req) {
-  if (req === 'silla') return items.filter((i) => SPECS[i.type].req === 'mesa').length * 5
-  return items.filter((i) => SPECS[i.type].req === req).length
+  // Las sillas no son sólo objetos sueltos: cada mesa o barra aporta las suyas.
+  if (req === 'silla') return items.reduce((n, i) => n + sillasDe(i), 0)
+  return items.filter((i) => SPECS[i.type] && SPECS[i.type].req === req).length
+}
+
+// Inventario en vivo de lo que hay puesto, agrupado por tipo. Es lo que ve el
+// admin ahora que el plano ya no responde a un programa fijo.
+export function inventario(items) {
+  const filas = []
+  const porTipo = {}
+  items.forEach((i) => {
+    if (!SPECS[i.type]) return
+    if (!porTipo[i.type]) { porTipo[i.type] = { type: i.type, name: SPECS[i.type].label, n: 0 }; filas.push(porTipo[i.type]) }
+    porTipo[i.type].n++
+  })
+  return filas.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name))
 }
 
 export function buscarHueco(items, type) {
   const s = SPECS[type]
-  const enCocina = ['visi', 'congeladora', 'horno', 'cocina', 'meson300', 'meson180', 'mesatrabajo', 'repisa', 'lavaplatos'].includes(type)
-  const base = enCocina ? { x: 4.5, y: 3.6 } : { x: 4.5, y: 15 }
+  const enCocina = ['visi', 'congeladora', 'horno', 'hornoDoble', 'cocina', 'cocina1', 'cocina2', 'cocina3',
+    'cocina4', 'cocina5', 'cocina6', 'meson', 'meson300', 'meson180', 'mesatrabajo', 'repisa', 'lavaplatos'].includes(type)
+  const cocina = RECINTO.COCINA_FIN > 0
+  const base = enCocina && cocina
+    ? { x: RECINTO.W / 2, y: RECINTO.COCINA_FIN / 2 }
+    : { x: RECINTO.W / 2, y: cocina ? (RECINTO.COCINA_FIN + RECINTO.H) / 2 : RECINTO.H / 2 }
   for (let k = 0; k < 160; k++) {
     const a = k * 0.9
     const r = 0.35 * Math.sqrt(k) * 1.3
@@ -284,11 +442,17 @@ export function crearItem(items, type) {
         if (!choca) return mkPuerta(type, muro, c)
       }
     }
-    return mkPuerta(type, 'sur', 4.5)
+    return mkPuerta(type, 'sur', RECINTO.W / 2)
   }
   const p = buscarHueco(items, type)
   const it = mk(type, p.x, p.y, 0)
-  if (type === 'mesa') it.label = 'MESA ' + String(items.filter((i) => i.type === 'mesa').length + 1).padStart(2, '0')
+  // Las mesas se numeran corridas entre todos los tipos de mesa, que es como
+  // las nombra el salón: MESA 01, MESA 02… sin importar si es redonda o larga.
+  if (SPECS[type].req === 'mesa') {
+    const n = items.filter((i) => SPECS[i.type] && SPECS[i.type].req === 'mesa').length + 1
+    it.label = 'MESA ' + String(n).padStart(2, '0')
+  }
+  if (type === 'silla') it.label = 'SILLA'
   if (type === 'visi') it.label = 'VISI COOLER ' + (items.filter((i) => i.type === 'visi').length + 1)
   if (type === 'repisa') it.label = 'REPISA ' + (items.filter((i) => i.type === 'repisa').length + 1)
   return clampItem(it)
@@ -340,21 +504,31 @@ function cota(x1, y1, x2, y2, text) {
     ${label}</g>`
 }
 
-export function svgShell(show, puertas) {
-  const { W, H, WALL, COCINA_FIN } = RECINTO
+export function svgShell(show, puertas, items) {
+  const { W, H, WALL } = RECINTO
+  // El corte cocina/salón puede no existir: entonces el recinto es un comedor
+  // entero, sin línea de zonificación ni piso de cocina.
+  const COCINA_FIN = RECINTO.COCINA_FIN > 0 ? Math.min(RECINTO.COCINA_FIN, LIMITES.y1) : 0
+  const hayCocina = COCINA_FIN > LIMITES.y0
   const vanos = puertas || []
+  const lista = items || []
   let s = ''
 
   // pisos
-  s += `<rect x="${LIMITES.x0}" y="${LIMITES.y0}" width="${LIMITES.x1 - LIMITES.x0}" height="${COCINA_FIN - LIMITES.y0}" fill="url(#pTile)"/>`
-  s += `<rect x="${LIMITES.x0}" y="${COCINA_FIN}" width="${LIMITES.x1 - LIMITES.x0}" height="${LIMITES.y1 - COCINA_FIN}" fill="url(#pDeck)"/>`
+  if (hayCocina) {
+    s += `<rect x="${LIMITES.x0}" y="${LIMITES.y0}" width="${LIMITES.x1 - LIMITES.x0}" height="${COCINA_FIN - LIMITES.y0}" fill="url(#pTile)"/>`
+  }
+  const y0Deck = hayCocina ? COCINA_FIN : LIMITES.y0
+  s += `<rect x="${LIMITES.x0}" y="${y0Deck}" width="${LIMITES.x1 - LIMITES.x0}" height="${LIMITES.y1 - y0Deck}" fill="url(#pDeck)"/>`
   if (show.grid) {
     s += `<rect x="${LIMITES.x0}" y="${LIMITES.y0}" width="${LIMITES.x1 - LIMITES.x0}" height="${LIMITES.y1 - LIMITES.y0}" fill="url(#pGrid)"/>`
   }
 
   // línea de zonificación
-  s += `<line x1="${LIMITES.x0}" y1="${COCINA_FIN}" x2="${LIMITES.x1}" y2="${COCINA_FIN}"
+  if (hayCocina) {
+    s += `<line x1="${LIMITES.x0}" y1="${COCINA_FIN}" x2="${LIMITES.x1}" y2="${COCINA_FIN}"
           stroke="${P.accent}" stroke-width="0.035" stroke-dasharray="0.28 0.18" opacity=".8"/>`
+  }
 
   // muros (poché) con los vanos recortados
   s += `<path fill-rule="evenodd" fill="${P.ink}" d="
@@ -372,14 +546,16 @@ export function svgShell(show, puertas) {
     }
   })
 
-  // cotas exteriores
+  // cotas exteriores — se calculan del recinto, que ahora es editable
   if (show.dims) {
-    s += cota(0, -0.8, W, -0.8, '9,00')
-    s += cota(-0.95, 0, -0.95, H, '24,00')
-    s += cota(-0.35, 0, -0.35, COCINA_FIN, '6,90')
-    s += cota(-0.35, COCINA_FIN, -0.35, H, '17,10')
+    s += cota(0, -0.8, W, -0.8, fmt(W))
+    s += cota(-0.95, 0, -0.95, H, fmt(H))
+    if (hayCocina) {
+      s += cota(-0.35, 0, -0.35, COCINA_FIN, fmt(COCINA_FIN))
+      s += cota(-0.35, COCINA_FIN, -0.35, H, fmt(H - COCINA_FIN))
+    }
     s += `<text x="${W / 2}" y="-0.32" text-anchor="middle" font-size="0.24" font-family="${F_ROT}"
-          letter-spacing="0.05" fill="${P.ink3}">SUPERFICIE TOTAL 216,00 m²</text>`
+          letter-spacing="0.05" fill="${P.ink3}">SUPERFICIE TOTAL ${fmt(W * H)} m²</text>`
   }
 
   // zonas rotuladas en el margen derecho
@@ -394,17 +570,76 @@ export function svgShell(show, puertas) {
         font-size="0.19" font-family="${F_ROT}" fill="${P.ink3}">${sub}</text>
     </g>`
   }
-  s += zona(0, COCINA_FIN, 'COCINA / PRODUCCIÓN', 'almacenamiento → preparación → cocción → despacho')
-  s += zona(COCINA_FIN, H, 'ÁREA DE MESAS / CLIENTES', '10 mesas · 50 sillas · pasillo central 1,80 m')
+  const nMesas = lista.filter((i) => SPECS[i.type] && SPECS[i.type].req === 'mesa').length
+  const nSillas = contar(lista, 'silla')
+  const resumen = lista.length ? `${nMesas} mesas · ${nSillas} sillas` : ''
+  if (hayCocina) {
+    s += zona(0, COCINA_FIN, 'COCINA / PRODUCCIÓN', 'almacenamiento → preparación → cocción → despacho')
+    s += zona(COCINA_FIN, H, 'ÁREA DE MESAS / CLIENTES', resumen)
+  } else {
+    s += zona(0, H, 'COMEDOR', resumen)
+  }
 
   return s
 }
 
+// Silla vista en planta: asiento + respaldo. En su marco local el respaldo
+// apunta hacia -Y, o sea "hacia afuera" de la mesa que tiene delante.
+function sillaCuerpo() {
+  return `<rect x="-0.21" y="-0.19" width="0.42" height="0.38" rx="0.09" fill="${P.paper}" stroke="${P.canopyLine}" stroke-width="0.032"/>
+    <rect x="-0.21" y="-0.29" width="0.42" height="0.11" rx="0.05" fill="${P.canopyLine}" stroke="${P.canopyLine}" stroke-width="0.028"/>`
+}
+
 function silla(a, r) {
-  return `<g transform="rotate(${a}) translate(0,${-r})">
-    <rect x="-0.21" y="-0.19" width="0.42" height="0.38" rx="0.09" fill="${P.paper}" stroke="${P.canopyLine}" stroke-width="0.032"/>
-    <rect x="-0.21" y="-0.29" width="0.42" height="0.11" rx="0.05" fill="${P.canopyLine}" stroke="${P.canopyLine}" stroke-width="0.028"/>
+  return `<g transform="rotate(${a}) translate(0,${-r})">${sillaCuerpo()}</g>`
+}
+
+function sillaEn(x, y, rot) {
+  return `<g transform="translate(${x.toFixed(3)},${y.toFixed(3)}) rotate(${rot})">${sillaCuerpo()}</g>`
+}
+
+function taburete(x, y) {
+  return `<g transform="translate(${x.toFixed(3)},${y.toFixed(3)})">
+    <circle r="0.2" fill="${P.paper}" stroke="${P.canopyLine}" stroke-width="0.032"/>
+    <circle r="0.075" fill="none" stroke="${P.canopyLine}" stroke-width="0.024" opacity=".7"/>
   </g>`
+}
+
+// Reparto de n sillas alrededor de una mesa rectangular: si es (casi) cuadrada
+// se reparten por los cuatro lados; si es alargada, van a los lados largos y
+// recién a partir de seis se ocupan las cabeceras.
+function repartoRect(w, h, n) {
+  const d = 0.3 // separación entre el borde de la mesa y el centro de la silla
+  const cuadrada = Math.abs(w - h) < 0.16
+  let arriba, abajo, izq, der
+  if (cuadrada) {
+    const base = Math.floor(n / 4)
+    const resto = n % 4
+    const lados = [base, base, base, base]
+    for (let i = 0; i < resto; i++) lados[i]++
+    ;[arriba, der, abajo, izq] = lados
+  } else if (w >= h) {
+    const cab = n >= 6 ? 2 : 0
+    const resto = n - cab
+    arriba = Math.ceil(resto / 2); abajo = Math.floor(resto / 2)
+    izq = cab ? 1 : 0; der = cab ? 1 : 0
+  } else {
+    const cab = n >= 6 ? 2 : 0
+    const resto = n - cab
+    izq = Math.ceil(resto / 2); der = Math.floor(resto / 2)
+    arriba = cab ? 1 : 0; abajo = cab ? 1 : 0
+  }
+  const out = []
+  const enLinea = (k, largo) => {
+    const p = []
+    for (let i = 0; i < k; i++) p.push(-largo / 2 + (largo * (i + 0.5)) / k)
+    return p
+  }
+  enLinea(arriba, w).forEach((x) => out.push({ x, y: -h / 2 - d, rot: 0 }))
+  enLinea(abajo, w).forEach((x) => out.push({ x, y: h / 2 + d, rot: 180 }))
+  enLinea(izq, h).forEach((y) => out.push({ x: -w / 2 - d, y, rot: 270 }))
+  enLinea(der, h).forEach((y) => out.push({ x: w / 2 + d, y, rot: 90 }))
+  return out
 }
 
 function cuerpo(it) {
@@ -421,8 +656,9 @@ function cuerpo(it) {
       const R = w / 2
       const rt = Math.min(0.55, R * 0.5)
       const rc = R * 0.82
+      const n = sillasDe(it)
       let g = ''
-      for (let i = 0; i < 5; i++) g += silla(-90 + i * 72, rc)
+      for (let i = 0; i < n; i++) g += silla(-90 + (i * 360) / n, rc)
       g += `<circle r="${rt}" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.03"/>`
       g += `<circle r="${rt * 0.62}" fill="none" stroke="${P.woodLine}" stroke-width="0.018" opacity=".55"/>`
       let pts = ''
@@ -440,6 +676,53 @@ function cuerpo(it) {
               <g opacity="0.5">${ribs}</g>
               <circle r="0.075" fill="${P.canopyLine}"/>
             </g>`
+      return g
+    }
+    case 'mesaR': {
+      // Mesa redonda sin quitasol: w es el diámetro real del tablero.
+      const R = Math.min(w, h) / 2
+      const n = sillasDe(it)
+      let g = ''
+      for (let i = 0; i < n; i++) g += silla(-90 + (i * 360) / n, R + 0.3)
+      g += `<circle r="${R.toFixed(3)}" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.03"/>`
+      g += `<circle r="${(R * 0.6).toFixed(3)}" fill="none" stroke="${P.woodLine}" stroke-width="0.018" opacity=".55"/>`
+      return g
+    }
+    case 'mesaC': {
+      // Mesa cuadrada o rectangular: el tablero es w × h y las sillas van fuera.
+      let g = ''
+      repartoRect(w, h, sillasDe(it)).forEach((p) => { g += sillaEn(p.x, p.y, p.rot) })
+      g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0.05" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.03"/>`
+      g += `<rect x="${x + 0.09}" y="${y + 0.09}" width="${w - 0.18}" height="${h - 0.18}" rx="0.03" fill="none" stroke="${P.woodLine}" stroke-width="0.018" opacity=".5"/>`
+      return g
+    }
+    case 'silla':
+      return `<g transform="scale(${(Math.min(w, h) / 0.45).toFixed(3)})">${sillaCuerpo()}</g>`
+    case 'barra': {
+      // Barra recta: tablero de madera con canto de acero y taburetes al frente.
+      const n = sillasDe(it)
+      let g = ''
+      for (let i = 0; i < n; i++) {
+        g += taburete(-w / 2 + (w * (i + 0.5)) / n, h / 2 + 0.34)
+      }
+      g += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.03"/>`
+      g += `<rect x="${x}" y="${y + h - h * 0.26}" width="${w}" height="${h * 0.26}" fill="url(#gSteel)" stroke="${P.steelLine}" stroke-width="0.022" opacity=".9"/>`
+      g += `<line x1="${x + 0.06}" y1="${y + h * 0.36}" x2="${x + w - 0.06}" y2="${y + h * 0.36}" stroke="${P.woodLine}" stroke-width="0.02" opacity=".7"/>`
+      return g
+    }
+    case 'bar': {
+      // Bar isla: mostrador, botellería al fondo y pileta de servicio.
+      const fondo = h * 0.34
+      let g = `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="0.06" fill="url(#gWood)" stroke="${P.woodLine}" stroke-width="0.032"/>`
+      g += `<rect x="${x}" y="${y}" width="${w}" height="${fondo}" fill="url(#gSteel)" stroke="${P.steelLine}" stroke-width="0.024"/>`
+      const botellas = Math.max(3, Math.floor(w / 0.28))
+      for (let i = 0; i < botellas; i++) {
+        const bx = x + (w * (i + 0.5)) / botellas
+        g += `<circle cx="${bx.toFixed(3)}" cy="${(y + fondo * 0.5).toFixed(3)}" r="0.055" fill="${P.glass}" stroke="${P.steelLine}" stroke-width="0.016"/>`
+      }
+      g += `<rect x="${x + w * 0.06}" y="${y + fondo + 0.08}" width="${(w * 0.22).toFixed(3)}" height="${(h - fondo - 0.18).toFixed(3)}" rx="0.04"
+              fill="${P.steel2}" stroke="${P.steelLine}" stroke-width="0.022"/>`
+      g += `<line x1="${x + 0.06}" y1="${y + h - 0.07}" x2="${x + w - 0.06}" y2="${y + h - 0.07}" stroke="${P.woodLine}" stroke-width="0.022" opacity=".7"/>`
       return g
     }
     case 'visi': {
@@ -461,13 +744,30 @@ function cuerpo(it) {
          <circle cx="${x + 0.16}" cy="${y + 0.09}" r="0.045" fill="${P.steelLine}"/>
          <circle cx="${x + w - 0.16}" cy="${y + 0.09}" r="0.045" fill="${P.steelLine}"/>`
     case 'cocina': {
-      const r1 = Math.min(h, w) * 0.28
-      return caja('url(#gSteel)') +
-        `<circle cx="${-w * 0.22}" cy="0" r="${r1}" fill="none" stroke="${P.steelLine}" stroke-width="0.032"/>
-         <circle cx="${-w * 0.22}" cy="0" r="${r1 * 0.5}" fill="none" stroke="${P.steelLine}" stroke-width="0.026"/>
-         <circle cx="${w * 0.22}" cy="0" r="${r1}" fill="none" stroke="${P.steelLine}" stroke-width="0.032"/>
-         <circle cx="${w * 0.22}" cy="0" r="${r1 * 0.5}" fill="none" stroke="${P.steelLine}" stroke-width="0.026"/>
-         <circle cx="0" cy="${y + 0.09}" r="0.042" fill="${P.steelLine}"/>`
+      // Una sola cocina para 1..6 fogones: hasta 3 van en una fila, de 4 en
+      // adelante se parten en dos filas (5 queda 3 + 2).
+      const n = fogonesDe(it)
+      const filas = n <= 3 ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)]
+      const anchoUtil = w * 0.88
+      const altoUtil = h * 0.74
+      const maxCol = Math.max(...filas)
+      const paso = Math.min(anchoUtil / maxCol, altoUtil / filas.length)
+      const r1 = paso * 0.4
+      let g = caja('url(#gSteel)')
+      filas.forEach((cant, fi) => {
+        const cy = (-(filas.length - 1) / 2 + fi) * (altoUtil / filas.length) - h * 0.04
+        for (let i = 0; i < cant; i++) {
+          const cx = (-(cant - 1) / 2 + i) * (anchoUtil / maxCol)
+          g += `<circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${r1.toFixed(3)}" fill="none" stroke="${P.steelLine}" stroke-width="0.032"/>
+                <circle cx="${cx.toFixed(3)}" cy="${cy.toFixed(3)}" r="${(r1 * 0.48).toFixed(3)}" fill="none" stroke="${P.steelLine}" stroke-width="0.026"/>`
+        }
+      })
+      // perillas al frente, una por fogón
+      for (let i = 0; i < n; i++) {
+        const kx = (-(n - 1) / 2 + i) * Math.min(0.13, (w * 0.8) / Math.max(n, 1))
+        g += `<circle cx="${kx.toFixed(3)}" cy="${(y + h - 0.07).toFixed(3)}" r="0.036" fill="${P.steelLine}"/>`
+      }
+      return g
     }
     case 'meson':
       return caja('url(#gSteel)') +
@@ -553,9 +853,21 @@ export function svgLabel(it, show) {
   if (!show.labels) return ''
   const s = SPECS[it.type]
   const name = it.label
-  const sub = it.type === 'mesa'
-    ? `Ø${fmt(Math.min(1.1, it.w * 0.5))} · 5 SILLAS`
-    : `${fmt(it.w)} × ${fmt(it.h)}`
+  // Una silla suelta no lleva rótulo: serían decenas de textos repetidos.
+  if (s.kind === 'silla') return ''
+  const nS = sillasDe(it)
+  const medida = `${fmt(it.w)} × ${fmt(it.h)}`
+  const sub = s.kind === 'mesa'
+    ? `Ø${fmt(Math.min(1.1, it.w * 0.5))} · ${nS} SILLAS`
+    : s.kind === 'mesaR'
+      ? `Ø${fmt(Math.min(it.w, it.h))} · ${nS} SILLAS`
+      : s.kind === 'mesaC'
+        ? `${medida} · ${nS} SILLAS`
+        : s.kind === 'barra'
+          ? `${medida} · ${nS} TABURETES`
+          : s.kind === 'cocina'
+            ? `${medida} · ${fogonesDe(it)} FOGONES`
+            : medida
 
   // El acceso rotula hacia el interior del recinto, siempre horizontal.
   if (s.kind === 'puerta') {
@@ -573,9 +885,10 @@ export function svgLabel(it, show) {
     </g>`
   }
 
-  // Las mesas llevan el rótulo siempre horizontal, debajo del conjunto.
-  if (s.kind === 'mesa') {
-    const y = it.y + it.w / 2 + 0.32
+  // Las mesas y las barras llevan el rótulo siempre horizontal, debajo del
+  // conjunto — el mueble más su banda de sillas, así no pisa a nadie.
+  if (['mesa', 'mesaR', 'mesaC'].includes(s.kind)) {
+    const y = it.y + Math.max(it.w, it.h) / 2 + bandaDe(it) + 0.32
     return `<g pointer-events="none">
       <text x="${it.x}" y="${y}" text-anchor="middle" font-size="0.24" font-weight="600" font-family="${F_ROT}"
         fill="${P.ink}" letter-spacing="0.012" paint-order="stroke" stroke="${P.paper}" stroke-width="0.075">${name}</text>
@@ -644,8 +957,9 @@ export function svgSeleccion(it) {
 
 // Un layout guardado puede venir de una versión anterior: se saneia siempre
 // antes de dibujarlo, para que un dato raro en la base no rompa la pantalla.
-export function sanear(datos) {
-  if (!Array.isArray(datos) || datos.length === 0) return layoutInicial()
+export function sanear(datos, fallback) {
+  const porDefecto = () => (typeof fallback === 'function' ? fallback() : (fallback || layoutInicial()))
+  if (!Array.isArray(datos) || datos.length === 0) return porDefecto()
   const limpio = datos
     .filter((d) => d && SPECS[d.type])
     .map((d) => clampItem(SPECS[d.type].kind === 'puerta' ? {
@@ -667,16 +981,25 @@ export function sanear(datos) {
       w: Math.max(0.25, Number(d.w) || SPECS[d.type].w),
       h: Math.max(0.25, Number(d.h) || SPECS[d.type].h),
       rot: Number(d.rot) || 0,
-      label: String(d.label || SPECS[d.type].label)
+      label: String(d.label || SPECS[d.type].label),
+      // sillas y fogones son propios del objeto: si el dato guardado no los
+      // trae (layout viejo), se toma el valor de fábrica del tipo.
+      ...(SPECS[d.type].sillas !== undefined || CON_SILLAS.includes(SPECS[d.type].kind)
+        ? { sillas: sillasDe({ type: d.type, sillas: d.sillas }) } : {}),
+      ...(SPECS[d.type].kind === 'cocina' ? { fogones: fogonesDe({ type: d.type, fogones: d.fogones }) } : {})
     }))
-  if (!limpio.length) return layoutInicial()
+  if (!limpio.length) return porDefecto()
   // Un layout guardado antes de que las puertas fueran objetos no las trae:
   // se le reponen los accesos por defecto para que el plano no quede sin
   // entrada. La UI impide borrar el último acceso, así que esto solo se
   // dispara con datos viejos, nunca porque el admin los haya eliminado.
   if (!limpio.some((d) => SPECS[d.type].kind === 'puerta')) {
-    limpio.push(mkPuerta('puertaDoble', 'sur', 4.5))
-    limpio.push(mkPuerta('puertaSimple', 'norte', 4.1))
+    limpio.push(mkPuerta('puertaDoble', 'sur', RECINTO.W / 2))
   }
   return limpio
 }
+
+// Primer cálculo del recinto. Va al final del archivo a propósito: setRecinto
+// toca MUROS, que se declara más arriba pero como const — llamarlo antes daría
+// error de inicialización.
+setRecinto({ ancho: 9, largo: 24, corte: 6.9 })
