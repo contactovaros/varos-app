@@ -27,7 +27,16 @@ export default {
         serif: ['"Playfair Display"', 'Georgia', 'serif']
       },
       boxShadow: {
-        glow: '0 0 24px rgba(255,122,26,0.35)'
+        glow: '0 0 24px rgba(255,122,26,0.35)',
+        // Resplandor dorado del CTA de marca. Más contenido que `glow`: el oro
+        // sobre casi negro ya se lee como fuente de luz, no necesita halo ancho.
+        glowGold: '0 0 24px rgba(227,179,65,0.35)'
+      },
+      // Las curvas del navegador son demasiado flojas para que un movimiento
+      // corto se sienta intencional. Estas dos son las únicas que usa la app.
+      transitionTimingFunction: {
+        salida: 'cubic-bezier(0.23, 1, 0.32, 1)',
+        mover: 'cubic-bezier(0.77, 0, 0.175, 1)'
       },
       keyframes: {
         // Haz de luz que cruza una superficie dorada. El barrido ocupa solo el

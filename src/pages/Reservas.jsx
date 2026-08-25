@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
 import { BotonRedSocial, IconoInstagram, IconoFacebook, IconoSitioWeb, IconoWhatsApp, IconoResena } from '../components/TarjetaFidelidad.jsx'
+import BotonOro from '../components/BotonOro.jsx'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
@@ -225,6 +226,9 @@ export default function Reservas() {
   const [email, setEmail] = useState('')
   const [alergias, setAlergias] = useState('')
   const [enviando, setEnviando] = useState(false)
+  // Vuelo de las dos acciones de red que antes no informaban nada.
+  const [buscando, setBuscando] = useState(false)
+  const [reteniendo, setReteniendo] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [codigoReserva, setCodigoReserva] = useState('')
 
@@ -290,13 +294,18 @@ export default function Reservas() {
   async function verPlano() {
     setMesaId(null)
     setComboIds(null)
-    const [{ data: reservasData }, { data: holdsData }] = await Promise.all([
-      supabase.from('reservas').select('mesa_id, hora').eq('fecha', fecha).neq('estado', 'cancelada'),
-      supabase.from('mesa_holds').select('mesa_id, hora').eq('fecha', fecha).gt('expira_at', new Date().toISOString())
-    ])
-    setReservasDelDia(reservasData ?? [])
-    setHoldsDelDia(holdsData ?? [])
-    setStep('plano')
+    setBuscando(true)
+    try {
+      const [{ data: reservasData }, { data: holdsData }] = await Promise.all([
+        supabase.from('reservas').select('mesa_id, hora').eq('fecha', fecha).neq('estado', 'cancelada'),
+        supabase.from('mesa_holds').select('mesa_id, hora').eq('fecha', fecha).gt('expira_at', new Date().toISOString())
+      ])
+      setReservasDelDia(reservasData ?? [])
+      setHoldsDelDia(holdsData ?? [])
+      setStep('plano')
+    } finally {
+      setBuscando(false)
+    }
   }
 
   function estaReservada(mesa) {
@@ -574,18 +583,27 @@ export default function Reservas() {
           <label className="text-xs tracking-wide text-gold/70">
             Personas
             <div className="mt-1.5 flex items-center gap-3 bg-inkSoft border border-bronze/25 rounded-xl px-4 py-2.5">
+              {/* 44 px de lado: es el control más tocado del primer paso y
+                  antes medía 36. Se deshabilitan en los extremos — tocar "+"
+                  en 20 no hacía nada, en silencio. */}
               <button
                 type="button"
+                aria-label="Quitar una persona"
                 onClick={() => setPersonas((p) => Math.max(1, p - 1))}
-                className="w-9 h-9 rounded-lg border border-bronze/30 text-paper/70 text-lg"
+                disabled={personas <= 1}
+                className="w-11 h-11 rounded-lg border border-bronze/30 text-paper/70 text-lg transition-[transform,opacity] duration-150 ease-salida active:scale-90 motion-reduce:active:scale-100 disabled:opacity-30 disabled:active:scale-100"
               >
                 −
               </button>
-              <span className="flex-1 text-center font-serif text-ember text-xl">{personas}</span>
+              <span aria-live="polite" className="flex-1 text-center font-serif text-gold text-xl">
+                {personas}
+              </span>
               <button
                 type="button"
+                aria-label="Agregar una persona"
                 onClick={() => setPersonas((p) => Math.min(20, p + 1))}
-                className="w-9 h-9 rounded-lg border border-ember/50 text-ember text-lg"
+                disabled={personas >= 20}
+                className="w-11 h-11 rounded-lg border border-gold/50 text-gold text-lg transition-[transform,opacity] duration-150 ease-salida active:scale-90 motion-reduce:active:scale-100 disabled:opacity-30 disabled:active:scale-100"
               >
                 +
               </button>
@@ -605,7 +623,8 @@ export default function Reservas() {
                       setZona(zona === z ? 'cualquiera' : z)
                       setZonaError(false)
                     }}
-                    className={`px-3.5 py-2 rounded-full text-xs border transition-colors ${
+                    aria-pressed={zona === z}
+                    className={`px-3.5 py-2.5 rounded-full text-xs border transition-[color,background-color,border-color,transform] duration-150 ease-salida active:scale-95 motion-reduce:active:scale-100 ${
                       zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
                     }`}
                   >
@@ -619,13 +638,12 @@ export default function Reservas() {
             )}
           </div>
 
-          <button
-            type="submit"
-            className="mt-3 w-full py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow flex items-center justify-center gap-2"
-          >
+          {/* `buscando` no es cosmético: verPlano() espera dos consultas a
+              Supabase (~220 ms medidos en producción) y sin esto el botón no
+              devuelve nada mientras tanto. */}
+          <BotonOro type="submit" cargando={buscando} textoCargando="BUSCANDO MESAS…" className="mt-3">
             VER PLANO Y MESAS DISPONIBLES
-            <span aria-hidden="true">›</span>
-          </button>
+          </BotonOro>
         </form>
       )}
 
@@ -844,17 +862,30 @@ export default function Reservas() {
               : 'Toca una mesa disponible'}
           </p>
 
-          <button
+          {/* `reteniendo` cierra un bug real: crearHolds() hace un insert que
+              tarda, y con el botón habilitado un doble toque creaba DOS lotes
+              de holds. setMisHolds pisaba los ids del primero, liberarHolds
+              solo borraba el segundo, y el primero quedaba huérfano bloqueando
+              esa mesa 5 minutos para todo el mundo. */}
+          <BotonOro
             onClick={async () => {
-              const ids = mesaSeleccionada ? [mesaSeleccionada.id] : comboSeleccionado.map((m) => m.id)
-              await crearHolds(ids)
-              setStep('contacto')
+              if (reteniendo) return
+              setReteniendo(true)
+              try {
+                const ids = mesaSeleccionada ? [mesaSeleccionada.id] : comboSeleccionado.map((m) => m.id)
+                await crearHolds(ids)
+                setStep('contacto')
+              } finally {
+                setReteniendo(false)
+              }
             }}
             disabled={!puedeContinuar}
-            className="w-full max-w-md py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-40 disabled:shadow-none"
+            cargando={reteniendo}
+            textoCargando="RESERVANDO TU MESA…"
+            className="max-w-md"
           >
             CONTINUAR
-          </button>
+          </BotonOro>
         </>
       )}
 
@@ -928,13 +959,9 @@ export default function Reservas() {
 
           {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
 
-          <button
-            type="submit"
-            disabled={enviando}
-            className="mt-2 w-full py-4 rounded-2xl font-head font-bold tracking-wide bg-gradient-to-br from-ember to-wine text-paper shadow-glow disabled:opacity-50"
-          >
-            {enviando ? 'ENVIANDO...' : 'CONFIRMAR RESERVA'}
-          </button>
+          <BotonOro type="submit" cargando={enviando} textoCargando="ENVIANDO…" className="mt-2">
+            CONFIRMAR RESERVA
+          </BotonOro>
         </form>
       )}
 
