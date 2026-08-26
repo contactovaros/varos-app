@@ -34,12 +34,18 @@ export const metros = (cm) => (cm / 100).toFixed(2).replace('.', ',')
 
 // Patrones de piso. Cada sala elige el suyo según lo que realmente hay en el
 // piso de ese espacio, no por decoración.
-export function PlanoDefs() {
+//
+// `pisoDeck`/`pisoPulido` son el color base editable desde /admin/mesas
+// (columna `salas.color_piso`) — cada sala solo pisa el patrón que usa como
+// piso principal (comedor/terraza → deck, salón → pulido). Las texturas
+// secundarias de la terraza (piedra de la pista, pasto del jardín) se quedan
+// con su tono fijo: `color_piso` es un solo campo por sala, no por parche.
+export function PlanoDefs({ pisoDeck = '#7A5432', pisoPulido = '#2A211C' } = {}) {
   return (
     <defs>
       {/* deck de madera: tablas de 17 cm con junta cada 240 cm */}
       <pattern id="slDeck" width="17" height="240" patternUnits="userSpaceOnUse">
-        <rect width="17" height="240" fill="#7A5432" />
+        <rect width="17" height="240" fill={pisoDeck} />
         <rect width="17" height="120" fill="#8E6540" opacity="0.38" />
         <line x1="0" y1="0" x2="0" y2="240" stroke="#4E3320" strokeWidth="1.2" opacity="0.75" />
         <line x1="0" y1="120" x2="17" y2="120" stroke="#4E3320" strokeWidth="1.2" opacity="0.5" />
@@ -47,7 +53,7 @@ export function PlanoDefs() {
 
       {/* piso pulido del salón: palmeta grande de 100 cm */}
       <pattern id="slPulido" width="100" height="100" patternUnits="userSpaceOnUse">
-        <rect width="100" height="100" fill="#2A211C" />
+        <rect width="100" height="100" fill={pisoPulido} />
         <path d="M0 0 H100 M0 0 V100" stroke="#3B2F27" strokeWidth="1.4" />
         <circle cx="50" cy="50" r="30" fill="#FFF8F1" opacity="0.012" />
       </pattern>

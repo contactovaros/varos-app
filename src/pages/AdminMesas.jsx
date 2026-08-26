@@ -11,40 +11,109 @@ import { CalendarioReservas, ListaReservasDia, todayISO } from '../components/Pa
 // pero se editan las tres desde /admin/mesas con el selector de abajo.
 import { PlanoDefs, Recinto, Piso, Cota, FranjaLabel, NotaPlano, PuertaDoble, C as PC } from '../lib/planoSalas.jsx'
 
-// Contorno interior libre de cada sala, en cm.
-export const COMEDOR_PATH = 'M0,0 L324,0 L324,550 L1314,550 L1314,1700 L0,1700 Z'
-export const SALON_W = 1000
-export const SALON_H = 1500
-export const TERRAZA_W = 1200
-export const TERRAZA_H = 2000
+// Geometría y materiales por defecto de cada sala — se usan mientras la
+// migración `supabase/add_config_salas.sql` no esté corrida (columnas nuevas
+// en `salas` todavía inexistentes) o mientras esa fila no traiga un campo
+// puntual. Son los mismos valores que antes estaban fijos en JSX.
+const ROOM_GEOMETRIA_DEFAULT = {
+  comedor: {
+    ancho: 1314,
+    largo: 1700,
+    hueco: { x0: 324, y0: 0, x1: 1314, y1: 550 },
+    // margen que se agrega al viewBox para las cotas/etiquetas del margen
+    margenDer: 396,
+    margenAbajo: 310,
+    colorPiso: '#7A5432',
+    colorMesa: '#3a2c24',
+    colorSilla: '#221A16'
+  },
+  salon: {
+    ancho: 1000,
+    largo: 1500,
+    hueco: null,
+    margenDer: 400,
+    margenAbajo: 380,
+    colorPiso: '#2A211C',
+    colorMesa: '#3a2c24',
+    colorSilla: '#221A16'
+  },
+  terraza: {
+    ancho: 1200,
+    largo: 2000,
+    hueco: null,
+    margenDer: 400,
+    margenAbajo: 380,
+    // La terraza tiene 3 materiales de piso (deck/piedra/pasto); `color_piso`
+    // es un solo campo por sala, así que solo recolorea el deck base — piedra
+    // y pasto se quedan con su tono fijo (ver PlanoDefs en planoSalas.jsx).
+    colorPiso: '#7A5432',
+    colorMesa: '#3a2c24',
+    colorSilla: '#221A16'
+  }
+}
+
+// Contorno interior libre del Comedor Exterior: rectángulo ancho x largo con
+// el recorte en L cortado. Asume que el hueco toca el borde superior
+// (hueco.y0 = 0) y el borde derecho (hueco.x1 = ancho) — la forma real de
+// hoy — no es un recorte de esquina genérico.
+function comedorPath(ancho, largo, hueco) {
+  if (!hueco) return `M0,0 H${ancho} V${largo} H0 Z`
+  return `M0,0 L${hueco.x0},0 L${hueco.x0},${hueco.y1} L${hueco.x1},${hueco.y1} L${hueco.x1},${largo} L0,${largo} Z`
+}
+
+// Combina la fila de `salas` (si ya tiene las columnas nuevas) con los
+// valores por defecto, y deriva de ahí el recinto (`viewBox`/`limite`/
+// `huecos`/`path`) y los 3 colores editables. `salaRow` puede venir
+// incompleto (migración no corrida) o ser `null/undefined`.
+export function getSalaGeometria(room, salaRow) {
+  const def = ROOM_GEOMETRIA_DEFAULT[room]
+  if (!def) return null
+  const ancho = Number(salaRow?.ancho) || def.ancho
+  const largo = Number(salaRow?.largo) || def.largo
+  const hueco =
+    room === 'comedor'
+      ? salaRow?.hueco_x0 != null && salaRow?.hueco_y0 != null && salaRow?.hueco_x1 != null && salaRow?.hueco_y1 != null
+        ? { x0: salaRow.hueco_x0, y0: salaRow.hueco_y0, x1: salaRow.hueco_x1, y1: salaRow.hueco_y1 }
+        : def.hueco
+      : null
+  return {
+    ancho,
+    largo,
+    hueco,
+    limite: { x0: 0, y0: 0, x1: ancho, y1: largo },
+    huecos: hueco ? [hueco] : [],
+    viewBox: { x: -190, y: -170, w: ancho + def.margenDer, h: largo + def.margenAbajo },
+    path: room === 'comedor' ? comedorPath(ancho, largo, hueco) : `M0,0 H${ancho} V${largo} H0 Z`,
+    colorPiso: salaRow?.color_piso || def.colorPiso,
+    colorMesa: salaRow?.color_mesa || def.colorMesa,
+    colorSilla: salaRow?.color_silla || def.colorSilla
+  }
+}
 
 export const ROOMS = {
   comedor: {
     label: 'Comedor Exterior',
     table: 'mesas',
     idPrefix: 't',
-    viewBox: { x: -190, y: -170, w: 1710, h: 2010 },
     // El arrastre se limita a la sala, no al viewBox: si no, una mesa se puede
     // dejar en el margen de las cotas, fuera del recinto. `huecos` saca el
-    // recorte en L del Comedor Exterior.
-    limite: { x0: 0, y0: 0, x1: 1314, y1: 1700 },
-    huecos: [{ x0: 324, y0: 0, x1: 1314, y1: 550 }],
+    // recorte en L del Comedor Exterior. Estos valores son el fallback antes
+    // de que se resuelva `getSalaGeometria(room, salas[room])` en el render.
+    ...getSalaGeometria('comedor', null),
     nuevaMesa: { x: 690, y: 1080, ancho: 120, capacidad: 8 }
   },
   salon: {
     label: 'Comedor Principal',
     table: 'mesas_salon',
     idPrefix: 'sm',
-    viewBox: { x: -190, y: -170, w: 1400, h: 1880 },
-    limite: { x0: 0, y0: 0, x1: 1000, y1: 1500 },
+    ...getSalaGeometria('salon', null),
     nuevaMesa: { x: 500, y: 750, ancho: 120, capacidad: 4 }
   },
   terraza: {
     label: 'Terraza',
     table: 'mesas_terraza',
     idPrefix: 'tz',
-    viewBox: { x: -190, y: -170, w: 1600, h: 2380 },
-    limite: { x0: 0, y0: 0, x1: 1200, y1: 2000 },
+    ...getSalaGeometria('terraza', null),
     nuevaMesa: { x: 400, y: 1700, ancho: 70, capacidad: 2 }
   }
 }
@@ -89,38 +158,70 @@ function toLocal(dx, dy, angleDeg) {
 export function ZonaLabels({ zonas, fontSize = 26, fontFamily = "'Space Grotesk',Arial,sans-serif", fill = '#FFF8F1', opacity = 0.55 }) {
   return (
     <g fontFamily={fontFamily} fontWeight="700" fill={fill}>
-      {zonas.map((z) => (
-        <text
-          key={z.id}
-          x={z.x}
-          y={z.y}
-          fontSize={z.tam || fontSize}
-          opacity={opacity}
-          textAnchor={z.angulo ? 'middle' : undefined}
-          transform={z.angulo ? `rotate(${z.angulo} ${z.x} ${z.y})` : undefined}
-        >
-          {z.texto}
-        </text>
+      {zonas
+        .filter((z) => z.x2 == null || z.y2 == null) // las filas con x2/y2 son líneas, no texto
+        .map((z) => (
+          <text
+            key={z.id}
+            x={z.x}
+            y={z.y}
+            fontSize={z.tam || fontSize}
+            opacity={opacity}
+            textAnchor={z.angulo ? 'middle' : undefined}
+            transform={z.angulo ? `rotate(${z.angulo} ${z.x} ${z.y})` : undefined}
+          >
+            {z.texto}
+          </text>
+        ))}
+    </g>
+  )
+}
+
+// Líneas punteadas de separación de zona — solo visuales, no acotan el
+// arrastre de mesas (ver `limitarASala`, que ni las lee). Cada fila de
+// `zonas` con `x2`/`y2` seteados se dibuja como línea de (x,y) a (x2,y2) en
+// vez de texto.
+export function ZonaLineas({ zonas, color = PC.bronze, opacity = 0.4 }) {
+  const lineas = zonas.filter((z) => z.x2 != null && z.y2 != null)
+  if (!lineas.length) return null
+  return (
+    <g stroke={color} strokeWidth="2" strokeDasharray="2 14" opacity={opacity}>
+      {lineas.map((z) => (
+        <line key={z.id} x1={z.x} y1={z.y} x2={z.x2} y2={z.y2} />
       ))}
     </g>
   )
 }
 
-export function ComedorBackground({ zonas }) {
+// `sala` es la geometría ya resuelta (`getSalaGeometria('comedor', ...)`) —
+// opcional para que este componente siga funcionando si alguien lo usa sin
+// pasarla (cae en los valores por defecto de hoy).
+export function ComedorBackground({ zonas, sala }) {
+  const g = sala || getSalaGeometria('comedor', null)
+  const { ancho, largo, hueco, path, colorPiso } = g
   return (
     <>
-      <PlanoDefs />
-      <Recinto d={COMEDOR_PATH} piso="slDeck" />
+      <PlanoDefs pisoDeck={colorPiso} />
+      <Recinto d={path} piso="slDeck" />
 
       {/* cotas: el recorte en L se lee con la medida corta arriba */}
-      <Cota x1={0} y1={-70} x2={324} y2={-70} />
-      <Cota x1={0} y1={1770} x2={1314} y2={1770} />
-      <Cota x1={-90} y1={0} x2={-90} y2={1700} />
-      <Cota x1={1384} y1={550} x2={1384} y2={1700} />
-
-      <FranjaLabel x={1384} y0={0} y1={550} texto="ACCESO" sub="vereda" />
+      {hueco ? (
+        <>
+          <Cota x1={0} y1={-70} x2={hueco.x0} y2={-70} />
+          <Cota x1={0} y1={largo + 70} x2={ancho} y2={largo + 70} />
+          <Cota x1={-90} y1={0} x2={-90} y2={largo} />
+          <Cota x1={ancho + 70} y1={hueco.y1} x2={ancho + 70} y2={largo} />
+          <FranjaLabel x={ancho + 70} y0={0} y1={hueco.y1} texto="ACCESO" sub="vereda" />
+        </>
+      ) : (
+        <>
+          <Cota x1={0} y1={-70} x2={ancho} y2={-70} />
+          <Cota x1={-90} y1={0} x2={-90} y2={largo} />
+        </>
+      )}
 
       <ZonaLabels zonas={zonas} opacity={0.75} />
+      <ZonaLineas zonas={zonas} />
       <NotaPlano x={0} y={-110} texto="COMEDOR EXTERIOR · deck de madera" />
     </>
   )
@@ -128,13 +229,14 @@ export function ComedorBackground({ zonas }) {
 
 // Salón de 10 x 15 m reconstruido desde el video de recorrido (agosto 2026).
 // Columnas, barra, cabina telefónica, etc. son solo referencia fija del espacio.
-export function SalonBackground({ zonas }) {
-  const ROOM_W = SALON_W
-  const ROOM_H = SALON_H
+export function SalonBackground({ zonas, sala }) {
+  const g = sala || getSalaGeometria('salon', null)
+  const ROOM_W = g.ancho
+  const ROOM_H = g.largo
   return (
     <>
-      <PlanoDefs />
-      <Recinto d={`M0,0 H${ROOM_W} V${ROOM_H} H0 Z`} piso="slPulido" />
+      <PlanoDefs pisoPulido={g.colorPiso} />
+      <Recinto d={g.path} piso="slPulido" />
 
       <Cota x1={0} y1={-70} x2={ROOM_W} y2={-70} />
       <Cota x1={-90} y1={0} x2={-90} y2={ROOM_H} />
@@ -144,11 +246,7 @@ export function SalonBackground({ zonas }) {
       <FranjaLabel x={ROOM_W + 70} y0={900} y1={1100} texto="BARRA" />
       <FranjaLabel x={ROOM_W + 70} y0={1100} y1={ROOM_H} texto="LOUNGE" />
 
-      <g stroke={PC.bronze} strokeWidth="2" strokeDasharray="2 14" opacity="0.4">
-        <line x1="0" y1="250" x2={ROOM_W} y2="250" />
-        <line x1="0" y1="900" x2={ROOM_W} y2="900" />
-        <line x1="0" y1="1100" x2={ROOM_W} y2="1100" />
-      </g>
+      <ZonaLineas zonas={zonas} />
 
       <ZonaLabels zonas={zonas.filter((z) => z.id !== 's_barra_letrero' && z.id !== 's_terraza' && z.texto)} />
 
@@ -233,15 +331,18 @@ export function SalonBackground({ zonas }) {
 // sin medidas reales todavía). 3 zonas apiladas: caminata cubierta con carpas,
 // pista central bajo un arco de truss, y jardín con barra/mesas de barril
 // junto al escenario (objeto arrastrable, ver MesaShape).
-export function TerrazaBackground({ zonas }) {
-  const ROOM_W = TERRAZA_W
-  const ROOM_H = TERRAZA_H
+export function TerrazaBackground({ zonas, sala }) {
+  const g = sala || getSalaGeometria('terraza', null)
+  const ROOM_W = g.ancho
+  const ROOM_H = g.largo
   return (
     <>
-      <PlanoDefs />
+      <PlanoDefs pisoDeck={g.colorPiso} />
       {/* El piso base es el deck de la caminata; las otras dos franjas se
-          parchan encima porque el material del piso cambia de verdad. */}
-      <Recinto d={`M0,0 H${ROOM_W} V${ROOM_H} H0 Z`} piso="slDeck" />
+          parchan encima porque el material del piso cambia de verdad. Estos
+          dos parches (piedra/pasto) no son editables — `color_piso` es un
+          solo campo por sala, ver nota en ROOM_GEOMETRIA_DEFAULT. */}
+      <Recinto d={g.path} piso="slDeck" />
       <Piso x={0} y={650} w={ROOM_W} h={700} piso="slPiedra" />
       <Piso x={0} y={1350} w={ROOM_W} h={ROOM_H - 1350} piso="slPasto" />
 
@@ -252,10 +353,7 @@ export function TerrazaBackground({ zonas }) {
       <FranjaLabel x={ROOM_W + 70} y0={650} y1={1350} texto="PISTA" sub="pavimento · arco de truss" />
       <FranjaLabel x={ROOM_W + 70} y0={1350} y1={ROOM_H} texto="JARDÍN Y BARRA" sub="piscina cubierta" />
 
-      <g stroke={PC.bronze} strokeWidth="2" strokeDasharray="2 14" opacity="0.45">
-        <line x1="0" y1="650" x2={ROOM_W} y2="650" />
-        <line x1="0" y1="1350" x2={ROOM_W} y2="1350" />
-      </g>
+      <ZonaLineas zonas={zonas} opacity={0.45} />
 
       <ZonaLabels zonas={zonas} />
 
@@ -432,7 +530,10 @@ function MesaEleganteShape({ radio, isSel }) {
   )
 }
 
-export function MesaShape({ mesa, isSel, elegante }) {
+// `colorMesa` es el color genérico de las mesas redondas/rectangulares (por
+// defecto el bronce oscuro de siempre) — NO se aplica a `MesaEleganteShape`
+// (el negro + borde dorado del salón), que sigue siendo su propio estilo fijo.
+export function MesaShape({ mesa, isSel, elegante, colorMesa = '#3a2c24' }) {
   if (mesa.tipo === 'escenario') {
     return (
       <path
@@ -461,7 +562,7 @@ export function MesaShape({ mesa, isSel, elegante }) {
     return (
       <circle
         r={mesa.ancho / 2}
-        fill={isSel ? '#FF7A1A' : '#3a2c24'}
+        fill={isSel ? '#FF7A1A' : colorMesa}
         stroke={isSel ? '#FFD9B3' : '#B5732A'}
         strokeWidth={isSel ? 6 : 3}
       />
@@ -474,7 +575,7 @@ export function MesaShape({ mesa, isSel, elegante }) {
       width={mesa.ancho}
       height={mesa.alto}
       rx="10"
-      fill={isSel ? '#FF7A1A' : '#3a2c24'}
+      fill={isSel ? '#FF7A1A' : colorMesa}
       stroke={isSel ? '#FFD9B3' : '#B5732A'}
       strokeWidth={isSel ? 6 : 3}
     />
@@ -492,7 +593,12 @@ export default function AdminMesas() {
   const [mostrarReservasMobile, setMostrarReservasMobile] = useState(false)
   const svgRef = useRef(null)
   const dragRef = useRef(null)
-  const config = ROOMS[room]
+  // `ROOMS[room]` trae label/table/idPrefix/nuevaMesa (fijos por código) más
+  // los valores por defecto de geometría/color; se pisan acá con lo que haya
+  // en `salas[room]` (la fila real de Supabase, si ya tiene las columnas
+  // nuevas) para que el recinto y los colores reaccionen a lo que edite el
+  // admin sin recargar la página.
+  const config = { ...ROOMS[room], ...getSalaGeometria(room, salas[room]) }
 
   useEffect(() => {
     if (!isAdmin) return
@@ -540,6 +646,67 @@ export default function AdminMesas() {
     await supabase.from('salas').update({ activo: nuevo }).eq('id', room)
   }
 
+  // Recinto/materiales de la sala (ancho, largo, hueco en L, colores) — mismo
+  // patrón que `updateZonaLocal`/`persistZona`: actualiza el estado local
+  // para que el plano reaccione al toque, y guarda en Supabase.
+  function updateSalaLocal(patch) {
+    setSalas((prev) => ({ ...prev, [room]: { ...prev[room], ...patch } }))
+  }
+
+  async function persistSala(patch) {
+    const { error } = await supabase.from('salas').update(patch).eq('id', room)
+    if (error) {
+      console.error('No se pudo guardar la configuración de la sala:', error)
+      alert('No se pudo guardar ese cambio (revisa tu conexión) — vuelve a intentarlo.')
+    }
+  }
+
+  // Nueva línea de zona: arranca centrada, cruzando la sala de lado a lado a
+  // media altura, para que sea fácil de encontrar y arrastrar a su lugar.
+  async function agregarLineaZona() {
+    const l = config.limite
+    const midY = Math.round((l.y0 + l.y1) / 2)
+    const nueva = {
+      id: `linea_${Date.now()}`,
+      room,
+      texto: '',
+      x: l.x0 + 40,
+      y: midY,
+      x2: l.x1 - 40,
+      y2: midY,
+      angulo: 0,
+      tam: 26,
+      orden: zonas.length + 1
+    }
+    const { data, error } = await supabase.from('zonas').insert(nueva).select().single()
+    if (!error && data) {
+      setZonas((prev) => [...prev, data])
+    } else if (error) {
+      console.error('No se pudo agregar la línea de zona:', error)
+      alert('No se pudo agregar la línea de zona (revisa tu conexión) — vuelve a intentarlo.')
+    }
+  }
+
+  async function eliminarLineaZona(id) {
+    await supabase.from('zonas').delete().eq('id', id)
+    setZonas((prev) => prev.filter((z) => z.id !== id))
+  }
+
+  // Arrastre de las puntas de una línea de zona: solo visual, así que se
+  // acota al viewBox nomás (no a `limitarASala`, que es para mesas).
+  function limitarAViewBox(vb, x, y) {
+    return {
+      x: Math.min(vb.x + vb.w, Math.max(vb.x, x)),
+      y: Math.min(vb.y + vb.h, Math.max(vb.y, y))
+    }
+  }
+
+  function onPointerDownZonaPunto(e, zona, punto) {
+    e.stopPropagation()
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragRef.current = { mode: 'zonaPunto', id: zona.id, punto }
+  }
+
   if (authLoading) return null
 
   if (!isAdmin) {
@@ -553,6 +720,10 @@ export default function AdminMesas() {
   }
 
   const selected = mesas.find((m) => m.id === selectedId)
+  // Las filas de `zonas` con x2/y2 son líneas de separación, no texto — se
+  // editan en secciones distintas del panel.
+  const zonasTexto = zonas.filter((z) => z.x2 == null)
+  const lineasZona = zonas.filter((z) => z.x2 != null && z.y2 != null)
 
   function updateLocal(id, patch) {
     setMesas((prev) => prev.map((m) => (m.id === id ? { ...m, ...patch } : m)))
@@ -589,9 +760,21 @@ export default function AdminMesas() {
   function onPointerMove(e) {
     const drag = dragRef.current
     if (!drag) return
+    const p = svgPoint(svgRef.current, e.clientX, e.clientY)
+
+    if (drag.mode === 'zonaPunto') {
+      const pos = limitarAViewBox(config.viewBox, p.x, p.y)
+      setZonas((prev) =>
+        prev.map((z) => {
+          if (z.id !== drag.id) return z
+          return drag.punto === 'a' ? { ...z, x: pos.x, y: pos.y } : { ...z, x2: pos.x, y2: pos.y }
+        })
+      )
+      return
+    }
+
     const mesa = mesas.find((m) => m.id === drag.id)
     if (!mesa) return
-    const p = svgPoint(svgRef.current, e.clientX, e.clientY)
 
     if (drag.mode === 'move') {
       // Sin este límite una mesa se puede arrastrar fuera del plano y
@@ -622,9 +805,16 @@ export default function AdminMesas() {
 
   function onPointerUp() {
     const drag = dragRef.current
-    if (!drag) return
-    const mesa = mesas.find((m) => m.id === drag.id)
     dragRef.current = null
+    if (!drag) return
+
+    if (drag.mode === 'zonaPunto') {
+      const zona = zonas.find((z) => z.id === drag.id)
+      if (zona) supabase.from('zonas').update({ x: zona.x, y: zona.y, x2: zona.x2, y2: zona.y2 }).eq('id', zona.id)
+      return
+    }
+
+    const mesa = mesas.find((m) => m.id === drag.id)
     if (!mesa) return
     if (drag.mode === 'move') persist(mesa.id, { x: mesa.x, y: mesa.y })
     else if (drag.mode === 'rotate') persist(mesa.id, { angulo: mesa.angulo })
@@ -794,9 +984,9 @@ export default function AdminMesas() {
           onPointerUp={onPointerUp}
           onPointerCancel={onPointerUp}
         >
-          {room === 'comedor' && <ComedorBackground zonas={zonas} />}
-          {room === 'salon' && <SalonBackground zonas={zonas} />}
-          {room === 'terraza' && <TerrazaBackground zonas={zonas} />}
+          {room === 'comedor' && <ComedorBackground zonas={zonas} sala={config} />}
+          {room === 'salon' && <SalonBackground zonas={zonas} sala={config} />}
+          {room === 'terraza' && <TerrazaBackground zonas={zonas} sala={config} />}
 
           {mesas.map((mesa) => {
             const isSel = mesa.id === selectedId
@@ -816,14 +1006,14 @@ export default function AdminMesas() {
                     height="24"
                     rx="5"
                     transform={`rotate(${c.rot} ${c.x} ${c.y})`}
-                    fill="#221A16"
+                    fill={config.colorSilla}
                     stroke="#B5732A"
                     strokeWidth="2"
                   />
                 ))}
 
                 <g onPointerDown={(e) => onPointerDownMesa(e, mesa)} className="cursor-move">
-                  <MesaShape mesa={mesa} isSel={isSel} elegante={room === 'salon'} />
+                  <MesaShape mesa={mesa} isSel={isSel} elegante={room === 'salon'} colorMesa={config.colorMesa} />
                   {/* El número se contra-rota: identifica la mesa, así que debe
                       leerse derecho aunque la mesa esté girada 90° o 180°. */}
                   <text
@@ -873,6 +1063,39 @@ export default function AdminMesas() {
               </g>
             )
           })}
+
+          {/* Puntas arrastrables de cada línea de zona — la línea en sí la
+              dibuja ZonaLineas() dentro del *Background de arriba, esto solo
+              agrega los dos handles para moverla. Solo visual: no pasa por
+              limitarASala. */}
+          {zonas
+            .filter((z) => z.x2 != null && z.y2 != null)
+            .map((z) => (
+              <g key={`linea-${z.id}`}>
+                <circle
+                  cx={z.x}
+                  cy={z.y}
+                  r="14"
+                  fill="#7DD3E8"
+                  fillOpacity="0.85"
+                  stroke="#15100D"
+                  strokeWidth="2"
+                  onPointerDown={(e) => onPointerDownZonaPunto(e, z, 'a')}
+                  className="cursor-grab"
+                />
+                <circle
+                  cx={z.x2}
+                  cy={z.y2}
+                  r="14"
+                  fill="#7DD3E8"
+                  fillOpacity="0.85"
+                  stroke="#15100D"
+                  strokeWidth="2"
+                  onPointerDown={(e) => onPointerDownZonaPunto(e, z, 'b')}
+                  className="cursor-grab"
+                />
+              </g>
+            ))}
         </svg>
       </div>
 
@@ -893,14 +1116,14 @@ export default function AdminMesas() {
         )}
       </div>
 
-      {zonas.length > 0 && (
+      {zonasTexto.length > 0 && (
         <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-4">
           <div className="font-head font-semibold text-sm mb-2">Nombres de zona</div>
           <p className="text-[11px] text-paper/40 mb-3">
             Cambia el texto y toca fuera del campo para guardar. Déjalo vacío para que no se muestre en el plano.
           </p>
           <div className="flex flex-col gap-2">
-            {zonas.map((z) => (
+            {zonasTexto.map((z) => (
               <input
                 key={z.id}
                 defaultValue={z.texto}
@@ -918,6 +1141,119 @@ export default function AdminMesas() {
           </div>
         </div>
       )}
+
+      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4 mb-4">
+        <div className="font-head font-semibold text-sm mb-2">Recinto y materiales</div>
+        <p className="text-[11px] text-paper/40 mb-3">
+          Cambia el tamaño del plano, agrega líneas de separación (solo visuales, no limitan dónde se puede
+          arrastrar una mesa) y los colores de piso, mesas y sillas de {config.label}.
+        </p>
+
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-paper/40">Ancho (cm)</span>
+            <input
+              key={`${room}-ancho-${config.ancho}`}
+              type="number"
+              defaultValue={config.ancho}
+              onBlur={(e) => {
+                const val = Number(e.target.value)
+                if (val > 0 && val !== config.ancho) {
+                  updateSalaLocal({ ancho: val })
+                  persistSala({ ancho: val })
+                }
+              }}
+              className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs text-paper"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[10px] text-paper/40">Largo (cm)</span>
+            <input
+              key={`${room}-largo-${config.largo}`}
+              type="number"
+              defaultValue={config.largo}
+              onBlur={(e) => {
+                const val = Number(e.target.value)
+                if (val > 0 && val !== config.largo) {
+                  updateSalaLocal({ largo: val })
+                  persistSala({ largo: val })
+                }
+              }}
+              className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs text-paper"
+            />
+          </label>
+        </div>
+
+        {room === 'comedor' && (
+          <div className="mb-3">
+            <div className="text-[10px] text-paper/40 mb-1.5">Recorte en L (cm) — x0, y0, x1, y1</div>
+            <div className="grid grid-cols-4 gap-1.5">
+              {['x0', 'y0', 'x1', 'y1'].map((campo) => (
+                <input
+                  key={`${room}-hueco-${campo}-${config.hueco?.[campo] ?? 0}`}
+                  type="number"
+                  defaultValue={config.hueco?.[campo] ?? 0}
+                  onBlur={(e) => {
+                    const val = Number(e.target.value)
+                    const actual = config.hueco?.[campo] ?? 0
+                    if (val !== actual) {
+                      const columna = `hueco_${campo}`
+                      updateSalaLocal({ [columna]: val })
+                      persistSala({ [columna]: val })
+                    }
+                  }}
+                  className="bg-ink border border-white/10 rounded-lg px-2 py-2 text-[11px] text-paper"
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[10px] text-paper/40">Líneas de separación</span>
+            <button onClick={agregarLineaZona} className="px-2 py-1 rounded-md border border-ember/40 text-ember text-[10px]">
+              + Línea de zona
+            </button>
+          </div>
+          {lineasZona.length > 0 && (
+            <div className="flex flex-col gap-1.5">
+              {lineasZona.map((z, i) => (
+                <div key={z.id} className="flex items-center justify-between bg-ink border border-white/10 rounded-lg px-3 py-1.5">
+                  <span className="text-[11px] text-paper/60">Línea {i + 1} — arrástrala del plano</span>
+                  <button onClick={() => eliminarLineaZona(z.id)} className="text-[10px] text-wineSoft">
+                    Eliminar
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { campo: 'color_piso', label: 'Piso', valor: config.colorPiso },
+            { campo: 'color_mesa', label: 'Mesas', valor: config.colorMesa },
+            { campo: 'color_silla', label: 'Sillas', valor: config.colorSilla }
+          ].map(({ campo, label, valor }) => (
+            <label key={campo} className="flex flex-col items-center gap-1">
+              <span className="text-[10px] text-paper/40">{label}</span>
+              <input
+                type="color"
+                value={valor}
+                // El selector nativo de color no siempre dispara blur al
+                // cerrarse (a diferencia de un <input type="text">), así que
+                // acá se guarda directo en cada cambio en vez de esperarlo.
+                onChange={(e) => {
+                  updateSalaLocal({ [campo]: e.target.value })
+                  persistSala({ [campo]: e.target.value })
+                }}
+                className="w-full h-8 rounded-md border border-white/10 bg-ink cursor-pointer"
+              />
+            </label>
+          ))}
+        </div>
+      </div>
 
       {selected && (
         <div className="bg-inkSoft border border-ember/20 rounded-2xl p-4 flex flex-col gap-3">

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../context/AuthContext.jsx'
 import { chairPositions } from '../lib/mesasLayout'
-import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground, MesaShape } from './AdminMesas.jsx'
+import { ROOMS, getSalaGeometria, ComedorBackground, SalonBackground, TerrazaBackground, MesaShape } from './AdminMesas.jsx'
 import { formatFechaCL } from './AdminReservas.jsx'
 import { todayISO, ReservaCard, CalendarioReservas, buscarSociosPorCorreos } from '../components/PanelReservasDia.jsx'
 
@@ -47,6 +47,7 @@ export default function AdminMesaTrabajo() {
   const [sociosPorCorreo, setSociosPorCorreo] = useState({})
   const [mesasPorRoom, setMesasPorRoom] = useState({ comedor: [], salon: [], terraza: [] })
   const [zonasPorRoom, setZonasPorRoom] = useState({ comedor: [], salon: [], terraza: [] })
+  const [salas, setSalas] = useState({})
   const [mesaSeleccionadaId, setMesaSeleccionadaId] = useState(null)
 
   useEffect(() => {
@@ -81,6 +82,17 @@ export default function AdminMesaTrabajo() {
       ;(z.data ?? []).forEach((zn) => porRoom[zn.room]?.push(zn))
       setZonasPorRoom(porRoom)
     })
+    supabase
+      .from('salas')
+      .select('*')
+      .then(({ data }) => {
+        if (!data?.length) return
+        const map = {}
+        data.forEach((s) => {
+          map[s.id] = s
+        })
+        setSalas(map)
+      })
   }, [isAdmin])
 
   const totalPersonas = useMemo(() => reservas.reduce((sum, r) => sum + (r.personas ?? 0), 0), [reservas])
@@ -106,7 +118,7 @@ export default function AdminMesaTrabajo() {
     )
   }
 
-  const config = ROOMS[room]
+  const config = { ...ROOMS[room], ...getSalaGeometria(room, salas[room]) }
   const mesasSala = mesasPorRoom[room] ?? []
   const reservasSeleccionadas = mesaSeleccionadaId ? reservasPorMesa[mesaSeleccionadaId] ?? [] : []
   const mesaSeleccionada = mesasSala.find((m) => m.id === mesaSeleccionadaId)
@@ -156,9 +168,9 @@ export default function AdminMesaTrabajo() {
 
       <div className="bg-inkSoft rounded-2xl p-3 mb-3">
         <svg viewBox={`${config.viewBox.x} ${config.viewBox.y} ${config.viewBox.w} ${config.viewBox.h}`} className="w-full h-auto">
-          {room === 'comedor' && <ComedorBackground zonas={zonasPorRoom.comedor} />}
-          {room === 'salon' && <SalonBackground zonas={zonasPorRoom.salon} />}
-          {room === 'terraza' && <TerrazaBackground zonas={zonasPorRoom.terraza} />}
+          {room === 'comedor' && <ComedorBackground zonas={zonasPorRoom.comedor} sala={config} />}
+          {room === 'salon' && <SalonBackground zonas={zonasPorRoom.salon} sala={config} />}
+          {room === 'terraza' && <TerrazaBackground zonas={zonasPorRoom.terraza} sala={config} />}
 
           {mesasSala.map((mesa) => {
             const clickable = mesa.tipo === 'round' || mesa.tipo === 'rect'
@@ -182,7 +194,7 @@ export default function AdminMesaTrabajo() {
                     height="24"
                     rx="5"
                     transform={`rotate(${c.rot} ${c.x} ${c.y})`}
-                    fill="#221A16"
+                    fill={config.colorSilla}
                     stroke="#B5732A"
                     strokeWidth="2"
                   />

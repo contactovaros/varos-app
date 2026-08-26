@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
-import { ROOMS, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
+import { ROOMS, getSalaGeometria, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
 import { BotonRedSocial, IconoInstagram, IconoFacebook, IconoSitioWeb, IconoWhatsApp, IconoResena } from '../components/TarjetaFidelidad.jsx'
 import BotonOro from '../components/BotonOro.jsx'
 
@@ -413,7 +413,9 @@ export default function Reservas() {
     (salas.comedor?.activo !== false ? 'comedor' : salas.salon?.activo !== false ? 'salon' : 'terraza')
 
   const mesasVisibles = mesas.filter((m) => m.sala === salaMostrada)
-  const zonasVisibles = zonas.filter((z) => z.room === salaMostrada && z.texto)
+  // Ojo: las líneas de zona van con `texto: ''` (no llevan etiqueta), así que
+  // el filtro no puede exigir texto — si no, la línea nunca llega a pintarse.
+  const zonasVisibles = zonas.filter((z) => z.room === salaMostrada && (z.texto || (z.x2 != null && z.y2 != null)))
 
   async function confirmarReserva(e) {
     e.preventDefault()
@@ -667,7 +669,10 @@ export default function Reservas() {
           <div className="w-full max-w-md bg-inkSoft rounded-2xl p-3 mb-4">
             <svg
               viewBox={(() => {
-                const vb = ROOMS[salaMostrada]?.viewBox || ROOMS.comedor.viewBox
+                // Misma geometría que /admin/mesas: si el admin cambió el
+                // tamaño del recinto, esta vista pública lo refleja también.
+                const geo = getSalaGeometria(salaMostrada, salas[salaMostrada]) || ROOMS.comedor
+                const vb = geo.viewBox
                 return `${vb.x} ${vb.y} ${vb.w} ${vb.h}`
               })()}
               className="w-full h-auto"
@@ -684,9 +689,9 @@ export default function Reservas() {
                 </filter>
               </defs>
 
-              {salaMostrada === 'comedor' && <ComedorBackground zonas={zonasVisibles} />}
-              {salaMostrada === 'salon' && <SalonBackground zonas={zonasVisibles} />}
-              {salaMostrada === 'terraza' && <TerrazaBackground zonas={zonasVisibles} />}
+              {salaMostrada === 'comedor' && <ComedorBackground zonas={zonasVisibles} sala={getSalaGeometria('comedor', salas.comedor)} />}
+              {salaMostrada === 'salon' && <SalonBackground zonas={zonasVisibles} sala={getSalaGeometria('salon', salas.salon)} />}
+              {salaMostrada === 'terraza' && <TerrazaBackground zonas={zonasVisibles} sala={getSalaGeometria('terraza', salas.terraza)} />}
 
               {mesasVisibles.map((m) => {
                 if (m.tipo === 'escenario' || m.tipo === 'decor') {
