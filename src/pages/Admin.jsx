@@ -404,9 +404,9 @@ export default function Admin() {
         className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
       >
         <div>
-          <div className="font-head font-semibold text-sm">⭐ Reseñas de Google</div>
+          <div className="font-head font-semibold text-sm">Consultor de reseñas</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
-            Puntaje y reseñas de Varo's Restaurant & Eventos
+            Preguntale a tus reseñas de Google qué reclama y qué celebra la gente
           </div>
         </div>
         <span className="text-ember text-lg">→</span>

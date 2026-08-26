@@ -1,41 +1,66 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { supabase } from '../lib/supabase'
 import { fetchPlaceReviews } from '../lib/googleReviews.js'
+import { formatPromedio, mesAnio } from '../lib/resenas'
+import ConsultorResenas from '../components/ConsultorResenas.jsx'
+import ImportadorResenas from '../components/ImportadorResenas.jsx'
+import Estrellas from '../components/Estrellas.jsx'
 
-function Estrellas({ valor }) {
-  const llenas = Math.round(valor || 0)
-  return (
-    <span className="text-gold text-sm tracking-wide" aria-label={`${valor ?? 0} de 5 estrellas`}>
-      {'★'.repeat(llenas)}
-      {'☆'.repeat(Math.max(0, 5 - llenas))}
-    </span>
-  )
-}
-
+// Esta pantalla tiene dos fuentes distintas y conviene no confundirlas:
+//
+//   - El corpus propio (`resenas_google`): lo que el dueño pegó desde su
+//     Perfil de Empresa. Puede ser todo su historial. Es sobre esto que
+//     responde el consultor.
+//   - La ficha de Google (Places API): el rating oficial y las 5 reseñas que
+//     Google elige mostrar. Es el dato de referencia — la nota que ve un
+//     cliente cuando busca el local — pero cinco reseñas no alcanzan para
+//     analizar nada, así que va abajo y en voz baja.
 export default function AdminResenas() {
   const { isAdmin, loading: authLoading } = useAuth()
-  const [datos, setDatos] = useState(null)
-  const [error, setError] = useState(null)
-  const [cargando, setCargando] = useState(true)
+
+  const [corpus, setCorpus] = useState({ total: 0, promedio: null, desde: null, cargado: false })
+  const [ficha, setFicha] = useState(null)
+  const [errorFicha, setErrorFicha] = useState(null)
+  const [errorCorpus, setErrorCorpus] = useState(null)
+
+  const cargarCorpus = useCallback(async () => {
+    const { data, error } = await supabase
+      .from('resenas_google')
+      .select('rating, fecha_aprox')
+
+    if (error) {
+      setErrorCorpus(error.message)
+      setCorpus((c) => ({ ...c, cargado: true }))
+      return
+    }
+
+    const filas = data ?? []
+    const fechas = filas.map((r) => r.fecha_aprox).filter(Boolean).sort()
+    setCorpus({
+      total: filas.length,
+      promedio: filas.length ? filas.reduce((a, r) => a + r.rating, 0) / filas.length : null,
+      desde: fechas[0] ?? null,
+      cargado: true
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!isAdmin) return
+    cargarCorpus()
+  }, [isAdmin, cargarCorpus])
 
   useEffect(() => {
     if (!isAdmin) return
     let cancelado = false
 
-    async function cargar() {
-      setCargando(true)
-      try {
-        const placeId = import.meta.env.VITE_GOOGLE_PLACE_ID
-        const d = await fetchPlaceReviews(placeId)
-        if (!cancelado) setDatos(d)
-      } catch (e) {
-        if (!cancelado) setError(e.message)
-      } finally {
-        if (!cancelado) setCargando(false)
-      }
+    fetchPlaceReviews(import.meta.env.VITE_GOOGLE_PLACE_ID)
+      .then((d) => !cancelado && setFicha(d))
+      .catch((e) => !cancelado && setErrorFicha(e.message))
+
+    return () => {
+      cancelado = true
     }
-    cargar()
-    return () => { cancelado = true }
   }, [isAdmin])
 
   if (authLoading) return null
@@ -51,66 +76,97 @@ export default function AdminResenas() {
   }
 
   return (
-    <div className="px-4 pt-8 pb-10">
-      <div className="mb-6">
+    <div className="px-4 pt-8 pb-10 flex flex-col gap-4">
+      <header>
         <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
-        <h1 className="font-head text-2xl font-semibold">Reseñas de Google</h1>
-      </div>
+        <h1 className="font-head text-2xl font-semibold">Consultor de reseñas</h1>
+        <p className="text-paper/40 text-xs mt-1 leading-relaxed">
+          {!corpus.cargado
+            ? 'Cargando el corpus…'
+            : corpus.total === 0
+              ? 'Sin reseñas guardadas todavía.'
+              : `${corpus.total} reseñas guardadas · promedio ${formatPromedio(corpus.promedio)}${
+                  corpus.desde ? ` · desde ${mesAnio(corpus.desde)}` : ''
+                }`}
+        </p>
+        {errorCorpus && (
+          <p className="text-wineSoft text-[11px] mt-1 leading-relaxed">
+            No se pudo leer el corpus: {errorCorpus}. Si dice algo de "row-level security",
+            falta correr la migración add_resenas_google.sql en Supabase.
+          </p>
+        )}
+      </header>
 
-      {cargando && <p className="text-paper/40 text-xs mb-4">Cargando reseñas…</p>}
+      <ConsultorResenas totalResenas={corpus.total} />
 
-      <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-        <h3 className="font-head font-semibold text-sm mb-2">Varo's Restaurant & Eventos</h3>
+      <ImportadorResenas onImportado={cargarCorpus} />
 
-        {error && (
-          <p className="text-wineSoft text-[11px] leading-relaxed">
-            {error.includes('VITE_GOOGLE_PLACES_API_KEY')
+      <section className="border-t border-white/5 pt-4">
+        <h2 className="font-head text-xs font-semibold text-paper/50 mb-2">
+          Tu ficha en Google, ahora
+        </h2>
+
+        {errorFicha && (
+          <p className="text-paper/35 text-[11px] leading-relaxed">
+            {errorFicha.includes('VITE_GOOGLE_PLACES_API_KEY')
               ? 'Falta configurar la API key de Google Places en el .env.'
-              : error.includes('Place ID')
+              : errorFicha.includes('Place ID')
                 ? 'Falta el Place ID del local (variable VITE_GOOGLE_PLACE_ID en el .env).'
-                : error}
+                : errorFicha}
           </p>
         )}
 
-        {datos && (
+        {ficha && (
           <>
-            <div className="flex items-center gap-3 mb-3">
-              <span className="font-display text-3xl text-ember">{datos.rating?.toFixed(1) ?? '—'}</span>
+            <div className="flex items-center gap-3">
+              <span className="font-display text-2xl text-ember leading-none">
+                {ficha.rating?.toFixed(1) ?? '—'}
+              </span>
               <div>
-                <Estrellas valor={datos.rating} />
-                <div className="text-paper/40 text-[10px]">{datos.userRatingCount ?? 0} reseñas en Google</div>
+                <Estrellas valor={ficha.rating} className="text-xs" />
+                <div className="text-paper/35 text-[10px]">
+                  {ficha.userRatingCount ?? 0} reseñas en Google
+                  {ficha.googleMapsUri && (
+                    <>
+                      {' · '}
+                      <a
+                        href={ficha.googleMapsUri}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-ember underline"
+                      >
+                        ver en Maps
+                      </a>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
 
-            {datos.googleMapsUri && (
-              <a
-                href={datos.googleMapsUri}
-                target="_blank"
-                rel="noreferrer"
-                className="text-ember text-[11px] underline"
-              >
-                Ver en Google Maps →
-              </a>
-            )}
-
-            <div className="mt-3 flex flex-col gap-3">
-              {(datos.reviews ?? []).map((r, i) => (
-                <div key={r.name ?? i} className="border-t border-white/5 pt-2 text-xs">
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-paper font-semibold">{r.authorAttribution?.displayName ?? 'Anónimo'}</span>
-                    <Estrellas valor={r.rating} />
-                  </div>
-                  <div className="text-paper/40 text-[10px] mb-1">{r.relativePublishTimeDescription}</div>
-                  {r.text?.text && <p className="text-paper/60">{r.text.text}</p>}
+            {(ficha.reviews ?? []).length > 0 && (
+              <details className="mt-2">
+                <summary className="text-paper/40 text-[11px] cursor-pointer">
+                  Las {ficha.reviews.length} que Google destaca
+                </summary>
+                <div className="mt-2 flex flex-col gap-2">
+                  {ficha.reviews.map((r, i) => (
+                    <div key={r.name ?? i} className="text-[11px] border-t border-white/5 pt-2">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-paper/70">
+                          {r.authorAttribution?.displayName ?? 'Anónimo'}
+                        </span>
+                        <Estrellas valor={r.rating} className="text-[10px]" />
+                      </div>
+                      <div className="text-paper/30">{r.relativePublishTimeDescription}</div>
+                      {r.text?.text && <p className="text-paper/50 mt-0.5">{r.text.text}</p>}
+                    </div>
+                  ))}
                 </div>
-              ))}
-              {(datos.reviews ?? []).length === 0 && (
-                <p className="text-paper/35 text-[11px]">Google no está devolviendo reseñas de texto para este local por ahora.</p>
-              )}
-            </div>
+              </details>
+            )}
           </>
         )}
-      </div>
+      </section>
     </div>
   )
 }
