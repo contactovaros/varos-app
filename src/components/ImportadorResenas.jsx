@@ -38,6 +38,7 @@ export default function ImportadorResenas({ onImportado }) {
     for (let i = 0; i < lotes.length; i++) {
       setProgreso({ actual: i + 1, total: lotes.length, guardadas })
 
+      const inicio = Date.now()
       try {
         // La función responde en streaming (el JSON llega de a pedazos, ver
         // el comentario en importar-resenas.mjs): acá se junta todo antes de
@@ -51,7 +52,12 @@ export default function ImportadorResenas({ onImportado }) {
         try {
           datos = JSON.parse(acumulado)
         } catch {
-          throw new Error('No se pudo terminar de leer este lote.')
+          // El tiempo transcurrido queda en el mensaje a propósito: si esto
+          // se corta siempre cerca del mismo número de segundos, es la pista
+          // de que hay un límite de duración de la infraestructura por medio
+          // (no de tokens ni de red), y ese número ayuda a acotarlo.
+          const segundos = Math.round((Date.now() - inicio) / 1000)
+          throw new Error(`No se pudo terminar de leer este lote (se cortó a los ${segundos}s).`)
         }
         if (datos.error) throw new Error(datos.error)
 
@@ -169,10 +175,11 @@ export default function ImportadorResenas({ onImportado }) {
           {resultado.fallidos.length > 0 && (
             <div className="mt-2 text-wineSoft text-[11px] leading-relaxed">
               <p>
-                {resultado.fallidos.length} lote{resultado.fallidos.length === 1 ? '' : 's'} no se
-                pudo{resultado.fallidos.length === 1 ? '' : 'ieron'} procesar. Lo ya guardado
-                arriba quedó bien igual — para completar el resto, volvé a pegar el mismo texto:
-                lo que ya está no se duplica, solo se procesa de nuevo lo que faltó.
+                {resultado.fallidos.length === 1
+                  ? '1 lote no se pudo procesar.'
+                  : `${resultado.fallidos.length} lotes no se pudieron procesar.`}{' '}
+                Lo ya guardado arriba quedó bien igual — para completar el resto, volvé a pegar el
+                mismo texto: lo que ya está no se duplica, solo se procesa de nuevo lo que faltó.
               </p>
               <ul className="mt-1 list-disc list-inside">
                 {resultado.fallidos.map((f) => (

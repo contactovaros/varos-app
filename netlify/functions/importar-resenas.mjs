@@ -28,7 +28,12 @@
 import { requireAdmin, jsonResponse } from './lib/adminAuth.mjs'
 import { clienteClaude, faltaClave, MENSAJE_SIN_CLAVE, MODELO, respuestaStreamNDJSON } from './lib/claude.mjs'
 
-const MAX_CARACTERES_LOTE = 12_000
+// Techo del lado del servidor (red de seguridad si alguien llama la función a
+// mano). Un poco por encima de los 4500 que usa el partidor del frontend
+// (src/lib/resenas.js), no de los 9000 de antes: se bajó junto con el
+// tamaño de lote real después de ver lotes grandes cortarse a mitad de
+// generación sin error visible en producción.
+const MAX_CARACTERES_LOTE = 6_000
 
 const HERRAMIENTA = {
   name: 'registrar_resenas',

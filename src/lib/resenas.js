@@ -98,10 +98,15 @@ export function mesAnio(iso) {
 //
 // Corta preferentemente en línea en blanco (que es como Google separa una
 // reseña de la siguiente) y solo cae en el corte duro si un bloque solo ya se
-// pasa del tamaño. Si igual quedara una reseña partida al medio, la peor
-// consecuencia es que esa entrada salga mal en la vista previa, donde se ve
-// antes de guardar.
-export function partirEnLotes(texto, maxChars = 9000) {
+// pasa del tamaño.
+//
+// maxChars bajó de 9000 a 4500 después de ver, en producción, lotes grandes
+// que se cortaban a mitad de generación sin ningún error visible (ni del
+// servidor ni de la red) — probablemente otro límite de duración de la
+// infraestructura de Netlify, además del de inactividad. Lotes más chicos
+// generan una respuesta más corta y tardan menos, así que se alejan de
+// cualquier techo de tiempo que exista, se conozca o no exactamente cuál es.
+export function partirEnLotes(texto, maxChars = 4500) {
   const limpio = String(texto ?? '').trim()
   if (!limpio) return []
   if (limpio.length <= maxChars) return [limpio]
