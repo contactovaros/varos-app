@@ -127,7 +127,13 @@ export default async (req) => {
 
   const stream = anthropic.messages.stream({
     model: MODELO,
-    max_tokens: 16000,
+    // Cada reseña se convierte en varios campos con nombre (autor, rating,
+    // fecha_texto, fecha_aprox, texto, respuesta_local): el JSON de salida
+    // pesa bastante más que el texto pegado. Con un lote de reseñas densas,
+    // 16.000 no alcanzaba y el modelo cortaba el JSON a mitad de camino sin
+    // avisar (visto en producción). Como ya se manda todo en streaming, un
+    // techo alto no cuesta nada salvo que de verdad haga falta usarlo.
+    max_tokens: 64000,
     // Tarea mecánica de transcripción: no necesita pensar mucho, y bajar el
     // esfuerzo la hace más barata y más rápida.
     output_config: { effort: 'low' },

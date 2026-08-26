@@ -87,10 +87,17 @@ export function errorLegible(e) {
  * `extraerTexto(evento)` recibe cada evento del stream de Anthropic y
  * devuelve el texto a mandar, o algo falsy si ese evento no trae contenido
  * (el consultor lee `text_delta`, el importador lee `input_json_delta`).
+ *
+ * También vigila que la respuesta no se haya cortado por quedarse sin
+ * `max_tokens`. Eso no es un error de red ni de la API — el stream termina
+ * "normal", sin tirar excepción — así que sin este chequeo el JSON del
+ * importador queda incompleto en silencio y el frontend solo ve que no puede
+ * parsearlo, sin saber por qué. Visto en producción con un lote grande.
  */
 export function respuestaStreamNDJSON(streamAnthropic, extraerTexto) {
   const encoder = new TextEncoder()
   let ultimoEnvio = Date.now()
+  let motivoDeCorte = null
 
   const body = new ReadableStream({
     async start(controller) {
@@ -105,8 +112,17 @@ export function respuestaStreamNDJSON(streamAnthropic, extraerTexto) {
 
       try {
         for await (const evento of streamAnthropic) {
+          if (evento.type === 'message_delta' && evento.delta?.stop_reason) {
+            motivoDeCorte = evento.delta.stop_reason
+          }
           const texto = extraerTexto(evento)
           if (texto) enviar({ delta: texto })
+        }
+        if (motivoDeCorte === 'max_tokens') {
+          enviar({
+            error:
+              'Esta tanda generó una respuesta más larga de lo esperado y se cortó a mitad de camino. Probá pegando menos reseñas por vez.'
+          })
         }
       } catch (e) {
         console.error('respuestaStreamNDJSON: error durante el stream', e)
