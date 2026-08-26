@@ -3,18 +3,20 @@
 //
 // Dos decisiones que no hay que "simplificar" sin entender por qué están:
 //
-// 1. La respuesta va en STREAMING. Las funciones sincrónicas de Netlify cortan
-//    a los 10 segundos, y una respuesta razonada sobre cientos de reseñas
-//    tarda más que eso. Al emitir el primer byte enseguida la conexión queda
-//    viva, y de paso el dueño ve la respuesta escribiéndose en vez de mirar un
-//    spinner mudo medio minuto. El frontend lee el body con un reader.
+// 1. La respuesta va en streaming NDJSON con latido (respuestaStreamNDJSON en
+//    lib/claude.mjs). Streamear evita el límite de 10 segundos de las
+//    funciones de Netlify; el latido evita el "Inactivity Timeout" que otra
+//    capa de la infraestructura tira si pasa un rato sin mandar ni un byte
+//    (por ejemplo mientras el modelo razona antes de escribir la primera
+//    palabra). De paso el dueño ve la respuesta escribiéndose en vez de mirar
+//    un spinner mudo medio minuto.
 //
 // 2. El corpus se lee ACÁ con la service role, no llega del cliente. El
 //    navegador solo manda la pregunta: así nadie puede inyectar reseñas falsas
 //    en el contexto ni inflar el gasto mandando un corpus gigante.
 
-import { requireAdmin } from './lib/adminAuth.mjs'
-import { clienteClaude, faltaClave, MENSAJE_SIN_CLAVE, MODELO, errorLegible } from './lib/claude.mjs'
+import { requireAdmin, jsonResponse } from './lib/adminAuth.mjs'
+import { clienteClaude, faltaClave, MENSAJE_SIN_CLAVE, MODELO, respuestaStreamNDJSON } from './lib/claude.mjs'
 
 const SYSTEM = `Sos el analista de reseñas de Varo's Restaurant y Centro de Eventos (Los Ángeles, Región del Biobío, Chile). Hablás con el dueño, no con un cliente.
 
@@ -74,31 +76,33 @@ function sanearHistorial(historial) {
     : []
 }
 
-function textoPlano(mensaje, status) {
-  return new Response(mensaje, {
-    status,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+// Una sola línea NDJSON con `{ delta }`: se usa para respuestas cortas que no
+// vienen del modelo (todavía no hay corpus) pero que igual tienen que
+// aparecer en la burbuja del chat, no como un error aparte.
+function respuestaCorta(mensaje) {
+  return new Response(`${JSON.stringify({ delta: mensaje })}\n`, {
+    headers: { 'Content-Type': 'application/x-ndjson; charset=utf-8' }
   })
 }
 
 export default async (req) => {
-  if (req.method !== 'POST') return textoPlano('Método no permitido', 405)
+  if (req.method !== 'POST') return jsonResponse({ error: 'Método no permitido' }, 405)
 
   const auth = await requireAdmin(req)
   if (auth.error) return auth.error
 
-  if (faltaClave()) return textoPlano(MENSAJE_SIN_CLAVE, 500)
+  if (faltaClave()) return jsonResponse({ error: MENSAJE_SIN_CLAVE }, 500)
 
   let pregunta
   let historial
   try {
     ;({ pregunta, historial } = await req.json())
   } catch {
-    return textoPlano('Body inválido', 400)
+    return jsonResponse({ error: 'Body inválido' }, 400)
   }
 
   if (typeof pregunta !== 'string' || !pregunta.trim()) {
-    return textoPlano('Falta la pregunta', 400)
+    return jsonResponse({ error: 'Falta la pregunta' }, 400)
   }
 
   const { data: resenas, error } = await auth.supabase
@@ -108,13 +112,12 @@ export default async (req) => {
 
   if (error) {
     console.error('consultor-resenas: error leyendo el corpus', error)
-    return textoPlano('No se pudieron leer las reseñas guardadas.', 500)
+    return jsonResponse({ error: 'No se pudieron leer las reseñas guardadas.' }, 500)
   }
 
   if (!resenas || resenas.length === 0) {
-    return textoPlano(
-      'Todavía no hay reseñas guardadas. Importá tus reseñas de Google acá abajo y después preguntame lo que quieras.',
-      200
+    return respuestaCorta(
+      'Todavía no hay reseñas guardadas. Importá tus reseñas de Google acá abajo y después preguntame lo que quieras.'
     )
   }
 
@@ -135,37 +138,9 @@ export default async (req) => {
     messages: [...sanearHistorial(historial), { role: 'user', content: pregunta.slice(0, 2000) }]
   })
 
-  const encoder = new TextEncoder()
-  let emitioAlgo = false
-
-  const body = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const evento of stream) {
-          if (evento.type === 'content_block_delta' && evento.delta?.type === 'text_delta') {
-            emitioAlgo = true
-            controller.enqueue(encoder.encode(evento.delta.text))
-          }
-        }
-      } catch (e) {
-        console.error('consultor-resenas: error durante el stream', e)
-        const { mensaje } = errorLegible(e)
-        // Una vez abierto el stream ya no se puede cambiar el status: el aviso
-        // viaja como texto al final de lo que se haya alcanzado a escribir.
-        controller.enqueue(
-          encoder.encode(`${emitioAlgo ? '\n\n' : ''}[Se cortó la respuesta: ${mensaje}]`)
-        )
-      } finally {
-        controller.close()
-      }
-    }
-  })
-
-  return new Response(body, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff'
-    }
-  })
+  return respuestaStreamNDJSON(stream, (evento) =>
+    evento.type === 'content_block_delta' && evento.delta?.type === 'text_delta'
+      ? evento.delta.text
+      : null
+  )
 }

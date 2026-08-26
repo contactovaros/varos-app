@@ -7,13 +7,18 @@
 // llamada larga — se pasa de largo seguro. El frontend parte el texto
 // (partirEnLotes en src/lib/resenas.js) y llama una vez por lote.
 //
-// Por qué va en STREAMING (y no solo por lotes): incluso un lote solo puede
-// tardar más de 10 segundos en generarse. Una función de Netlify que devuelve
-// un stream no se mide contra ese límite de la misma forma — mientras la
-// conexión siga mandando datos, sigue viva. Por eso se manda cada pedacito
-// del JSON de la herramienta a medida que el modelo lo va generando (delta a
-// delta), y recién el frontend arma el JSON completo cuando termina de
-// recibirlo (ver postStream + analizar() en ImportadorResenas.jsx).
+// Por qué va en STREAMING con latido (y no solo por lotes): incluso un lote
+// solo puede tardar más de 10 segundos en generarse. Streamear evita el
+// límite de duración de una función de Netlify — mientras la conexión siga
+// mandando datos, sigue viva — pero no evita que otra capa de la
+// infraestructura corte la conexión si pasa un rato sin mandar ni un byte
+// ("Inactivity Timeout", visto en producción con un lote grande: el modelo
+// tarda en empezar a escribir y en ese silencio la conexión se da por
+// muerta). `respuestaStreamNDJSON` (lib/claude.mjs) manda un latido cada
+// pocos segundos para evitarlo, y de paso manda cada pedacito del JSON de la
+// herramienta a medida que el modelo lo va generando — recién el frontend
+// arma el JSON completo cuando termina de recibirlo (ver postStream +
+// analizar() en ImportadorResenas.jsx).
 //
 // El parseo va por `strict tool use` en vez de pedir "devolveme un JSON":
 // el modelo no puede salirse del esquema, así que no hay que adivinar si la
@@ -21,7 +26,7 @@
 // que hay que reensamblar es el streaming de los pedazos.
 
 import { requireAdmin, jsonResponse } from './lib/adminAuth.mjs'
-import { clienteClaude, faltaClave, MENSAJE_SIN_CLAVE, MODELO, errorLegible } from './lib/claude.mjs'
+import { clienteClaude, faltaClave, MENSAJE_SIN_CLAVE, MODELO, respuestaStreamNDJSON } from './lib/claude.mjs'
 
 const MAX_CARACTERES_LOTE = 12_000
 
@@ -86,20 +91,13 @@ Reglas:
 - No inventes reseñas que no estén en el texto. Si el pegado no tiene ninguna, devolvé la lista vacía.`
 }
 
-function textoPlano(mensaje, status) {
-  return new Response(mensaje, {
-    status,
-    headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-  })
-}
-
 export default async (req) => {
   if (req.method !== 'POST') return jsonResponse({ error: 'Método no permitido' }, 405)
 
   const auth = await requireAdmin(req)
   if (auth.error) return auth.error
 
-  if (faltaClave()) return textoPlano(JSON.stringify({ error: MENSAJE_SIN_CLAVE }), 200)
+  if (faltaClave()) return jsonResponse({ error: MENSAJE_SIN_CLAVE }, 500)
 
   let texto
   try {
@@ -141,46 +139,14 @@ export default async (req) => {
     messages: [{ role: 'user', content: `Texto pegado:\n\n${texto}` }]
   })
 
-  const encoder = new TextEncoder()
-  let emitioAlgo = false
-
-  const body = new ReadableStream({
-    async start(controller) {
-      try {
-        for await (const evento of stream) {
-          // El input de la herramienta llega de a pedazos de texto JSON
-          // (input_json_delta) a medida que el modelo lo genera. Como
-          // `tool_choice` fuerza una sola herramienta, no hace falta
-          // distinguir bloques: se concatenan todos en orden.
-          if (evento.type === 'content_block_delta' && evento.delta?.type === 'input_json_delta') {
-            emitioAlgo = true
-            controller.enqueue(encoder.encode(evento.delta.partial_json))
-          }
-        }
-      } catch (e) {
-        console.error('importar-resenas: error durante el stream', e)
-        // Si todavía no se mandó nada, se puede mandar un JSON de error
-        // limpio: el frontend distingue `{ error }` de `{ resenas }`. Si ya
-        // se había empezado a mandar el JSON de las reseñas, agregar texto acá
-        // lo rompería (dejaría de ser JSON válido) — en ese caso el frontend
-        // detecta el fallo al no poder parsear y pide reintentar con menos
-        // texto, que es lo más honesto que se puede hacer sin poder avisar
-        // a mitad de una respuesta ya empezada.
-        if (!emitioAlgo) {
-          const { mensaje } = errorLegible(e)
-          controller.enqueue(encoder.encode(JSON.stringify({ error: mensaje })))
-        }
-      } finally {
-        controller.close()
-      }
-    }
-  })
-
-  return new Response(body, {
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'no-store',
-      'X-Content-Type-Options': 'nosniff'
-    }
-  })
+  // El input de la herramienta llega de a pedazos de texto JSON
+  // (input_json_delta) a medida que el modelo lo genera. Como `tool_choice`
+  // fuerza una sola herramienta, no hace falta distinguir bloques: el
+  // frontend concatena todos los pedazos en orden y recién al final parsea
+  // el JSON completo (ver analizar() en ImportadorResenas.jsx).
+  return respuestaStreamNDJSON(stream, (evento) =>
+    evento.type === 'content_block_delta' && evento.delta?.type === 'input_json_delta'
+      ? evento.delta.partial_json
+      : null
+  )
 }
