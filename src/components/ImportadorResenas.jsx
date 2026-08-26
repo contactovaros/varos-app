@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { postJson } from '../lib/apiAdmin'
+import { postStream } from '../lib/apiAdmin'
 import { aFilaResena, dedupePorHuella, partirEnLotes, recortar, formatPromedio, promedioRating } from '../lib/resenas'
 import Estrellas from './Estrellas'
 
@@ -29,8 +29,25 @@ export default function ImportadorResenas({ onImportado }) {
     try {
       for (let i = 0; i < lotes.length; i++) {
         setProgreso({ actual: i + 1, total: lotes.length })
-        const { resenas } = await postJson('importar-resenas', { texto: lotes[i] })
-        encontradas.push(...(resenas ?? []))
+
+        // La función responde en streaming (el JSON llega de a pedazos, ver
+        // el comentario en importar-resenas.mjs): acá se junta todo antes de
+        // parsear, porque un JSON a medio recibir no es válido todavía.
+        let acumulado = ''
+        await postStream('importar-resenas', { texto: lotes[i] }, (pedazo) => {
+          acumulado += pedazo
+        })
+
+        let datos
+        try {
+          datos = JSON.parse(acumulado)
+        } catch {
+          throw new Error(
+            `No se pudo terminar de leer el lote ${i + 1} de ${lotes.length}. Probá pegando menos reseñas por vez.`
+          )
+        }
+        if (datos.error) throw new Error(datos.error)
+        encontradas.push(...(datos.resenas ?? []))
       }
     } catch (e) {
       setError(e.message)
