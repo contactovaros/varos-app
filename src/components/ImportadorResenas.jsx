@@ -1,35 +1,44 @@
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { postStream } from '../lib/apiAdmin'
-import { aFilaResena, dedupePorHuella, partirEnLotes, recortar, formatPromedio, promedioRating } from '../lib/resenas'
+import { aFilaResena, dedupePorHuella, partirEnLotes, recortar, formatPromedio } from '../lib/resenas'
 import Estrellas from './Estrellas'
 
 // Google no deja exportar reseñas, así que la vía real es copiar y pegar desde
-// el Perfil de Empresa. La IA parsea ese pegado sucio; acá se muestra qué
-// entendió ANTES de escribir nada en la base, porque un parseo mal hecho que
-// se guarda solo ensucia el corpus para todas las consultas que vengan.
+// el Perfil de Empresa.
+//
+// Cada lote se guarda apenas se procesa — no hay un botón de "Guardar" al
+// final que junte todo. Con un pegado grande esto tarda varios minutos en
+// varios lotes, y esperar hasta el final para guardar es justo el paso que se
+// pierde si alguien actualiza la página o se corta la conexión a mitad de
+// camino (pasó en producción). Guardando de a lote, lo que ya se procesó
+// queda guardado pase lo que pase con el resto.
+//
+// Si un lote falla (por ejemplo por un corte de red), se lo salta y se sigue
+// con los demás: es mejor guardar 8 lotes de 9 que perder los 9 porque uno
+// falló.
 export default function ImportadorResenas({ onImportado }) {
   const [abierto, setAbierto] = useState(false)
   const [texto, setTexto] = useState('')
-  const [previa, setPrevia] = useState(null)
   const [progreso, setProgreso] = useState(null)
-  const [guardando, setGuardando] = useState(false)
-  const [error, setError] = useState(null)
   const [resultado, setResultado] = useState(null)
+  const [ejemplos, setEjemplos] = useState([])
 
-  async function analizar() {
+  async function importar() {
     const lotes = partirEnLotes(texto)
     if (lotes.length === 0) return
 
-    setError(null)
     setResultado(null)
-    setPrevia(null)
+    setEjemplos([])
 
-    const encontradas = []
-    try {
-      for (let i = 0; i < lotes.length; i++) {
-        setProgreso({ actual: i + 1, total: lotes.length })
+    let guardadas = 0
+    let vistas = 0
+    const fallidos = []
 
+    for (let i = 0; i < lotes.length; i++) {
+      setProgreso({ actual: i + 1, total: lotes.length, guardadas })
+
+      try {
         // La función responde en streaming (el JSON llega de a pedazos, ver
         // el comentario en importar-resenas.mjs): acá se junta todo antes de
         // parsear, porque un JSON a medio recibir no es válido todavía.
@@ -42,56 +51,40 @@ export default function ImportadorResenas({ onImportado }) {
         try {
           datos = JSON.parse(acumulado)
         } catch {
-          throw new Error(
-            `No se pudo terminar de leer el lote ${i + 1} de ${lotes.length}. Probá pegando menos reseñas por vez.`
-          )
+          throw new Error('No se pudo terminar de leer este lote.')
         }
         if (datos.error) throw new Error(datos.error)
-        encontradas.push(...(datos.resenas ?? []))
+
+        const filas = dedupePorHuella((datos.resenas ?? []).map((r) => aFilaResena(r)).filter(Boolean))
+        vistas += filas.length
+
+        if (filas.length > 0) {
+          // `.select()` después del upsert devuelve, por cómo funciona
+          // ON CONFLICT DO NOTHING en Postgres, SOLO las filas que se
+          // insertaron de verdad — las que ya existían por `huella` no
+          // vienen en la respuesta. Así se sabe cuántas eran nuevas sin
+          // tener que contar la tabla antes y después.
+          const { data: insertadas, error: errorInsert } = await supabase
+            .from('resenas_google')
+            .upsert(filas, { onConflict: 'huella', ignoreDuplicates: true })
+            .select('id')
+
+          if (errorInsert) throw new Error(errorInsert.message)
+
+          guardadas += insertadas?.length ?? 0
+          setEjemplos((prev) => (prev.length >= 5 ? prev : [...prev, ...filas].slice(0, 5)))
+          onImportado?.()
+        }
+      } catch (e) {
+        fallidos.push({ lote: i + 1, mensaje: e.message })
       }
-    } catch (e) {
-      setError(e.message)
-      setProgreso(null)
-      // Lo que se alcanzó a leer antes del error se muestra igual: sirve para
-      // guardar esa parte y reintentar con el resto.
-      if (encontradas.length === 0) return
+
+      setProgreso({ actual: i + 1, total: lotes.length, guardadas })
     }
 
     setProgreso(null)
-    const filas = dedupePorHuella(encontradas.map((r) => aFilaResena(r)).filter(Boolean))
-    setPrevia(filas)
-  }
-
-  async function guardar() {
-    if (!previa?.length) return
-    setGuardando(true)
-    setError(null)
-
-    try {
-      const { count: antes } = await supabase
-        .from('resenas_google')
-        .select('id', { count: 'exact', head: true })
-
-      const { error: errorInsert } = await supabase
-        .from('resenas_google')
-        .upsert(previa, { onConflict: 'huella', ignoreDuplicates: true })
-
-      if (errorInsert) throw new Error(errorInsert.message)
-
-      const { count: despues } = await supabase
-        .from('resenas_google')
-        .select('id', { count: 'exact', head: true })
-
-      const nuevas = (despues ?? 0) - (antes ?? 0)
-      setResultado({ nuevas, repetidas: previa.length - nuevas, total: despues ?? 0 })
-      setPrevia(null)
-      setTexto('')
-      onImportado?.()
-    } catch (e) {
-      setError(`No se pudieron guardar: ${e.message}`)
-    } finally {
-      setGuardando(false)
-    }
+    setResultado({ guardadas, vistas, fallidos, totalLotes: lotes.length })
+    if (fallidos.length === 0) setTexto('')
   }
 
   if (!abierto) {
@@ -115,13 +108,14 @@ export default function ImportadorResenas({ onImportado }) {
           <h3 className="font-head font-semibold text-sm">Importar reseñas</h3>
           <p className="text-paper/35 text-[11px] leading-relaxed mt-1 max-w-sm">
             Entrá a business.google.com con la cuenta del local, abrí la sección
-            Reseñas, seleccioná todo lo que veas en pantalla y pegalo acá. Podés
-            repetirlo cuando quieras: las que ya están no se duplican.
+            Reseñas, scrolleá para que carguen todas, seleccioná todo y pegalo
+            acá. Podés repetirlo cuando quieras: las que ya están no se duplican.
           </p>
         </div>
         <button
           onClick={() => setAbierto(false)}
-          className="text-paper/30 hover:text-paper/60 text-xs shrink-0 transition-colors duration-150"
+          disabled={!!progreso}
+          className="text-paper/30 hover:text-paper/60 text-xs shrink-0 transition-colors duration-150 disabled:opacity-20"
         >
           Cerrar
         </button>
@@ -130,18 +124,21 @@ export default function ImportadorResenas({ onImportado }) {
       <textarea
         value={texto}
         onChange={(e) => setTexto(e.target.value)}
+        disabled={!!progreso}
         rows={6}
         placeholder="Pegá acá las reseñas…"
-        className="w-full bg-ink/60 border border-white/5 rounded-xl px-3 py-2 text-xs text-paper placeholder:text-paper/25 outline-none focus:border-ember/40 resize-y transition-colors duration-150"
+        className="w-full bg-ink/60 border border-white/5 rounded-xl px-3 py-2 text-xs text-paper placeholder:text-paper/25 outline-none focus:border-ember/40 resize-y disabled:opacity-50 transition-colors duration-150"
       />
 
       <div className="flex items-center gap-3 mt-2">
         <button
-          onClick={analizar}
+          onClick={importar}
           disabled={!texto.trim() || !!progreso}
           className="bg-ember text-ink font-semibold text-xs rounded-xl px-3.5 py-2 disabled:opacity-25 transition-opacity duration-150"
         >
-          {progreso ? `Leyendo ${progreso.actual} de ${progreso.total}…` : 'Leer lo pegado'}
+          {progreso
+            ? `Lote ${progreso.actual} de ${progreso.total} — ${progreso.guardadas} guardadas`
+            : 'Importar'}
         </button>
         {texto.trim() && !progreso && (
           <span className="text-paper/30 text-[11px]">
@@ -150,56 +147,65 @@ export default function ImportadorResenas({ onImportado }) {
         )}
       </div>
 
-      {error && <p className="text-wineSoft text-[11px] leading-relaxed mt-3">{error}</p>}
-
-      {resultado && (
-        <p className="text-paper/60 text-xs mt-3 leading-relaxed">
-          Se guardaron <strong className="text-paper">{resultado.nuevas}</strong> reseñas nuevas
-          {resultado.repetidas > 0 && ` (${resultado.repetidas} ya estaban)`}. El corpus quedó
-          en {resultado.total}.
+      {progreso && (
+        <p className="text-paper/35 text-[11px] mt-2 leading-relaxed">
+          Se está guardando a medida que avanza — podés cerrar esta pantalla en
+          cualquier momento sin perder lo que ya se guardó, aunque mejor esperá
+          a que termine.
         </p>
       )}
 
-      {previa && (
-        <div className="mt-4 border-t border-white/5 pt-3">
-          {previa.length === 0 ? (
-            <p className="text-paper/40 text-[11px]">
-              No se reconoció ninguna reseña en ese texto. Fijate de haber copiado el bloque
-              de reseñas y no otra parte de la página.
-            </p>
-          ) : (
-            <>
-              <div className="flex items-baseline justify-between mb-2">
-                <span className="text-paper text-xs font-semibold">
-                  {previa.length} reseñas reconocidas
-                </span>
-                <span className="text-paper/40 text-[11px]">
-                  promedio {formatPromedio(promedioRating(previa))}
-                </span>
-              </div>
+      {resultado && (
+        <div className="mt-3">
+          <p className="text-paper/60 text-xs leading-relaxed">
+            Se guardaron <strong className="text-paper">{resultado.guardadas}</strong> reseñas
+            nuevas de {resultado.vistas} reconocidas en {resultado.totalLotes} lote
+            {resultado.totalLotes === 1 ? '' : 's'}
+            {resultado.vistas > resultado.guardadas &&
+              ` (${resultado.vistas - resultado.guardadas} ya estaban)`}
+            .
+          </p>
 
-              <div className="max-h-56 overflow-y-auto flex flex-col gap-2 mb-3">
-                {previa.map((r) => (
-                  <div key={r.huella} className="text-[11px] border-b border-white/5 pb-2 last:border-0">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-paper/80">{r.autor}</span>
-                      <Estrellas valor={r.rating} className="text-[10px]" />
-                    </div>
-                    <div className="text-paper/30">{r.fecha_texto || 'sin fecha'}</div>
-                    {r.texto && <p className="text-paper/50 mt-0.5">{recortar(r.texto, 120)}</p>}
-                  </div>
+          {resultado.fallidos.length > 0 && (
+            <div className="mt-2 text-wineSoft text-[11px] leading-relaxed">
+              <p>
+                {resultado.fallidos.length} lote{resultado.fallidos.length === 1 ? '' : 's'} no se
+                pudo{resultado.fallidos.length === 1 ? '' : 'ieron'} procesar. Lo ya guardado
+                arriba quedó bien igual — para completar el resto, volvé a pegar el mismo texto:
+                lo que ya está no se duplica, solo se procesa de nuevo lo que faltó.
+              </p>
+              <ul className="mt-1 list-disc list-inside">
+                {resultado.fallidos.map((f) => (
+                  <li key={f.lote}>
+                    Lote {f.lote}: {f.mensaje}
+                  </li>
                 ))}
-              </div>
-
-              <button
-                onClick={guardar}
-                disabled={guardando}
-                className="bg-ember text-ink font-semibold text-xs rounded-xl px-3.5 py-2 disabled:opacity-40 transition-opacity duration-150"
-              >
-                {guardando ? 'Guardando…' : `Guardar estas ${previa.length}`}
-              </button>
-            </>
+              </ul>
+            </div>
           )}
+        </div>
+      )}
+
+      {ejemplos.length > 0 && (
+        <div className="mt-3 border-t border-white/5 pt-3">
+          <div className="flex items-baseline justify-between mb-2">
+            <span className="text-paper/50 text-[11px]">Algunas de las que se guardaron</span>
+            <span className="text-paper/30 text-[11px]">
+              promedio de esta tanda {formatPromedio(ejemplos.reduce((a, r) => a + r.rating, 0) / ejemplos.length)}
+            </span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {ejemplos.map((r) => (
+              <div key={r.huella} className="text-[11px] border-b border-white/5 pb-2 last:border-0">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-paper/80">{r.autor}</span>
+                  <Estrellas valor={r.rating} className="text-[10px]" />
+                </div>
+                <div className="text-paper/30">{r.fecha_texto || 'sin fecha'}</div>
+                {r.texto && <p className="text-paper/50 mt-0.5">{recortar(r.texto, 120)}</p>}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </section>
