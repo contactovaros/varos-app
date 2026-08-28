@@ -153,7 +153,7 @@ export default function AdminReservas() {
             </div>
             <div className="flex justify-between items-center text-[11px] text-paper/40 mb-3">
               <span>{r.email || 'sin correo'}</span>
-              <span>{r.codigo}</span>
+              <span>{r.codigo ? `N° ${String(r.codigo).replace(/^VRS-/, '')}` : ''}</span>
             </div>
             {r.alergias && (
               <div className="text-[11px] text-gold bg-gold/10 border border-gold/25 rounded-lg px-2.5 py-1.5 mb-3">

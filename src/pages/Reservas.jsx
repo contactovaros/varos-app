@@ -502,8 +502,8 @@ export default function Reservas() {
           {formatFechaCL(fecha)} · {hora} hrs
         </p>
         {codigoReserva && (
-          <p className="font-mono text-ember text-sm mt-3 tracking-wide border border-ember/30 rounded-full px-4 py-1.5">
-            {codigoReserva}
+          <p className="text-ember text-sm mt-3 tracking-wide border border-ember/30 rounded-full px-4 py-1.5">
+            Reserva N° <span className="font-mono">{String(codigoReserva).replace(/^VRS-/, '')}</span>
           </p>
         )}
         <p className="text-xs text-paper/40 max-w-xs mt-4">
