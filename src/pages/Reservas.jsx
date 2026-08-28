@@ -201,7 +201,7 @@ function TituloReserva({ children }) {
 }
 
 export default function Reservas() {
-  const [step, setStep] = useState('filtros') // filtros | plano | contacto | ok
+  const [step, setStep] = useState('filtros') // filtros | plano | ok
   const [fecha, setFecha] = useState(todayISO())
   const [hora, setHora] = useState(ALMUERZO_INICIO)
   const [personas, setPersonas] = useState(2)
@@ -226,9 +226,8 @@ export default function Reservas() {
   const [email, setEmail] = useState('')
   const [alergias, setAlergias] = useState('')
   const [enviando, setEnviando] = useState(false)
-  // Vuelo de las dos acciones de red que antes no informaban nada.
+  // Vuelo de la búsqueda de mesas, que antes no informaba nada.
   const [buscando, setBuscando] = useState(false)
-  const [reteniendo, setReteniendo] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [codigoReserva, setCodigoReserva] = useState('')
 
@@ -328,15 +327,6 @@ export default function Reservas() {
     return mesa.capacidad >= personas
   }
 
-  // Retiene la(s) mesa elegida(s) por HOLD_MIN minutos mientras el cliente
-  // completa sus datos, para que no la tome otra persona en ese rato.
-  async function crearHolds(ids) {
-    const expiraAt = new Date(Date.now() + HOLD_MIN * 60000).toISOString()
-    const rows = ids.map((id) => ({ mesa_id: id, fecha, hora, expira_at: expiraAt }))
-    const { data, error } = await supabase.from('mesa_holds').insert(rows).select()
-    if (!error && data) setMisHolds(data.map((h) => h.id))
-  }
-
   async function liberarHolds() {
     if (!misHolds.length) return
     const ids = misHolds
@@ -344,14 +334,38 @@ export default function Reservas() {
     await supabase.from('mesa_holds').delete().in('id', ids)
   }
 
-  // Si el cliente abandona la página con una mesa retenida (sin volver al
-  // plano ni confirmar), se libera al salir. Si cierra la pestaña sin más,
-  // el hold igual expira solo a los HOLD_MIN minutos.
+  // El plano y el formulario de datos viven ahora en la misma pantalla, así
+  // que la mesa se retiene por HOLD_MIN minutos apenas el cliente la elige
+  // (antes se retenía al pasar de paso). El ciclo de vida del efecto serializa
+  // el churn de ir tocando mesas: al cambiar de selección React corre primero
+  // el cleanup (libera la retención anterior) y recién después crea la nueva;
+  // al salir del paso o desmontar la página, también libera. Si el cliente
+  // cierra la pestaña sin más, el hold igual expira solo a los HOLD_MIN.
   useEffect(() => {
+    const ids = mesaId ? [mesaId] : comboIds
+    if (step !== 'plano' || !ids?.length) return
+    let creados = []
+    let cancelado = false
+    const expiraAt = new Date(Date.now() + HOLD_MIN * 60000).toISOString()
+    supabase
+      .from('mesa_holds')
+      .insert(ids.map((id) => ({ mesa_id: id, fecha, hora, expira_at: expiraAt })))
+      .select()
+      .then(({ data, error }) => {
+        if (cancelado) {
+          if (data?.length) supabase.from('mesa_holds').delete().in('id', data.map((h) => h.id))
+          return
+        }
+        if (!error && data) {
+          creados = data.map((h) => h.id)
+          setMisHolds(creados)
+        }
+      })
     return () => {
-      if (misHolds.length) supabase.from('mesa_holds').delete().in('id', misHolds)
+      cancelado = true
+      if (creados.length) supabase.from('mesa_holds').delete().in('id', creados)
     }
-  }, [misHolds])
+  }, [mesaId, comboIds, step, fecha, hora])
 
   const libres = mesas.filter((m) => !estaReservada(m))
   const candidatosSolos = libres.filter((m) => esCompatible(m)).sort((a, b) => a.capacidad - b.capacidad)
@@ -505,8 +519,7 @@ export default function Reservas() {
       <Header />
       <TituloReserva>
         {step === 'filtros' && 'Cuéntanos cuándo y cuántos son.'}
-        {step === 'plano' && 'Elige tu mesa en el plano.'}
-        {step === 'contacto' && 'Últimos datos para confirmar.'}
+        {step === 'plano' && 'Elige tu mesa y déjanos tus datos.'}
       </TituloReserva>
 
       {step === 'filtros' && (
@@ -867,107 +880,67 @@ export default function Reservas() {
               : 'Toca una mesa disponible'}
           </p>
 
-          {/* `reteniendo` cierra un bug real: crearHolds() hace un insert que
-              tarda, y con el botón habilitado un doble toque creaba DOS lotes
-              de holds. setMisHolds pisaba los ids del primero, liberarHolds
-              solo borraba el segundo, y el primero quedaba huérfano bloqueando
-              esa mesa 5 minutos para todo el mundo. */}
-          <BotonOro
-            onClick={async () => {
-              if (reteniendo) return
-              setReteniendo(true)
-              try {
-                const ids = mesaSeleccionada ? [mesaSeleccionada.id] : comboSeleccionado.map((m) => m.id)
-                await crearHolds(ids)
-                setStep('contacto')
-              } finally {
-                setReteniendo(false)
-              }
-            }}
-            disabled={!puedeContinuar}
-            cargando={reteniendo}
-            textoCargando="RESERVANDO TU MESA…"
-            className="max-w-md"
-          >
-            CONTINUAR
-          </BotonOro>
+          {puedeContinuar ? (
+            <form onSubmit={confirmarReserva} className="w-full max-w-md flex flex-col gap-3">
+              <p className="text-[10px] text-paper/35 -mt-1 mb-1">
+                Tu mesa queda retenida por {HOLD_MIN} minutos mientras completas estos datos.
+              </p>
+
+              <label className="text-xs tracking-wide text-gold/70">
+                Nombre
+                <input
+                  required
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                  placeholder="Tu nombre completo"
+                />
+              </label>
+              <label className="text-xs tracking-wide text-gold/70">
+                Teléfono de contacto
+                <input
+                  required
+                  type="tel"
+                  value={telefono}
+                  onChange={(e) => setTelefono(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                  placeholder="+56 9 ..."
+                />
+              </label>
+              <label className="text-xs tracking-wide text-gold/70">
+                Correo (te llega la confirmación ahí)
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                  placeholder="tucorreo@ejemplo.com"
+                />
+              </label>
+              <label className="text-xs tracking-wide text-gold/70">
+                ¿Alguna alergia o intolerancia alimentaria? (opcional)
+                <textarea
+                  value={alergias}
+                  onChange={(e) => setAlergias(e.target.value)}
+                  rows={2}
+                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
+                  placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
+                />
+              </label>
+
+              {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
+
+              <BotonOro type="submit" cargando={enviando} textoCargando="ENVIANDO…" className="mt-2">
+                CONFIRMAR RESERVA
+              </BotonOro>
+            </form>
+          ) : (
+            <p className="w-full max-w-md text-center text-xs text-paper/40 mb-2">
+              Toca una mesa disponible en el plano para completar tus datos.
+            </p>
+          )}
         </>
-      )}
-
-      {step === 'contacto' && (
-        <form onSubmit={confirmarReserva} className="w-full max-w-md flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={async () => {
-              await liberarHolds()
-              setStep('plano')
-            }}
-            className="text-xs text-gold/80 underline decoration-gold/30 text-left mb-1"
-          >
-            ← Volver al plano
-          </button>
-          <p className="text-[10px] text-paper/35 -mt-2 mb-1">Tu mesa queda retenida por {HOLD_MIN} minutos mientras completas estos datos.</p>
-
-          <div className="bg-inkSoft border border-bronze/25 rounded-xl p-3.5 text-xs text-paper/70 flex items-center justify-between flex-wrap gap-2">
-            <span className="flex items-center gap-1.5">
-              <IconMesa className="w-3.5 h-3.5 text-gold/70" />
-              {mesaSeleccionada ? mesaSeleccionada.etiqueta : comboSeleccionado.map((m) => m.etiqueta).join(' + ')} · {personas} personas
-            </span>
-            <span className="font-mono text-ember flex items-center gap-1.5">
-              <IconReloj className="w-3.5 h-3.5" />
-              {formatFechaCL(fecha)} · {hora}
-            </span>
-          </div>
-
-          <label className="text-xs tracking-wide text-gold/70">
-            Nombre
-            <input
-              required
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-              placeholder="Tu nombre completo"
-            />
-          </label>
-          <label className="text-xs tracking-wide text-gold/70">
-            Teléfono de contacto
-            <input
-              required
-              type="tel"
-              value={telefono}
-              onChange={(e) => setTelefono(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-              placeholder="+56 9 ..."
-            />
-          </label>
-          <label className="text-xs tracking-wide text-gold/70">
-            Correo (te llega la confirmación ahí)
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-              placeholder="tucorreo@ejemplo.com"
-            />
-          </label>
-          <label className="text-xs tracking-wide text-gold/70">
-            ¿Alguna alergia o intolerancia alimentaria? (opcional)
-            <textarea
-              value={alergias}
-              onChange={(e) => setAlergias(e.target.value)}
-              rows={2}
-              className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
-              placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
-            />
-          </label>
-
-          {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
-
-          <BotonOro type="submit" cargando={enviando} textoCargando="ENVIANDO…" className="mt-2">
-            CONFIRMAR RESERVA
-          </BotonOro>
-        </form>
       )}
 
       <FooterRedes />
