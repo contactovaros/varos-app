@@ -125,20 +125,26 @@ export default function AdminReservas() {
         <p className="text-xs text-paper/50 mt-1">De hoy en adelante, ordenadas por fecha y hora.</p>
       </div>
 
-      <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-3">
+      <div className="flex items-center justify-between gap-3 bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-3">
         <div>
-          <div className="text-xs text-paper/70">Reservas online (página pública /reservas)</div>
-          <div className="text-[10px] text-paper/40">
-            En pausa: quien entra ve “muy pronto” + WhatsApp. Publicadas: se puede reservar online.
+          <div className="text-xs text-paper/70">Reservas online — página pública /reservas</div>
+          <div className="text-[10px] mt-0.5">
+            {publicado ? (
+              <span className="text-ember">● Publicada — el cliente puede reservar online.</span>
+            ) : (
+              <span className="text-paper/40">● En pausa — el cliente ve “Reservas muy pronto” + WhatsApp.</span>
+            )}
           </div>
         </div>
         <button
           onClick={togglePublicado}
           className={`px-4 py-2 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${
-            publicado ? 'border-ember/40 text-ember bg-ember/10' : 'border-white/10 text-paper/40'
+            publicado
+              ? 'border-white/10 text-paper/50'
+              : 'border-ember/50 text-ember bg-ember/10'
           }`}
         >
-          {publicado ? 'Publicadas' : 'En pausa'}
+          {publicado ? 'Poner en pausa' : 'Publicar ahora'}
         </button>
       </div>
 
