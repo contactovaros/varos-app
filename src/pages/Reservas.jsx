@@ -518,8 +518,8 @@ export default function Reservas() {
     <div className="min-h-screen bg-ink text-paper px-4 py-8 flex flex-col items-center">
       <Header />
       <TituloReserva>
-        {step === 'filtros' && 'Cuéntanos cuándo y cuántos son.'}
-        {step === 'plano' && 'Elige tu mesa y déjanos tus datos.'}
+        {step === 'filtros' && 'Cuéntanos cuándo, cuántos son y cómo contactarte.'}
+        {step === 'plano' && 'Elige tu mesa y confirma.'}
       </TituloReserva>
 
       {step === 'filtros' && (
@@ -528,6 +528,7 @@ export default function Reservas() {
             e.preventDefault()
             setFechaError('')
             setHoraError('')
+            setErrorMsg('')
             let ok = true
             if (esLunes(fecha)) {
               setFechaError('Los lunes el restaurante está cerrado. Elige otro día.')
@@ -540,6 +541,10 @@ export default function Reservas() {
             if (!ok) return
             if (zona === 'cualquiera') {
               setZonaError(true)
+              return
+            }
+            if (!telefonoValido(telefono)) {
+              setErrorMsg('Revisa el teléfono — incluye el código de área, ej. +56 9 1234 5678.')
               return
             }
             verPlano()
@@ -653,6 +658,59 @@ export default function Reservas() {
             )}
           </div>
 
+          {/* Datos de contacto acá, en el primer paso: así el cliente completa
+              todo de una y en el plano solo elige mesa y confirma, sin volver
+              a un formulario después. */}
+          <div className="mt-2 pt-3 border-t border-gold/10 flex flex-col gap-3">
+            <label className="text-xs tracking-wide text-gold/70">
+              Nombre
+              <input
+                required
+                value={nombre}
+                onChange={(e) => setNombre(e.target.value)}
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                placeholder="Tu nombre completo"
+              />
+            </label>
+            <label className="text-xs tracking-wide text-gold/70">
+              Teléfono de contacto
+              <input
+                required
+                type="tel"
+                value={telefono}
+                onChange={(e) => {
+                  setTelefono(e.target.value)
+                  setErrorMsg('')
+                }}
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                placeholder="+56 9 ..."
+              />
+            </label>
+            <label className="text-xs tracking-wide text-gold/70">
+              Correo (te llega la confirmación ahí)
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                placeholder="tucorreo@ejemplo.com"
+              />
+            </label>
+            <label className="text-xs tracking-wide text-gold/70">
+              ¿Alguna alergia o intolerancia alimentaria? (opcional)
+              <textarea
+                value={alergias}
+                onChange={(e) => setAlergias(e.target.value)}
+                rows={2}
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
+                placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
+              />
+            </label>
+          </div>
+
+          {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
+
           {/* `buscando` no es cosmético: verPlano() espera dos consultas a
               Supabase (~220 ms medidos en producción) y sin esto el botón no
               devuelve nada mientras tanto. */}
@@ -666,7 +724,7 @@ export default function Reservas() {
         <>
           <div className="w-full max-w-md flex items-center justify-between text-xs text-paper/50 mb-3 gap-2">
             <button onClick={() => { setAvisoPlano(''); setStep('filtros') }} className="text-gold/80 underline decoration-gold/30 shrink-0">
-              ← Cambiar fecha/hora/personas
+              ← Volver a mis datos
             </button>
             <span className="font-mono text-ember text-right">
               {personas} · {hora} · {formatFechaCL(fecha)}
@@ -881,63 +939,22 @@ export default function Reservas() {
           </p>
 
           {puedeContinuar ? (
-            <form onSubmit={confirmarReserva} className="w-full max-w-md flex flex-col gap-3">
-              <p className="text-[10px] text-paper/35 -mt-1 mb-1">
-                Tu mesa queda retenida por {HOLD_MIN} minutos mientras completas estos datos.
-              </p>
-
-              <label className="text-xs tracking-wide text-gold/70">
-                Nombre
-                <input
-                  required
-                  value={nombre}
-                  onChange={(e) => setNombre(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                  placeholder="Tu nombre completo"
-                />
-              </label>
-              <label className="text-xs tracking-wide text-gold/70">
-                Teléfono de contacto
-                <input
-                  required
-                  type="tel"
-                  value={telefono}
-                  onChange={(e) => setTelefono(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                  placeholder="+56 9 ..."
-                />
-              </label>
-              <label className="text-xs tracking-wide text-gold/70">
-                Correo (te llega la confirmación ahí)
-                <input
-                  required
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                  placeholder="tucorreo@ejemplo.com"
-                />
-              </label>
-              <label className="text-xs tracking-wide text-gold/70">
-                ¿Alguna alergia o intolerancia alimentaria? (opcional)
-                <textarea
-                  value={alergias}
-                  onChange={(e) => setAlergias(e.target.value)}
-                  rows={2}
-                  className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
-                  placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
-                />
-              </label>
+            <div className="w-full max-w-md flex flex-col gap-2">
+              <div className="bg-inkSoft border border-bronze/25 rounded-xl px-4 py-3 text-xs text-paper/60">
+                Reserva a nombre de <span className="text-paper/90">{nombre}</span> · {telefono}
+                {alergias.trim() && <div className="text-gold/80 mt-1">⚠ {alergias.trim()}</div>}
+              </div>
+              <p className="text-[10px] text-paper/35 mb-1">Tu mesa queda retenida por {HOLD_MIN} minutos.</p>
 
               {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
 
-              <BotonOro type="submit" cargando={enviando} textoCargando="ENVIANDO…" className="mt-2">
+              <BotonOro onClick={confirmarReserva} type="button" cargando={enviando} textoCargando="ENVIANDO…" className="mt-1">
                 CONFIRMAR RESERVA
               </BotonOro>
-            </form>
+            </div>
           ) : (
             <p className="w-full max-w-md text-center text-xs text-paper/40 mb-2">
-              Toca una mesa disponible en el plano para completar tus datos.
+              Toca una mesa disponible en el plano para confirmar tu reserva.
             </p>
           )}
         </>
