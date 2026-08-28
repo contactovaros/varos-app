@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, getSalaGeometria, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
-import { BotonRedSocial, IconoInstagram, IconoFacebook, IconoSitioWeb, IconoWhatsApp, IconoResena } from '../components/TarjetaFidelidad.jsx'
 import BotonOro from '../components/BotonOro.jsx'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
@@ -159,29 +158,25 @@ function Header() {
   )
 }
 
-// Mismos 5 botones que la tarjeta de fidelización, fijos al pie de las
-// cuatro pantallas del flujo (no solo la de confirmación).
-function FooterRedes() {
+// Pie mínimo para la página de reservas. Un visitante que todavía no vino
+// no necesita redes ni "déjanos tu reseña" — esos botones son de la tarjeta
+// de fidelización, que el cliente nuevo no conoce. Acá solo una vía de
+// contacto por si tiene una duda con la reserva.
+function PieContacto() {
   return (
-    <div className="w-full max-w-md flex flex-col items-center gap-3 mt-8 pt-5 border-t border-gold/10">
-      <div className="flex items-center justify-center gap-2">
-        <BotonRedSocial href="https://www.instagram.com/varosrestaurant/?hl=es" label="Síguenos en Instagram">
-          <IconoInstagram />
-        </BotonRedSocial>
-        <BotonRedSocial href="https://www.facebook.com/varosrestaurant" label="Síguenos en Facebook">
-          <IconoFacebook />
-        </BotonRedSocial>
-        <BotonRedSocial href="https://varos.cl/" label="Visita nuestro sitio web">
-          <IconoSitioWeb />
-        </BotonRedSocial>
-        <BotonRedSocial href="https://wa.me/56999235368" label="Escríbenos por WhatsApp">
-          <IconoWhatsApp />
-        </BotonRedSocial>
-        <BotonRedSocial href="https://g.page/r/CfTLjMLhcWvCEBM/review" label="Déjanos tu reseña">
-          <IconoResena />
-        </BotonRedSocial>
-      </div>
-      <div className="text-[10px] text-gold/40 tracking-wide">contacto@varos.cl</div>
+    <div className="w-full max-w-md flex flex-col items-center gap-1.5 mt-8 pt-5 border-t border-gold/10 text-center">
+      <p className="text-[11px] text-paper/40">
+        ¿Dudas con tu reserva?{' '}
+        <a
+          href="https://wa.me/56999235368"
+          target="_blank"
+          rel="noreferrer"
+          className="text-gold/70 underline decoration-gold/30"
+        >
+          Escríbenos por WhatsApp
+        </a>
+      </p>
+      <div className="text-[10px] text-gold/30 tracking-wide">contacto@varos.cl</div>
     </div>
   )
 }
@@ -212,6 +207,9 @@ export default function Reservas() {
 
   const [salas, setSalas] = useState({ comedor: { activo: true }, salon: { activo: true }, terraza: { activo: true } })
   const [cenaHabilitada, setCenaHabilitada] = useState(false)
+  // null = todavía no sabemos; el admin lo prende desde /admin/reservas
+  // cuando el dueño da el OK. Mientras tanto la página muestra "muy pronto".
+  const [publicado, setPublicado] = useState(null)
   const [zonas, setZonas] = useState([])
   const [mesas, setMesas] = useState([])
   const [reservasDelDia, setReservasDelDia] = useState([])
@@ -250,10 +248,13 @@ export default function Reservas() {
       .then(({ data }) => setZonas(data ?? []))
     supabase
       .from('configuracion_reservas')
-      .select('cena_habilitada')
+      .select('*')
       .eq('id', 1)
       .maybeSingle()
-      .then(({ data }) => setCenaHabilitada(data?.cena_habilitada ?? false))
+      .then(({ data }) => {
+        setCenaHabilitada(data?.cena_habilitada ?? false)
+        setPublicado(data?.publicado ?? false)
+      })
   }, [])
 
   useEffect(() => {
@@ -487,6 +488,39 @@ export default function Reservas() {
     setStep('ok')
   }
 
+  // Reservas online en pausa (interruptor en /admin/reservas). El link puede
+  // estar publicado en varos.cl sin que nadie pueda reservar todavía: quien
+  // entra ve esto en vez del formulario.
+  if (publicado === null) {
+    return (
+      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6">
+        <Header />
+        <p className="text-paper/40 text-sm">Cargando…</p>
+      </div>
+    )
+  }
+  if (!publicado) {
+    return (
+      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
+        <Header />
+        <h1 className="font-serif text-2xl sm:text-[28px] text-gold mb-3">Reservas online, muy pronto</h1>
+        <p className="text-sm text-paper/60 max-w-xs">
+          Estamos afinando el sistema de reservas por internet. Por ahora reservá tu mesa por WhatsApp y te confirmamos a la brevedad.
+        </p>
+        <a
+          href="https://wa.me/56999235368"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-6 inline-flex items-center justify-center rounded-full border border-gold/50 text-gold px-6 py-3 text-sm font-head font-semibold tracking-wide"
+        >
+          Reservar por WhatsApp
+        </a>
+        <p className="text-xs text-paper/40 mt-5">Martes a domingo · 12:30 a 16:30 hrs</p>
+        <PieContacto />
+      </div>
+    )
+  }
+
   if (step === 'ok') {
     const label = comboSeleccionado ? comboSeleccionado.map((m) => m.etiqueta).join(' + ') : mesaSeleccionada.etiqueta
     return (
@@ -509,7 +543,7 @@ export default function Reservas() {
         <p className="text-xs text-paper/40 max-w-xs mt-4">
           El restaurante recibirá tu solicitud y te contactará al {telefono} para confirmarla.
         </p>
-        <FooterRedes />
+        <PieContacto />
       </div>
     )
   }
@@ -960,7 +994,7 @@ export default function Reservas() {
         </>
       )}
 
-      <FooterRedes />
+      <PieContacto />
     </div>
   )
 }

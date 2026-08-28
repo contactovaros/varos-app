@@ -34,6 +34,7 @@ export default function AdminReservas() {
   const [reservas, setReservas] = useState([])
   const [loading, setLoading] = useState(true)
   const [cenaHabilitada, setCenaHabilitada] = useState(false)
+  const [publicado, setPublicado] = useState(false)
 
   async function cargar() {
     const { data } = await supabase
@@ -47,8 +48,9 @@ export default function AdminReservas() {
   }
 
   async function cargarConfig() {
-    const { data } = await supabase.from('configuracion_reservas').select('cena_habilitada').eq('id', 1).maybeSingle()
+    const { data } = await supabase.from('configuracion_reservas').select('*').eq('id', 1).maybeSingle()
     setCenaHabilitada(data?.cena_habilitada ?? false)
+    setPublicado(data?.publicado ?? false)
   }
 
   useEffect(() => {
@@ -65,6 +67,16 @@ export default function AdminReservas() {
     if (error) {
       setCenaHabilitada(!nuevo)
       alert('No se pudo actualizar el horario: ' + error.message)
+    }
+  }
+
+  async function togglePublicado() {
+    const nuevo = !publicado
+    setPublicado(nuevo)
+    const { error } = await supabase.from('configuracion_reservas').upsert({ id: 1, publicado: nuevo })
+    if (error) {
+      setPublicado(!nuevo)
+      alert('No se pudo actualizar: ' + error.message)
     }
   }
 
@@ -111,6 +123,23 @@ export default function AdminReservas() {
         <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
         <h1 className="font-head text-2xl font-semibold">Reservas</h1>
         <p className="text-xs text-paper/50 mt-1">De hoy en adelante, ordenadas por fecha y hora.</p>
+      </div>
+
+      <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-3">
+        <div>
+          <div className="text-xs text-paper/70">Reservas online (página pública /reservas)</div>
+          <div className="text-[10px] text-paper/40">
+            En pausa: quien entra ve “muy pronto” + WhatsApp. Publicadas: se puede reservar online.
+          </div>
+        </div>
+        <button
+          onClick={togglePublicado}
+          className={`px-4 py-2 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${
+            publicado ? 'border-ember/40 text-ember bg-ember/10' : 'border-white/10 text-paper/40'
+          }`}
+        >
+          {publicado ? 'Publicadas' : 'En pausa'}
+        </button>
       </div>
 
       <div className="flex items-center justify-between bg-inkSoft border border-white/5 rounded-xl px-4 py-3 mb-6">
