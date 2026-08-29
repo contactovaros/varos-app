@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase'
 import { chairPositions } from '../lib/mesasLayout'
 import { ROOMS, getSalaGeometria, ComedorBackground, SalonBackground, TerrazaBackground } from './AdminMesas.jsx'
 import BotonOro from '../components/BotonOro.jsx'
+import SelectorIdioma from '../components/SelectorIdioma.jsx'
+import { useIdioma } from '../i18n/reservas.js'
 
 const BUFFER_MIN = 120 // ventana de conflicto entre reservas en la misma mesa
 const COMBO_MAX_DIST = 420 // distancia máxima entre centros para considerarlas "adyacentes"
@@ -20,7 +22,23 @@ const SALON_ROOM_H = 1500
 const TERRAZA_ROOM_W = 1200
 const TERRAZA_ROOM_H = 2000
 
+// Nombres de sala en español. Ya no se muestran directo (el flujo pasa por
+// i18n / ZONA_CLAVE abajo), pero se conservan como referencia y como el patrón
+// a replicar al agregar una sala nueva (ver CLAUDE.md).
 const ROOM_LABELS = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
+
+// El valor interno de la zona sigue en español (lo usan salaDeZona() y la
+// columna `sala` de la reserva); esto es solo para mostrar la etiqueta en el
+// idioma activo. Mapea tanto el id de sala ('comedor') como el texto de la
+// opción ('Comedor Exterior') a la clave de traducción.
+const ZONA_CLAVE = {
+  comedor: 'sala_comedor',
+  salon: 'sala_salon',
+  terraza: 'sala_terraza',
+  'Comedor Exterior': 'sala_comedor',
+  'Comedor Principal': 'sala_salon',
+  Terraza: 'sala_terraza',
+}
 
 // Objetos decorativos (escenario, carrito) — mismas formas que en
 // /admin/mesas, no son reservables (ver esReservable), solo dan contexto
@@ -162,21 +180,43 @@ function Header() {
 // no necesita redes ni "déjanos tu reseña" — esos botones son de la tarjeta
 // de fidelización, que el cliente nuevo no conoce. Acá solo una vía de
 // contacto por si tiene una duda con la reserva.
-function PieContacto() {
+function PieContacto({ t }) {
   return (
     <div className="w-full max-w-md flex flex-col items-center gap-1.5 mt-8 pt-5 border-t border-gold/10 text-center">
       <p className="text-[11px] text-paper/40">
-        ¿Dudas con tu reserva?{' '}
+        {t('pie_dudas')}
         <a
           href="https://wa.me/56999235368"
           target="_blank"
           rel="noreferrer"
           className="text-gold/70 underline decoration-gold/30"
         >
-          Escríbenos por WhatsApp
+          {t('pie_whatsapp')}
         </a>
       </p>
       <div className="text-[10px] text-gold/30 tracking-wide">contacto@varos.cl</div>
+    </div>
+  )
+}
+
+// Acceso a la carta del restaurante desde el flujo de reserva. La carta no se
+// replica: es un enlace a varos.cl/carta que abre en pestaña nueva. Arriba, el
+// Menú del Día escrito a mano (los platos concretos cambian a diario y no los
+// tenemos acá). Tratamiento secundario — no compite con el CTA del formulario.
+function BloqueCarta({ t }) {
+  return (
+    <div className="w-full max-w-md mt-6 rounded-2xl border border-gold/20 bg-inkSoft p-4 text-center">
+      <h2 className="font-serif text-lg tracking-wide text-gold">{t('menuDia_titulo')}</h2>
+      <p className="mt-1 text-xs text-paper/55">{t('menuDia_bajada')}</p>
+      <p className="mt-0.5 text-[11px] text-paper/40">{t('menuDia_hoy')}</p>
+      <a
+        href="https://www.varos.cl/carta"
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 inline-flex items-center justify-center rounded-full border border-gold/50 px-5 py-2.5 text-xs font-head font-semibold tracking-wide text-gold"
+      >
+        {t('verCarta')}
+      </a>
     </div>
   )
 }
@@ -196,6 +236,7 @@ function TituloReserva({ children }) {
 }
 
 export default function Reservas() {
+  const { idioma, setIdioma, t } = useIdioma()
   const [step, setStep] = useState('filtros') // filtros | plano | ok
   const [fecha, setFecha] = useState(todayISO())
   const [hora, setHora] = useState(ALMUERZO_INICIO)
@@ -435,7 +476,7 @@ export default function Reservas() {
   async function confirmarReserva(e) {
     e.preventDefault()
     if (!telefonoValido(telefono)) {
-      setErrorMsg('Revisa el teléfono — debe incluir código de área, ej. +56 9 1234 5678.')
+      setErrorMsg(t('err_telefono_confirm'))
       return
     }
     setEnviando(true)
@@ -471,10 +512,10 @@ export default function Reservas() {
       if (error.code === '23505') {
         await liberarHolds()
         setErrorMsg('')
-        setAvisoPlano('Esta mesa acaba de ser reservada. Por favor elige otra mesa disponible.')
+        setAvisoPlano(t('aviso_reservada'))
         await verPlano()
       } else {
-        setErrorMsg('No pudimos registrar tu reserva. Inténtalo de nuevo o escríbenos por WhatsApp.')
+        setErrorMsg(t('err_registrar'))
       }
       return
     }
@@ -493,30 +534,30 @@ export default function Reservas() {
   // entra ve esto en vez del formulario.
   if (publicado === null) {
     return (
-      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6">
+      <div className="relative min-h-screen bg-ink flex flex-col items-center justify-center px-6">
+        <SelectorIdioma idioma={idioma} setIdioma={setIdioma} />
         <Header />
-        <p className="text-paper/40 text-sm">Cargando…</p>
+        <p className="text-paper/40 text-sm">{t('cargando')}</p>
       </div>
     )
   }
   if (!publicado) {
     return (
-      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
+      <div className="relative min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
+        <SelectorIdioma idioma={idioma} setIdioma={setIdioma} />
         <Header />
-        <h1 className="font-serif text-2xl sm:text-[28px] text-gold mb-3">Reservas online, muy pronto</h1>
-        <p className="text-sm text-paper/60 max-w-xs">
-          Estamos afinando el sistema de reservas por internet. Por ahora reservá tu mesa por WhatsApp y te confirmamos a la brevedad.
-        </p>
+        <h1 className="font-serif text-2xl sm:text-[28px] text-gold mb-3">{t('pausa_titulo')}</h1>
+        <p className="text-sm text-paper/60 max-w-xs">{t('pausa_texto')}</p>
         <a
           href="https://wa.me/56999235368"
           target="_blank"
           rel="noreferrer"
           className="mt-6 inline-flex items-center justify-center rounded-full border border-gold/50 text-gold px-6 py-3 text-sm font-head font-semibold tracking-wide"
         >
-          Reservar por WhatsApp
+          {t('pausa_boton')}
         </a>
-        <p className="text-xs text-paper/40 mt-5">Martes a domingo · 12:30 a 16:30 hrs</p>
-        <PieContacto />
+        <p className="text-xs text-paper/40 mt-5">{t('horario_corto')}</p>
+        <PieContacto t={t} />
       </div>
     )
   }
@@ -524,36 +565,39 @@ export default function Reservas() {
   if (step === 'ok') {
     const label = comboSeleccionado ? comboSeleccionado.map((m) => m.etiqueta).join(' + ') : mesaSeleccionada.etiqueta
     return (
-      <div className="min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
+      <div className="relative min-h-screen bg-ink flex flex-col items-center justify-center px-6 text-center text-paper">
+        <SelectorIdioma idioma={idioma} setIdioma={setIdioma} />
         <Header />
         <div className="w-14 h-14 rounded-full border border-gold/40 flex items-center justify-center mb-4">
           <span className="text-2xl text-gold">✓</span>
         </div>
-        <h1 className="font-serif text-2xl text-gold mb-2">¡Reserva confirmada!</h1>
+        <h1 className="font-serif text-2xl text-gold mb-2">{t('ok_titulo')}</h1>
         <p className="text-sm text-paper/60 max-w-xs">
-          {label} · {personas} personas
+          {t('ok_resumen_personas', { label, n: personas })}
           <br />
-          {formatFechaCL(fecha)} · {hora} hrs
+          {t('ok_resumen_fecha', { fecha: formatFechaCL(fecha), hora })}
         </p>
         {codigoReserva && (
           <p className="text-ember text-sm mt-3 tracking-wide border border-ember/30 rounded-full px-4 py-1.5">
-            Reserva N° <span className="font-mono">{String(codigoReserva).replace(/^VRS-/, '')}</span>
+            {t('ok_reserva_n')}<span className="font-mono">{String(codigoReserva).replace(/^VRS-/, '')}</span>
           </p>
         )}
         <p className="text-xs text-paper/40 max-w-xs mt-4">
-          El restaurante recibirá tu solicitud y te contactará al {telefono} para confirmarla.
+          {t('ok_contacto', { telefono })}
         </p>
-        <PieContacto />
+        <BloqueCarta t={t} />
+        <PieContacto t={t} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-ink text-paper px-4 py-8 flex flex-col items-center">
+    <div className="relative min-h-screen bg-ink text-paper px-4 py-8 flex flex-col items-center">
+      <SelectorIdioma idioma={idioma} setIdioma={setIdioma} />
       <Header />
       <TituloReserva>
-        {step === 'filtros' && 'Cuéntanos cuándo, cuántos son y cómo contactarte.'}
-        {step === 'plano' && 'Elige tu mesa y confirma.'}
+        {step === 'filtros' && t('sub_filtros')}
+        {step === 'plano' && t('sub_plano')}
       </TituloReserva>
 
       {step === 'filtros' && (
@@ -565,11 +609,11 @@ export default function Reservas() {
             setErrorMsg('')
             let ok = true
             if (esLunes(fecha)) {
-              setFechaError('Los lunes el restaurante está cerrado. Elige otro día.')
+              setFechaError(t('err_lunes'))
               ok = false
             }
             if (!cenaHabilitada && horaFueraDeAlmuerzo(hora)) {
-              setHoraError(`Por ahora la reserva online solo está disponible en horario de almuerzo (${ALMUERZO_INICIO} a ${ALMUERZO_FIN}).`)
+              setHoraError(t('err_almuerzo', { inicio: ALMUERZO_INICIO, fin: ALMUERZO_FIN }))
               ok = false
             }
             if (!ok) return
@@ -578,7 +622,7 @@ export default function Reservas() {
               return
             }
             if (!telefonoValido(telefono)) {
-              setErrorMsg('Revisa el teléfono — incluye el código de área, ej. +56 9 1234 5678.')
+              setErrorMsg(t('err_telefono'))
               return
             }
             verPlano()
@@ -586,12 +630,12 @@ export default function Reservas() {
           className="w-full max-w-md flex flex-col gap-3"
         >
           <p className="text-[11px] text-paper/45 -mb-1">
-            Atención martes a domingo, de {ALMUERZO_INICIO} a {ALMUERZO_FIN} hrs.
+            {t('atencion_horario', { inicio: ALMUERZO_INICIO, fin: ALMUERZO_FIN })}
           </p>
 
           <div className="flex gap-3">
             <label className="text-xs tracking-wide text-gold/70 flex-1">
-              Fecha
+              {t('label_fecha')}
               <div className="relative mt-1.5">
                 <IconCalendario className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gold/60 pointer-events-none" />
                 <input
@@ -608,7 +652,7 @@ export default function Reservas() {
               </div>
             </label>
             <label className="text-xs tracking-wide text-gold/70 flex-1">
-              Hora
+              {t('label_hora')}
               <div className="relative mt-1.5">
                 <IconReloj className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gold/60 pointer-events-none" />
                 <input
@@ -630,19 +674,19 @@ export default function Reservas() {
           {horaError && <p className="text-xs text-wineSoft -mt-1">{horaError}</p>}
           {!cenaHabilitada && !horaError && (
             <p className="text-[10px] text-paper/35 -mt-1">
-              Reserva online solo de almuerzo por ahora. ¿Cena? Escríbenos por WhatsApp.
+              {t('nota_almuerzo')}
             </p>
           )}
 
           <label className="text-xs tracking-wide text-gold/70">
-            Personas
+            {t('label_personas')}
             <div className="mt-1.5 flex items-center gap-3 bg-inkSoft border border-bronze/25 rounded-xl px-4 py-2.5">
               {/* 44 px de lado: es el control más tocado del primer paso y
                   antes medía 36. Se deshabilitan en los extremos — tocar "+"
                   en 20 no hacía nada, en silencio. */}
               <button
                 type="button"
-                aria-label="Quitar una persona"
+                aria-label={t('aria_quitar_persona')}
                 onClick={() => setPersonas((p) => Math.max(1, p - 1))}
                 disabled={personas <= 1}
                 className="w-11 h-11 rounded-lg border border-bronze/30 text-paper/70 text-lg transition-[transform,opacity] duration-150 ease-salida active:scale-90 motion-reduce:active:scale-100 disabled:opacity-30 disabled:active:scale-100"
@@ -654,7 +698,7 @@ export default function Reservas() {
               </span>
               <button
                 type="button"
-                aria-label="Agregar una persona"
+                aria-label={t('aria_agregar_persona')}
                 onClick={() => setPersonas((p) => Math.min(20, p + 1))}
                 disabled={personas >= 20}
                 className="w-11 h-11 rounded-lg border border-gold/50 text-gold text-lg transition-[transform,opacity] duration-150 ease-salida active:scale-90 motion-reduce:active:scale-100 disabled:opacity-30 disabled:active:scale-100"
@@ -665,7 +709,7 @@ export default function Reservas() {
           </label>
 
           <div>
-            <span className="text-xs tracking-wide text-gold/70">Zona</span>
+            <span className="text-xs tracking-wide text-gold/70">{t('label_zona')}</span>
             <div className="mt-1.5 flex gap-2 flex-wrap">
               {zonaOptions
                 .filter((z) => z !== 'cualquiera')
@@ -682,13 +726,13 @@ export default function Reservas() {
                       zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
                     }`}
                   >
-                    {z}
+                    {t(ZONA_CLAVE[z] ?? z)}
                   </button>
                 ))}
             </div>
-            {zonaError && <p className="text-xs text-wineSoft mt-2">Elige una sala para ver el plano y las mesas disponibles.</p>}
+            {zonaError && <p className="text-xs text-wineSoft mt-2">{t('err_zona')}</p>}
             {salas.comedor?.activo === false && salas.salon?.activo === false && salas.terraza?.activo === false && (
-              <p className="text-xs text-wineSoft mt-2">Hoy no hay salas disponibles para reserva online — escríbenos por WhatsApp.</p>
+              <p className="text-xs text-wineSoft mt-2">{t('sin_salas')}</p>
             )}
           </div>
 
@@ -697,17 +741,17 @@ export default function Reservas() {
               a un formulario después. */}
           <div className="mt-2 pt-3 border-t border-gold/10 flex flex-col gap-3">
             <label className="text-xs tracking-wide text-gold/70">
-              Nombre
+              {t('label_nombre')}
               <input
                 required
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
                 className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                placeholder="Tu nombre completo"
+                placeholder={t('ph_nombre')}
               />
             </label>
             <label className="text-xs tracking-wide text-gold/70">
-              Teléfono de contacto
+              {t('label_telefono')}
               <input
                 required
                 type="tel"
@@ -717,28 +761,28 @@ export default function Reservas() {
                   setErrorMsg('')
                 }}
                 className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                placeholder="+56 9 ..."
+                placeholder={t('ph_telefono')}
               />
             </label>
             <label className="text-xs tracking-wide text-gold/70">
-              Correo (te llega la confirmación ahí)
+              {t('label_email')}
               <input
                 required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
-                placeholder="tucorreo@ejemplo.com"
+                placeholder={t('ph_email')}
               />
             </label>
             <label className="text-xs tracking-wide text-gold/70">
-              ¿Alguna alergia o intolerancia alimentaria? (opcional)
+              {t('label_alergias')}
               <textarea
                 value={alergias}
                 onChange={(e) => setAlergias(e.target.value)}
                 rows={2}
                 className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
-                placeholder="Ej: alergia a los mariscos, intolerancia al gluten..."
+                placeholder={t('ph_alergias')}
               />
             </label>
           </div>
@@ -748,9 +792,11 @@ export default function Reservas() {
           {/* `buscando` no es cosmético: verPlano() espera dos consultas a
               Supabase (~220 ms medidos en producción) y sin esto el botón no
               devuelve nada mientras tanto. */}
-          <BotonOro type="submit" cargando={buscando} textoCargando="BUSCANDO MESAS…" className="mt-3">
-            VER PLANO Y MESAS DISPONIBLES
+          <BotonOro type="submit" cargando={buscando} textoCargando={t('btn_buscando')} className="mt-3">
+            {t('btn_ver_plano')}
           </BotonOro>
+
+          <BloqueCarta t={t} />
         </form>
       )}
 
@@ -758,7 +804,7 @@ export default function Reservas() {
         <>
           <div className="w-full max-w-md flex items-center justify-between text-xs text-paper/50 mb-3 gap-2">
             <button onClick={() => { setAvisoPlano(''); setStep('filtros') }} className="text-gold/80 underline decoration-gold/30 shrink-0">
-              ← Volver a mis datos
+              {t('volver_datos')}
             </button>
             <span className="font-mono text-ember text-right">
               {personas} · {hora} · {formatFechaCL(fecha)}
@@ -782,7 +828,7 @@ export default function Reservas() {
               })()}
               className="w-full h-auto"
               role="img"
-              aria-label={`Plano de ${ROOM_LABELS[salaMostrada]}, elige una mesa`}
+              aria-label={t('aria_plano', { sala: t(ZONA_CLAVE[salaMostrada] ?? salaMostrada) })}
             >
               <defs>
                 <filter id="glowSeleccionada" x="-60%" y="-60%" width="220%" height="220%">
@@ -827,7 +873,7 @@ export default function Reservas() {
                       transform={`translate(${m.x},${m.y}) rotate(${m.tipo === 'rect' ? m.angulo : 0})`}
                       opacity="0.4"
                       role="img"
-                      aria-label={`${m.etiqueta}, no disponible${m.bloqueo_motivo ? ': ' + m.bloqueo_motivo : ''}`}
+                      aria-label={`${t('mesa_no_disponible', { etiqueta: m.etiqueta })}${m.bloqueo_motivo ? ': ' + m.bloqueo_motivo : ''}`}
                     >
                       {m.tipo === 'round' ? (
                         <circle r={m.ancho / 2} fill="#2a2320" stroke="#6b5330" strokeWidth="3" strokeDasharray="6 5" />
@@ -883,7 +929,7 @@ export default function Reservas() {
                     filter={seleccionada ? 'url(#glowSeleccionada)' : undefined}
                     role="button"
                     aria-disabled={!clickable}
-                    aria-label={`${m.etiqueta}${reservada ? ', reservada' : seleccionada ? ', seleccionada' : ', disponible'}`}
+                    aria-label={`${m.etiqueta}, ${reservada ? t('estado_reservada') : seleccionada ? t('estado_seleccionada') : t('estado_disponible')}`}
                   >
                     {chairs.map((c, i) => (
                       <rect
@@ -927,23 +973,23 @@ export default function Reservas() {
 
             <div className="flex items-center justify-between mt-3 flex-wrap gap-y-2">
               <div className="flex items-center gap-4 text-[10px] text-paper/50">
-                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#15100D', border: '1.5px solid #E3B341' }} />Disponible</span>
-                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#4a3a24', border: '1.5px solid #6b5330' }} />Reservada</span>
-                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />Seleccionada</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#15100D', border: '1.5px solid #E3B341' }} />{t('leyenda_disponible')}</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#4a3a24', border: '1.5px solid #6b5330' }} />{t('leyenda_reservada')}</span>
+                <span className="flex items-center gap-1.5"><i className="w-3 h-3 rounded-full inline-block" style={{ background: '#FF7A1A' }} />{t('leyenda_seleccionada')}</span>
               </div>
-              {zonaOptions.length > 1 && <span className="text-[10px] text-paper/40">{ROOM_LABELS[salaMostrada]}</span>}
+              {zonaOptions.length > 1 && <span className="text-[10px] text-paper/40">{t(ZONA_CLAVE[salaMostrada] ?? salaMostrada)}</span>}
             </div>
           </div>
 
           {necesitaCombo && combo && (
             <div className="w-full max-w-md bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-4">
-              <p className="text-xs text-paper/50 mb-2">Ninguna mesa sola alcanza para {personas} personas — combinación recomendada:</p>
+              <p className="text-xs text-paper/50 mb-2">{t('combo_intro', { n: personas })}</p>
               <div className="flex items-center justify-between">
                 <div>
                   <div className="font-head font-semibold text-sm">
                     {combo.a.etiqueta} + {combo.b.etiqueta}
                   </div>
-                  <div className="text-xs text-paper/50">Capacidad {combo.capacidad} · {formatFechaCL(fecha)} {hora}</div>
+                  <div className="text-xs text-paper/50">{t('combo_capacidad', { n: combo.capacidad, fecha: formatFechaCL(fecha), hora })}</div>
                 </div>
                 <button
                   onClick={usarCombo}
@@ -951,7 +997,7 @@ export default function Reservas() {
                     comboIds ? 'bg-ember text-ink' : 'border border-ember/40 text-ember'
                   }`}
                 >
-                  {comboIds ? 'Elegida ✓' : 'Usar esta combinación'}
+                  {comboIds ? t('combo_elegida') : t('combo_usar')}
                 </button>
               </div>
             </div>
@@ -959,42 +1005,42 @@ export default function Reservas() {
 
           {necesitaCombo && !combo && (
             <p className="w-full max-w-md text-center text-xs text-wineSoft mb-4">
-              No encontramos mesas ni combinaciones disponibles para {personas} personas a esa hora. Prueba otro horario.
+              {t('combo_sin', { n: personas })}
             </p>
           )}
 
           <p className="text-center text-xs text-gold/70 mb-4 flex items-center justify-center gap-1.5">
             {(mesaSeleccionada || comboSeleccionado) && <IconMesa className="w-3.5 h-3.5" />}
             {mesaSeleccionada
-              ? `${mesaSeleccionada.etiqueta} · ${personas} personas`
+              ? t('mesa_resumen', { etiqueta: mesaSeleccionada.etiqueta, n: personas })
               : comboSeleccionado
-              ? `${comboSeleccionado.map((m) => m.etiqueta).join(' + ')} · ${personas} personas`
-              : 'Toca una mesa disponible'}
+              ? t('mesa_resumen', { etiqueta: comboSeleccionado.map((m) => m.etiqueta).join(' + '), n: personas })
+              : t('toca_mesa')}
           </p>
 
           {puedeContinuar ? (
             <div className="w-full max-w-md flex flex-col gap-2">
               <div className="bg-inkSoft border border-bronze/25 rounded-xl px-4 py-3 text-xs text-paper/60">
-                Reserva a nombre de <span className="text-paper/90">{nombre}</span> · {telefono}
+                {t('reserva_a_nombre')} <span className="text-paper/90">{nombre}</span> · {telefono}
                 {alergias.trim() && <div className="text-gold/80 mt-1">⚠ {alergias.trim()}</div>}
               </div>
-              <p className="text-[10px] text-paper/35 mb-1">Tu mesa queda retenida por {HOLD_MIN} minutos.</p>
+              <p className="text-[10px] text-paper/35 mb-1">{t('mesa_retenida', { n: HOLD_MIN })}</p>
 
               {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
 
-              <BotonOro onClick={confirmarReserva} type="button" cargando={enviando} textoCargando="ENVIANDO…" className="mt-1">
-                CONFIRMAR RESERVA
+              <BotonOro onClick={confirmarReserva} type="button" cargando={enviando} textoCargando={t('btn_enviando')} className="mt-1">
+                {t('btn_confirmar')}
               </BotonOro>
             </div>
           ) : (
             <p className="w-full max-w-md text-center text-xs text-paper/40 mb-2">
-              Toca una mesa disponible en el plano para confirmar tu reserva.
+              {t('toca_mesa_confirmar')}
             </p>
           )}
         </>
       )}
 
-      <PieContacto />
+      <PieContacto t={t} />
     </div>
   )
 }
