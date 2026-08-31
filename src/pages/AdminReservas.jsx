@@ -29,12 +29,241 @@ export function formatFechaCL(iso) {
   return `${d}/${m}/${y}`
 }
 
+// Ventana de conflicto entre dos reservas en la misma mesa (mismo valor que
+// BUFFER_MIN en Reservas.jsx). Acá solo sirve para AVISAR al admin, no bloquea.
+const BUFFER_MIN = 120
+
+// Qué tabla de mesas mira cada sala. Mismo mapeo que usa Reservas.jsx.
+const SALA_TABLA = { comedor: 'mesas', salon: 'mesas_salon', terraza: 'mesas_terraza' }
+
+function horaToMin(hora) {
+  const [h, m] = String(hora).split(':').map(Number)
+  return h * 60 + m
+}
+
+// Mismo criterio que Reservas.jsx: los objetos decorativos (escenario, carrito,
+// parlante) y las mesas bloqueadas a mano no son reservables.
+function esReservable(m) {
+  return (m.tipo === 'round' || m.tipo === 'rect') && m.activa !== false
+}
+
+// Carga manual de una reserva desde el panel — para las que entran por
+// WhatsApp o teléfono, que si no nunca aparecen en el plano ni en la mesa de
+// trabajo. Versión MVP: sala y mesa por <select>, sin plano clickeable.
+// Inserta con estado 'confirmada' y origen 'admin'. Si la mesa ya tiene algo
+// en esa franja lo avisa pero deja guardar igual (decisión del admin).
+function CargaManualReserva({ reservas, mesasPorSala, onCreada }) {
+  const [sala, setSala] = useState('comedor')
+  const [mesaId, setMesaId] = useState('')
+  const [fecha, setFecha] = useState(todayISO())
+  const [hora, setHora] = useState('13:00')
+  const [personas, setPersonas] = useState(2)
+  const [nombre, setNombre] = useState('')
+  const [telefono, setTelefono] = useState('')
+  const [notas, setNotas] = useState('')
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
+  const [ok, setOk] = useState('')
+
+  const mesasSala = (mesasPorSala[sala] ?? []).filter(esReservable)
+  const mesa = mesasSala.find((m) => m.id === mesaId)
+
+  // Si se cambia de sala y la mesa elegida ya no pertenece, se deselecciona.
+  useEffect(() => {
+    if (mesaId && !mesasSala.some((m) => m.id === mesaId)) setMesaId('')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sala])
+
+  // Choques en la misma mesa/fecha dentro de ±BUFFER_MIN — solo aviso.
+  const conflictos = mesaId
+    ? reservas.filter(
+        (r) =>
+          r.fecha === fecha &&
+          r.mesa_id === mesaId &&
+          r.estado !== 'cancelada' &&
+          Math.abs(horaToMin(r.hora) - horaToMin(hora)) < BUFFER_MIN
+      )
+    : []
+
+  async function guardar(e) {
+    e.preventDefault()
+    setError('')
+    setOk('')
+    if (!mesa) {
+      setError('Elegí una mesa.')
+      return
+    }
+    if (telefono.replace(/\D/g, '').length < 8) {
+      setError('El teléfono no parece válido.')
+      return
+    }
+    setGuardando(true)
+
+    // El código se pide por RPC ANTES del insert y se manda explícito en la
+    // fila — mismo patrón que Reservas.jsx. No encadenar .select() sobre
+    // `reservas` (ver la trampa de RLS 42501 documentada en el proyecto).
+    const { data: codigo } = await supabase.rpc('siguiente_codigo_reserva')
+
+    const fila = {
+      mesa_id: mesa.id,
+      mesa_label: mesa.etiqueta,
+      nombre: nombre.trim(),
+      telefono: telefono.trim(),
+      fecha,
+      hora,
+      personas,
+      sala,
+      estado: 'confirmada',
+      origen: 'admin',
+      alergias: notas.trim() || null
+    }
+    if (codigo) fila.codigo = codigo
+
+    const { error: errIns } = await supabase.from('reservas').insert(fila)
+    setGuardando(false)
+
+    if (errIns) {
+      setError(
+        errIns.code === '23505'
+          ? 'Esa mesa ya tiene una reserva exactamente a esa fecha y hora.'
+          : 'No se pudo guardar: ' + errIns.message
+      )
+      return
+    }
+
+    setOk(`Reserva de ${nombre.trim()} cargada y confirmada.`)
+    setNombre('')
+    setTelefono('')
+    setNotas('')
+    setPersonas(2)
+    onCreada()
+  }
+
+  const inputCls =
+    'w-full rounded-lg bg-ink border border-white/10 px-3 py-2 text-sm text-paper focus:border-ember/50 focus:outline-none'
+
+  return (
+    <details className="group bg-inkSoft border border-white/5 rounded-2xl mb-6">
+      <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+        <div>
+          <div className="font-head font-semibold text-sm">Cargar una reserva a mano</div>
+          <div className="text-[11px] text-paper/40 mt-0.5">
+            Para las que entran por WhatsApp o teléfono. Queda confirmada al instante.
+          </div>
+        </div>
+        <span className="text-ember text-sm shrink-0 transition-transform duration-200 group-open:rotate-180">▾</span>
+      </summary>
+
+      <form onSubmit={guardar} className="px-4 pb-4 flex flex-col gap-3">
+        <div className="flex gap-3">
+          <label className="flex-1 text-[11px] text-paper/50">
+            Sala
+            <select value={sala} onChange={(e) => setSala(e.target.value)} className={inputCls + ' mt-1'}>
+              {Object.keys(SALA_TABLA).map((s) => (
+                <option key={s} value={s}>
+                  {SALA_LABEL[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex-1 text-[11px] text-paper/50">
+            Mesa
+            <select value={mesaId} onChange={(e) => setMesaId(e.target.value)} className={inputCls + ' mt-1'}>
+              <option value="">Elegí una mesa…</option>
+              {mesasSala.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.etiqueta} · {m.capacidad}p
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="flex gap-3">
+          <label className="flex-1 text-[11px] text-paper/50">
+            Fecha
+            <input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} className={inputCls + ' mt-1'} />
+          </label>
+          <label className="flex-1 text-[11px] text-paper/50">
+            Hora
+            <input type="time" value={hora} onChange={(e) => setHora(e.target.value)} className={inputCls + ' mt-1'} />
+          </label>
+          <label className="w-20 text-[11px] text-paper/50">
+            Personas
+            <input
+              type="number"
+              min="1"
+              max="60"
+              value={personas}
+              onChange={(e) => setPersonas(Math.max(1, Number(e.target.value) || 1))}
+              className={inputCls + ' mt-1'}
+            />
+          </label>
+        </div>
+
+        {mesa && personas > mesa.capacidad && (
+          <p className="text-[11px] text-gold">
+            ⚠ {mesa.etiqueta} es para {mesa.capacidad} — cargás {personas} personas.
+          </p>
+        )}
+
+        {conflictos.length > 0 && (
+          <p className="text-[11px] text-gold bg-gold/10 border border-gold/25 rounded-lg px-2.5 py-1.5">
+            ⚠ {mesa?.etiqueta} ya tiene {conflictos.length} reserva(s) cerca de esa hora (±2 h):{' '}
+            {conflictos.map((c) => `${c.nombre} ${c.hora?.slice(0, 5)}`).join(', ')}. Podés guardar igual.
+          </p>
+        )}
+
+        <div className="flex gap-3">
+          <label className="flex-1 text-[11px] text-paper/50">
+            Nombre
+            <input required value={nombre} onChange={(e) => setNombre(e.target.value)} className={inputCls + ' mt-1'} />
+          </label>
+          <label className="flex-1 text-[11px] text-paper/50">
+            Teléfono
+            <input
+              required
+              type="tel"
+              value={telefono}
+              onChange={(e) => setTelefono(e.target.value)}
+              className={inputCls + ' mt-1'}
+            />
+          </label>
+        </div>
+
+        <label className="text-[11px] text-paper/50">
+          Alergias / notas
+          <textarea
+            value={notas}
+            onChange={(e) => setNotas(e.target.value)}
+            rows={2}
+            className={inputCls + ' mt-1 resize-none'}
+            placeholder="Opcional — alergias, silla de bebé, ventana, etc."
+          />
+        </label>
+
+        {error && <p className="text-sm text-wineSoft">{error}</p>}
+        {ok && <p className="text-sm text-diamond">{ok}</p>}
+
+        <button
+          type="submit"
+          disabled={guardando}
+          className="self-end px-4 py-2 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+        >
+          {guardando ? 'Guardando…' : 'Cargar reserva'}
+        </button>
+      </form>
+    </details>
+  )
+}
+
 export default function AdminReservas() {
   const { isAdmin, loading: authLoading } = useAuth()
   const [reservas, setReservas] = useState([])
   const [loading, setLoading] = useState(true)
   const [cenaHabilitada, setCenaHabilitada] = useState(false)
   const [publicado, setPublicado] = useState(false)
+  const [mesasPorSala, setMesasPorSala] = useState({ comedor: [], salon: [], terraza: [] })
 
   async function cargar() {
     const { data } = await supabase
@@ -53,10 +282,20 @@ export default function AdminReservas() {
     setPublicado(data?.publicado ?? false)
   }
 
+  async function cargarMesas() {
+    const [c, s, t] = await Promise.all([
+      supabase.from('mesas').select('*').order('orden'),
+      supabase.from('mesas_salon').select('*').order('orden'),
+      supabase.from('mesas_terraza').select('*').order('orden')
+    ])
+    setMesasPorSala({ comedor: c.data ?? [], salon: s.data ?? [], terraza: t.data ?? [] })
+  }
+
   useEffect(() => {
     if (isAdmin) {
       cargar()
       cargarConfig()
+      cargarMesas()
     }
   }, [isAdmin])
 
@@ -164,6 +403,8 @@ export default function AdminReservas() {
           {cenaHabilitada ? 'Habilitada' : 'Solo almuerzo'}
         </button>
       </div>
+
+      <CargaManualReserva reservas={reservas} mesasPorSala={mesasPorSala} onCreada={cargar} />
 
       {loading && <p className="text-paper/40 text-sm">Cargando…</p>}
       {!loading && reservas.length === 0 && <p className="text-paper/40 text-sm">No hay reservas próximas.</p>}
