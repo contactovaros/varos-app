@@ -1,4 +1,4 @@
-const CACHE = 'varos-cache-v2';
+const CACHE = 'varos-cache-v3';
 const CORE_ASSETS = ['/manifest.json'];
 
 self.addEventListener('install', (event) => {
