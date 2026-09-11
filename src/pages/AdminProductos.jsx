@@ -22,6 +22,21 @@ const ESTADO_PILL = {
   agotado: 'border-rose-400/40 text-rose-400 bg-rose-400/10'
 }
 
+// Producto vacío para el panel de creación — mismos campos que una fila real
+// de menu_items, con los defaults que pide el negocio: disponible sí (recién
+// creado, se puede vender), visible en la carta NO (el admin la prende a
+// mano cuando la foto/precio estén listos, ver punto 2 del pedido).
+const NUEVO_PRODUCTO = {
+  id: null,
+  name: '',
+  category: '',
+  price_clp: '',
+  description: '',
+  available: true,
+  visible_carta: false,
+  image_url: null
+}
+
 export default function AdminProductos() {
   const { isAdmin, loading: authLoading } = useAuth()
 
@@ -35,6 +50,15 @@ export default function AdminProductos() {
   const [seleccionadoId, setSeleccionadoId] = useState(null)
   const [precioForm, setPrecioForm] = useState('')
   const [guardandoPrecio, setGuardandoPrecio] = useState(false)
+
+  // Panel de creación: cuando está abierto, reemplaza al de edición. `null`
+  // = cerrado. Objeto de formulario aparte del de edición (no `nuevo`, para
+  // no chocar con la variable local del mismo nombre en guardarPrecio) porque
+  // un producto nuevo no existe todavía en `items` — no tiene id hasta el insert.
+  const [nuevoProducto, setNuevoProducto] = useState(null)
+  const [creando, setCreando] = useState(false)
+  const [subiendoFoto, setSubiendoFoto] = useState(false)
+  const [errorFoto, setErrorFoto] = useState('')
 
   async function cargar() {
     setCargando(true)
@@ -80,7 +104,19 @@ export default function AdminProductos() {
   }, [seleccionadoId, seleccionado?.price_clp])
 
   function seleccionar(item) {
+    setNuevoProducto(null) // seleccionar un producto existente cierra el panel de creación
     setSeleccionadoId(item.id === seleccionadoId ? null : item.id)
+  }
+
+  function abrirNuevoProducto() {
+    setSeleccionadoId(null)
+    setErrorFoto('')
+    setNuevoProducto({ ...NUEVO_PRODUCTO })
+  }
+
+  function cerrarNuevoProducto() {
+    setNuevoProducto(null)
+    setErrorFoto('')
   }
 
   async function guardarPrecio() {
@@ -119,6 +155,84 @@ export default function AdminProductos() {
     }
   }
 
+  // Sube un archivo al bucket público `menu-fotos` (ver
+  // supabase/add_menu_fotos_bucket.sql) con un nombre único, y devuelve la URL
+  // pública ya lista para guardar en `image_url`. `null` si falla.
+  async function subirFotoAlBucket(file) {
+    setErrorFoto('')
+    setSubiendoFoto(true)
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+      const path = `${crypto.randomUUID()}.${ext}`
+      const { error: err } = await supabase.storage.from('menu-fotos').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false
+      })
+      if (err) throw err
+      const { data } = supabase.storage.from('menu-fotos').getPublicUrl(path)
+      return data.publicUrl
+    } catch (err) {
+      setErrorFoto('No se pudo subir la foto: ' + err.message)
+      return null
+    } finally {
+      setSubiendoFoto(false)
+    }
+  }
+
+  // Cambiar la foto de un producto YA existente: sube y guarda de una, igual
+  // que el resto de los campos de esta pantalla (no hay botón "Guardar" aparte).
+  async function onFotoExistente(e, item) {
+    const file = e.target.files?.[0]
+    e.target.value = '' // permite volver a elegir el mismo archivo después
+    if (!file) return
+    const url = await subirFotoAlBucket(file)
+    if (!url) return
+    setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, image_url: url } : i)))
+    const { error: err } = await supabase.from('menu_items').update({ image_url: url }).eq('id', item.id)
+    if (err) alert('La foto se subió pero no se pudo guardar en el producto: ' + err.message)
+  }
+
+  // Cambiar la foto en el panel de creación: solo queda en el formulario en
+  // memoria hasta que se cree el producto (el archivo en el bucket ya quedó
+  // subido, con nombre único, así que no hay conflicto si el admin cambia de
+  // foto varias veces antes de guardar).
+  async function onFotoNueva(e) {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    const url = await subirFotoAlBucket(file)
+    if (!url) return
+    setNuevoProducto((prev) => ({ ...prev, image_url: url }))
+  }
+
+  async function crearProducto() {
+    if (!nuevoProducto) return
+    const nombre = nuevoProducto.name.trim()
+    const cat = nuevoProducto.category.trim()
+    const precio = Number(nuevoProducto.price_clp)
+    if (!nombre || !cat || !Number.isFinite(precio) || precio < 0) return
+
+    setCreando(true)
+    const payload = {
+      name: nombre,
+      category: cat,
+      price_clp: precio,
+      description: nuevoProducto.description?.trim() || null,
+      available: nuevoProducto.available,
+      visible_carta: nuevoProducto.visible_carta,
+      image_url: nuevoProducto.image_url || null
+    }
+    const { data, error: err } = await supabase.from('menu_items').insert(payload).select().single()
+    setCreando(false)
+    if (err) {
+      alert('No se pudo crear el producto: ' + err.message)
+      return
+    }
+    setNuevoProducto(null)
+    await cargar() // vuelve a leer todo para mantener el orden real (categoría → orden → nombre)
+    setSeleccionadoId(data.id)
+  }
+
   if (authLoading) return null
 
   if (!isAdmin) {
@@ -133,17 +247,25 @@ export default function AdminProductos() {
 
   return (
     <div className="px-4 pt-8 pb-10">
-      <header className="mb-5">
-        <div className="font-mono text-[10px] tracking-[0.3em] text-gold uppercase">Varo's · Gestión</div>
-        <h1 className="font-head text-2xl font-semibold">Productos</h1>
-        <p className="text-paper/40 text-xs mt-1 leading-relaxed">
-          {cargando ? 'Cargando…' : `${items.length} productos · ${filtrados.length} en esta vista`}
-        </p>
-        {error && (
-          <p className="text-rose-400 text-[11px] mt-1 leading-relaxed">
-            No se pudo leer el menú: {error}
+      <header className="mb-5 flex items-start justify-between gap-3">
+        <div>
+          <div className="font-mono text-[10px] tracking-[0.3em] text-gold uppercase">Varo's · Gestión</div>
+          <h1 className="font-head text-2xl font-semibold">Productos</h1>
+          <p className="text-paper/40 text-xs mt-1 leading-relaxed">
+            {cargando ? 'Cargando…' : `${items.length} productos · ${filtrados.length} en esta vista`}
           </p>
-        )}
+          {error && (
+            <p className="text-rose-400 text-[11px] mt-1 leading-relaxed">
+              No se pudo leer el menú: {error}
+            </p>
+          )}
+        </div>
+        <button
+          onClick={abrirNuevoProducto}
+          className="shrink-0 bg-gradient-to-br from-gold to-bronze text-ink font-head text-xs font-medium px-3.5 py-2.5 rounded-lg whitespace-nowrap"
+        >
+          + Nuevo producto
+        </button>
       </header>
 
       <div className="flex flex-col lg:flex-row gap-4">
@@ -242,10 +364,135 @@ export default function AdminProductos() {
           </div>
         </div>
 
-        {/* ---- Panel lateral de edición ---- */}
+        {/* ---- Panel lateral: crear, o editar ---- */}
         <aside className="lg:w-80 shrink-0 lg:sticky lg:top-6 lg:self-start">
           <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-            {!seleccionado ? (
+            {nuevoProducto ? (
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <span className="font-head font-semibold text-sm">Nuevo producto</span>
+                  <button onClick={cerrarNuevoProducto} className="text-paper/40 text-xs hover:text-paper/70">
+                    Cancelar
+                  </button>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">Nombre</label>
+                  <input
+                    value={nuevoProducto.name}
+                    onChange={(e) => setNuevoProducto((prev) => ({ ...prev, name: e.target.value }))}
+                    placeholder="Ej: Ceviche mixto"
+                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">Categoría</label>
+                  <input
+                    value={nuevoProducto.category}
+                    onChange={(e) => setNuevoProducto((prev) => ({ ...prev, category: e.target.value }))}
+                    list="categorias-existentes"
+                    placeholder="Elegí una o escribí una nueva"
+                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50"
+                  />
+                  <datalist id="categorias-existentes">
+                    {categorias.map((c) => (
+                      <option key={c} value={c} />
+                    ))}
+                  </datalist>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">Precio</label>
+                  <input
+                    type="number"
+                    value={nuevoProducto.price_clp}
+                    onChange={(e) => setNuevoProducto((prev) => ({ ...prev, price_clp: e.target.value }))}
+                    placeholder="0"
+                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono focus:outline-none focus:border-gold/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">
+                    Descripción <span className="text-paper/25">(opcional)</span>
+                  </label>
+                  <textarea
+                    value={nuevoProducto.description}
+                    onChange={(e) => setNuevoProducto((prev) => ({ ...prev, description: e.target.value }))}
+                    rows={2}
+                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">Foto</label>
+                  <div className="flex items-center gap-3">
+                    {nuevoProducto.image_url && (
+                      <img
+                        src={nuevoProducto.image_url}
+                        alt=""
+                        className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+                      />
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={onFotoNueva}
+                      disabled={subiendoFoto}
+                      className="flex-1 text-[11px] text-paper/50 min-w-0"
+                    />
+                  </div>
+                  {subiendoFoto && <p className="text-paper/35 text-[10px] mt-1.5">Subiendo…</p>}
+                  {errorFoto && <p className="text-rose-400 text-[10px] mt-1.5 leading-relaxed">{errorFoto}</p>}
+                </div>
+
+                <div className="flex items-center justify-between gap-3 border-t border-white/5 pt-3.5">
+                  <span className="text-xs text-paper">Disponible</span>
+                  <button
+                    onClick={() => setNuevoProducto((prev) => ({ ...prev, available: !prev.available }))}
+                    aria-pressed={!!nuevoProducto.available}
+                    className={`relative w-11 h-6 rounded-full shrink-0 transition-colors duration-200 ${
+                      nuevoProducto.available ? 'bg-gradient-to-br from-gold to-bronze' : 'bg-white/10'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-paper transition-transform duration-200 ${
+                        nuevoProducto.available ? 'translate-x-5' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-xs text-paper">Visible en la carta de varos.cl</span>
+                  <button
+                    onClick={() => setNuevoProducto((prev) => ({ ...prev, visible_carta: !prev.visible_carta }))}
+                    aria-pressed={!!nuevoProducto.visible_carta}
+                    className={`relative w-11 h-6 rounded-full shrink-0 transition-colors duration-200 ${
+                      nuevoProducto.visible_carta ? 'bg-gradient-to-br from-gold to-bronze' : 'bg-white/10'
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-paper transition-transform duration-200 ${
+                        nuevoProducto.visible_carta ? 'translate-x-5' : ''
+                      }`}
+                    />
+                  </button>
+                </div>
+                <p className="text-paper/35 text-[10px] -mt-2 leading-relaxed">
+                  Apagado por defecto: prendelo cuando la foto y el precio estén listos.
+                </p>
+
+                <button
+                  onClick={crearProducto}
+                  disabled={creando || !nuevoProducto.name.trim() || !nuevoProducto.category.trim() || nuevoProducto.price_clp === ''}
+                  className="w-full bg-gradient-to-br from-gold to-bronze text-ink font-head text-xs font-medium py-2.5 rounded-lg disabled:opacity-40"
+                >
+                  {creando ? 'Creando…' : 'Crear producto'}
+                </button>
+              </div>
+            ) : !seleccionado ? (
               <p className="text-paper/35 text-xs py-4 text-center">
                 Toca un producto de la tabla para editarlo.
               </p>
@@ -254,6 +501,32 @@ export default function AdminProductos() {
                 <div>
                   <div className="font-head font-semibold text-sm">{seleccionado.name}</div>
                   <div className="text-paper/40 text-[11px] mt-0.5">{seleccionado.category}</div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">Foto</label>
+                  <div className="flex items-center gap-3">
+                    {seleccionado.image_url ? (
+                      <img
+                        src={seleccionado.image_url}
+                        alt=""
+                        className="w-12 h-12 rounded-lg object-cover border border-white/10 shrink-0"
+                      />
+                    ) : (
+                      <div className="w-12 h-12 rounded-lg border border-white/10 shrink-0 flex items-center justify-center text-paper/20 text-[9px] text-center">
+                        Sin foto
+                      </div>
+                    )}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => onFotoExistente(e, seleccionado)}
+                      disabled={subiendoFoto}
+                      className="flex-1 text-[11px] text-paper/50 min-w-0"
+                    />
+                  </div>
+                  {subiendoFoto && <p className="text-paper/35 text-[10px] mt-1.5">Subiendo…</p>}
+                  {errorFoto && <p className="text-rose-400 text-[10px] mt-1.5 leading-relaxed">{errorFoto}</p>}
                 </div>
 
                 <div>
