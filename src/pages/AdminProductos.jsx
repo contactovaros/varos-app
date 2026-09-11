@@ -269,8 +269,13 @@ export default function AdminProductos() {
       </header>
 
       <div className="flex flex-col lg:flex-row gap-4">
-        {/* ---- Columna izquierda: buscador + chips + tabla ---- */}
-        <div className="flex-1 min-w-0">
+        {/* ---- Columna izquierda: buscador + chips + tabla ----
+             order-last en mobile: la tabla tiene 200+ filas, así que si el
+             panel (que sí necesita verse apenas se abre) quedara debajo de
+             ella, "+ Nuevo producto" parecería no hacer nada — quedaría a
+             miles de píxeles de scroll. En desktop el flex-row ya la pone a
+             la izquierda sin necesitar order. */}
+        <div className="flex-1 min-w-0 order-last lg:order-none">
           <input
             value={busqueda}
             onChange={(e) => setBusqueda(e.target.value)}
