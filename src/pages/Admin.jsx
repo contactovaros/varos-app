@@ -401,7 +401,7 @@ export default function Admin() {
 
       <Link
         to="/admin/resenas"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-6"
+        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
       >
         <div>
           <div className="font-head font-semibold text-sm">Consultor de reseñas</div>
@@ -410,6 +410,20 @@ export default function Admin() {
           </div>
         </div>
         <span className="text-ember text-lg">→</span>
+      </Link>
+
+      {/* Primer módulo del reemplazo del POS viejo — ver DECISIONES.md */}
+      <Link
+        to="/admin/productos"
+        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">💲 Productos</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Precio, disponibilidad y qué se muestra en la carta pública de varos.cl
+          </div>
+        </div>
+        <span className="text-gold text-lg">→</span>
       </Link>
 
       {/* ---- QR DE CHECK-IN DEL LOCAL (nuevo) ---- */}

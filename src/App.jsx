@@ -15,7 +15,9 @@ import AdminReservas from './pages/AdminReservas.jsx'
 import AdminMesaTrabajo from './pages/AdminMesaTrabajo.jsx'
 import AdminResenas from './pages/AdminResenas.jsx'
 import AdminPlano from './pages/AdminPlano.jsx'
+import AdminProductos from './pages/AdminProductos.jsx'
 import Plano from './pages/Plano.jsx'
+import PlanoFlujo from './pages/PlanoFlujo.jsx'
 import { useAuth } from './context/AuthContext.jsx'
 
 export default function App() {
@@ -39,6 +41,7 @@ export default function App() {
     return (
       <Routes>
         <Route path="/plano/:id" element={<Plano />} />
+        <Route path="/plano/:id/flujo" element={<PlanoFlujo />} />
       </Routes>
     )
   }
@@ -56,13 +59,16 @@ export default function App() {
   }
 
   // El resto de la app va en una columna de ancho móvil, centrada, incluso en
-  // desktop — /admin/mesas es la excepción: en pantallas anchas se ensancha
-  // para mostrar el panel de reservas del día al costado del plano.
-  const anchoAdminMesas = location.pathname === '/admin/mesas' || location.pathname === '/admin/plano'
+  // desktop — se ensancha solo en las pantallas de admin que necesitan mostrar
+  // una lista o plano junto a un panel lateral fijo: mesas, plano y productos.
+  const anchoAmplio =
+    location.pathname === '/admin/mesas' ||
+    location.pathname === '/admin/plano' ||
+    location.pathname === '/admin/productos'
 
   return (
     <CartProvider>
-      <div className={`${anchoAdminMesas ? 'lg:max-w-7xl' : ''} max-w-md mx-auto min-h-screen pb-24 relative`}>
+      <div className={`${anchoAmplio ? 'lg:max-w-7xl' : ''} max-w-md mx-auto min-h-screen pb-24 relative`}>
         <Routes>
           <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
           <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
@@ -74,6 +80,7 @@ export default function App() {
           <Route path="/admin/mesa-trabajo" element={<AdminMesaTrabajo />} />
           <Route path="/admin/resenas" element={<AdminResenas />} />
           <Route path="/admin/plano" element={<AdminPlano />} />
+          <Route path="/admin/productos" element={<AdminProductos />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>

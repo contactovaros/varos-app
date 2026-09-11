@@ -4,6 +4,34 @@ Más nueva arriba.
 
 ---
 
+## Reusar `menu_items` para el primer módulo del reemplazo del POS (Productos) · 2026-09-11 · varos-app
+
+**Contexto** — Ver `varos-pos/DECISIONES.md` para el programa completo (reemplazo incremental del PHP de `varos.cl/gestion`). Este módulo es el primer paso: Productos/Menú. `varos-app` ya tiene `public.menu_items` (name/description/price_clp/category/image_url/available, RLS: select público, all admins) con un CRUD básico en `/admin` — construida para el flujo de pedidos-por-puntos del Club, hoy dormido (casi no se usa, pocas filas reales).
+
+**Decisión** — Reusar `menu_items` en vez de crear una tabla `productos` nueva. Es la misma forma de dato (nombre/precio/categoría/disponibilidad) y evita una segunda fuente de verdad para "qué platos sirve Varo's". Se agregan dos columnas aditivas: `visible_carta boolean default false` (¿aparece en la carta pública de varos.cl? — distinto de `available`, que es disponibilidad de cocina/venta) y `orden integer` (orden manual dentro de categoría).
+
+**Qué perdemos** — El flujo de pedidos-por-puntos (dormido) va a convivir con datos pensados para el catálogo completo del restaurante (~150 ítems reales) en vez de su placeholder de 1 fila — si algún día se revive ese flujo, hereda el menú real completo, no una selección curada; a evaluar en ese momento, no ahora.
+
+**Plan** — (1) Migración aditiva a `menu_items` (`varos-supabase`). (2) Pantalla nueva `/admin/productos` sobre datos reales, paleta dorado/bronce en vez de wine/ember (pedido explícito del usuario tras ver la maqueta) (`varos-frontend`). (3) Pendiente, decisión aparte: cómo se siembran los ~150 ítems reales (scraping de `varos.cl/carta`, ver el parser ya documentado en la sección "Carta e idioma" de este mismo archivo) y si la carta pública de varos.cl pasa a alimentarse de esta tabla en vez del PHP viejo.
+
+**Cómo se vuelve atrás** — Columnas nuevas, aditivas; `drop column` las quita sin tocar las filas existentes. La pantalla nueva es una ruta más; quitarla no afecta el CRUD viejo de `/admin` ni el flujo de pedidos.
+
+---
+
+## Marcar / pre-seleccionar platos en la reserva de almuerzo · 2026-08-29 · varos-app
+
+**ESTADO: descartado. No se construye nada.**
+
+**Contexto** — El usuario propuso que el cliente pueda marcar con un "corazón" los platos que le interesan al reservar, y que esa lista llegue al restaurante. Requiere la carta dentro de la app (hoy es solo un enlace a varos.cl/carta — ver la decisión de abajo).
+
+**Por qué se descartó** (criterio de `varos-negocio`) — Para el almuerzo suelto no aporta: la cocina prepara por volumen histórico y compras de días antes, no mesa por mesa. Crea una promesa implícita que el restaurante nunca confirmó (plato agotado o Menú del Día cambiado = queja en mesa peor que si no se hubiera marcado; el Menú del Día ni se publica por fecha). Suma un traspaso nuevo al admin —leer la lista y cantarla al pase— en la franja 12:30–16:30 que ya lo tiene saturado. Y duplica la carta, que se mantiene por fuera en varos.cl.
+
+**Alternativas más baratas que también se ofrecieron y el usuario rechazó** — (a) ampliar la etiqueta del campo de alergias a "¿algo que quieras adelantarle a la cocina?" y verlo un mes como experimento; (b) un checkbox opcional para platos de cocción lenta ("vamos a pedir costillar, ~45 min"). El usuario dijo "ninguna de las dos".
+
+**Dónde sí tiene lugar** — En el flujo de eventos / grupos de 40+, donde ya se acuerda un menú cerrado antes con una persona y una cotización. Si se retoma, es diseño propio, no una extensión de `/reservas`.
+
+---
+
 ## Carta e idioma en el flujo de reserva · 2026-08-29 · varos-app
 
 **ESTADO: implementado (solo frontend) el 2026-08-29.** Carta = Opción 1: bloque fijo del Menú del Día escrito a mano + botón "Ver la carta" → `https://www.varos.cl/carta` (pestaña nueva), en los pasos `filtros` y `ok`. Sin réplica, sin tabla, sin función de Netlify, sin scraper. Idioma = Opción 2: `src/i18n/reservas.js` (objeto plano ES/EN + `traducir()` + hook `useIdioma()`), `src/components/SelectorIdioma.jsx` en la esquina superior izquierda de los tres estados del flujo, persistencia `localStorage` (`varos_idioma`) + `?lang=`. Todos los textos de cliente de `Reservas.jsx` pasan por `t(...)`. Los pasos 2, 3, 5 y 6 del plan quedan sin hacer; si algún día se quiere la carta dentro de la app, se retoma desde ahí.
