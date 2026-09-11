@@ -10,6 +10,7 @@ import CheckIn from './pages/CheckIn.jsx'
 import MostrarQR from './pages/MostrarQR.jsx'
 import CompletarPerfil from './pages/CompletarPerfil.jsx'
 import Reservas from './pages/Reservas.jsx'
+import Mozo from './pages/Mozo.jsx'
 import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
 import AdminMesaTrabajo from './pages/AdminMesaTrabajo.jsx'
@@ -32,6 +33,13 @@ export default function App() {
   // hacerlo sin crear cuenta ni iniciar sesión.
   if (location.pathname === '/reservas') {
     return <Reservas />
+  }
+
+  // Pantalla del mozo: sin gate de admin, a propósito — mismo modelo de
+  // seguridad que ya usa la pantalla de cocina del KDS (un secreto embebido
+  // en la página, no login individual de Google). Ver varos-pos/DECISIONES.md.
+  if (location.pathname === '/mozo') {
+    return <Mozo />
   }
 
   // Un plano publicado también es público: se comparte por enlace y no debe
