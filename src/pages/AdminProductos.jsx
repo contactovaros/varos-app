@@ -14,6 +14,45 @@ function formatCLP(valor) {
   return `$${n.toLocaleString('es-CL')}`
 }
 
+// Piloto "reflejar /admin/productos en varos.cl/carta sin cambiar de URL"
+// (varos-pos/DECISIONES.md). varos.cl/carta la sigue generando el PHP viejo
+// (gestion.php) — la única forma de que se vea reflejado ahí un cambio de
+// acá es escribirlo de vuelta en esa base, y la única vía que existe para
+// eso es la cola del Worker `varos-kds` + el userscript de la PC de caja
+// (que sí tiene la cookie de sesión). Ver worker.js de varos-kds.
+//
+// Solo funciona para los 192/206 productos que ya tienen `pos_prodid`
+// mapeado — si no lo tiene, no hay a qué producto real del PHP escribirle,
+// así que se omite en silencio (Supabase igual queda actualizado, que sigue
+// siendo la fuente de verdad de este panel).
+const KDS_WORKER = 'https://varos-kds.varosnocturno.workers.dev'
+const KDS_KEY = '797a0ed49a8623e452b03fc0'
+
+async function syncCampoConPos(item, campo, dato) {
+  if (!item?.pos_prodid) return
+  try {
+    await fetch(`${KDS_WORKER}/product-update?k=${KDS_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prodid: item.pos_prodid, campo, dato: String(dato) })
+    })
+  } catch {
+    // silencioso a propósito: es un espejo best-effort hacia el PHP, no debe
+    // bloquear ni alarmar por una falla de red momentánea de este lado.
+  }
+}
+
+async function syncFotoConPos(item, imageUrl) {
+  if (!item?.pos_prodid) return
+  try {
+    await fetch(`${KDS_WORKER}/product-photo?k=${KDS_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prodid: item.pos_prodid, imageUrl, catid: item.pos_catid || '' })
+    })
+  } catch {}
+}
+
 // Paleta de esta pantalla: dorado/bronce como acento (no ember/wine, que son
 // el protagonista del resto de /admin). Los estados de disponibilidad son
 // semánticos (verde/rojo) y van aparte del acento de marca.
@@ -131,6 +170,8 @@ export default function AdminProductos() {
       setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, price_clp: anterior } : i)))
       setPrecioForm(String(anterior))
       alert('No se pudo guardar el precio: ' + err.message)
+    } else {
+      syncCampoConPos(seleccionado, 'Precio', nuevo)
     }
     setGuardandoPrecio(false)
   }
@@ -152,6 +193,10 @@ export default function AdminProductos() {
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, visible_carta: !nuevo } : i)))
       alert('No se pudo cambiar la visibilidad en varos.cl: ' + err.message)
+    } else {
+      // "Bloqueado" en el PHP es justo lo inverso de visible_carta (confirmado:
+      // solo oculta de la carta pública, no del catálogo interno de menús).
+      syncCampoConPos(item, 'Bloqueado', nuevo ? '0' : '1')
     }
   }
 
@@ -190,6 +235,7 @@ export default function AdminProductos() {
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, image_url: url } : i)))
     const { error: err } = await supabase.from('menu_items').update({ image_url: url }).eq('id', item.id)
     if (err) alert('La foto se subió pero no se pudo guardar en el producto: ' + err.message)
+    else syncFotoConPos(item, url)
   }
 
   // Cambiar la foto en el panel de creación: solo queda en el formulario en
@@ -506,6 +552,11 @@ export default function AdminProductos() {
                 <div>
                   <div className="font-head font-semibold text-sm">{seleccionado.name}</div>
                   <div className="text-paper/40 text-[11px] mt-0.5">{seleccionado.category}</div>
+                  {!seleccionado.pos_prodid && (
+                    <p className="text-amber-400/80 text-[10px] mt-1.5 leading-relaxed">
+                      Sin conectar con varos.cl/carta — los cambios acá no se ven reflejados ahí todavía.
+                    </p>
+                  )}
                 </div>
 
                 <div>
