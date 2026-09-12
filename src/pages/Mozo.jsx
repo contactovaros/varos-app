@@ -11,7 +11,15 @@ import { supabase } from '../lib/supabase'
 // una sola vez por celular y queda guardado en localStorage — cada mozo usa
 // su propio teléfono, así que no hace falta volver a pedirlo cada vez.
 const KDS_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo?k=797a0ed49a8623e452b03fc0'
+const MENU_CATALOG_URL = 'https://varos-kds.varosnocturno.workers.dev/menu-catalog?k=797a0ed49a8623e452b03fc0'
 const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
+
+// "Menú del Día" en menu_items es UN solo producto contenedor (sin
+// Entrada/Principal/Postre propios) — el desglose real vive en el POS
+// viejo y se scrapea al Worker vía /menu-catalog (mismo dato que usa el
+// panel "Editar menú" del KDS). Sin esto, pedirlo desde /mozo no dejaba
+// elegir el curso — el mozo tenía que escribirlo a mano en la nota.
+const CURSOS_MENU_DIA = ['Entrada', 'Plato Principal', 'Postres y Tentaciones']
 
 // Numeración de mesas por sector: placeholder razonable (no hay data real de
 // numeración exacta todavía). El usuario la puede ajustar después si hace falta.
@@ -129,6 +137,16 @@ export default function Mozo() {
   const [errorEnvio, setErrorEnvio] = useState('')
   const [toast, setToast] = useState(false)
 
+  // Desglose real de Entrada/Principal/Postre del Menú del Día, scrapeado
+  // del POS viejo (ver /menu-catalog en varos-kds). null mientras carga,
+  // '' de error si el Worker no respondió.
+  const [menuDiaOpciones, setMenuDiaOpciones] = useState(null)
+  const [menuDiaError, setMenuDiaError] = useState('')
+  const [sheetMenuDia, setSheetMenuDia] = useState(false)
+  const [menuDiaItemActual, setMenuDiaItemActual] = useState(null)
+  const [menuDiaSel, setMenuDiaSel] = useState({ Entrada: '', 'Plato Principal': '', 'Postres y Tentaciones': '' })
+  const [menuDiaNota, setMenuDiaNota] = useState('')
+
   useEffect(() => {
     async function cargar() {
       setCargando(true)
@@ -153,6 +171,24 @@ export default function Mozo() {
       setCargando(false)
     }
     cargar()
+  }, [])
+
+  useEffect(() => {
+    async function cargarMenuDia() {
+      try {
+        const res = await fetch(MENU_CATALOG_URL)
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const data = await res.json()
+        const porCurso = { Entrada: [], 'Plato Principal': [], 'Postres y Tentaciones': [] }
+        for (const it of data?.catalog?.enMenu ?? []) {
+          if (porCurso[it.curso]) porCurso[it.curso].push(it.nombre)
+        }
+        setMenuDiaOpciones(porCurso)
+      } catch (err) {
+        setMenuDiaError('No se pudo cargar el Menú del Día de hoy.')
+      }
+    }
+    cargarMenuDia()
   }, [])
 
   const categorias = useMemo(() => {
@@ -207,6 +243,37 @@ export default function Mozo() {
     setCart((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], nota } } : prev))
   }
 
+  // Menú del Día: no es un plato más — es un contenedor con Entrada/
+  // Principal/Postre a elección, así que se guarda en el carrito con una
+  // key propia (no item.id) para que dos combos distintos convivan como
+  // líneas separadas, igual que en la comanda real.
+  function abrirMenuDia(item) {
+    setMenuDiaSel({ Entrada: '', 'Plato Principal': '', 'Postres y Tentaciones': '' })
+    setMenuDiaNota('')
+    setSheetMenuDia(true)
+    setMenuDiaItemActual(item)
+  }
+
+  function confirmarMenuDia() {
+    const { Entrada, 'Plato Principal': principal, 'Postres y Tentaciones': postre } = menuDiaSel
+    if (!Entrada || !principal || !postre || !menuDiaItemActual) return
+    const key = `menudia:${Entrada}|${principal}|${postre}`
+    setCart((prev) => {
+      const actual = prev[key]
+      if (actual) return { ...prev, [key]: { ...actual, qty: actual.qty + 1 } }
+      return {
+        ...prev,
+        [key]: {
+          qty: 1,
+          nota: menuDiaNota,
+          item: menuDiaItemActual,
+          menuChoice: { entrada: Entrada, principal, postre }
+        }
+      }
+    })
+    setSheetMenuDia(false)
+  }
+
   function elegirMesa(num, sector) {
     setMesa({ num, sector })
     setTimeout(() => setSheetMesa(false), 150)
@@ -237,7 +304,10 @@ export default function Mozo() {
       items: cartEntries.map(([, c]) => ({
         cant: c.qty,
         nombre: c.item.name,
-        comentario: c.nota?.trim() || ''
+        comentario: c.nota?.trim() || '',
+        // Menú del Día: un `menus` por unidad pedida, mismo formato que ya
+        // arma el bridge del PHP real (entrada/principal/postre elegidos).
+        ...(c.menuChoice ? { menus: Array.from({ length: c.qty }, () => ({ ...c.menuChoice })) } : {})
       }))
     }
     try {
@@ -349,7 +419,15 @@ export default function Mozo() {
               <div key={g.nombre}>
                 <div className="font-head text-[13px] font-semibold text-paper/60 mt-3.5 mb-1.5 first:mt-0">{g.nombre}</div>
                 {g.items.map((item) => {
-                  const enCarrito = cart[item.id]
+                  const esMenuDia = item.category === 'Menú del Día'
+                  // El Menú del Día nunca usa el stepper +/− de acá: cada
+                  // toque abre el selector de curso y puede crear una línea
+                  // NUEVA (combo distinto) o sumarle 1 a una ya elegida —
+                  // eso se resuelve dentro de confirmarMenuDia(), no acá.
+                  const combosEnCarrito = esMenuDia
+                    ? Object.values(cart).filter((c) => c.menuChoice).reduce((s, c) => s + c.qty, 0)
+                    : 0
+                  const enCarrito = !esMenuDia && cart[item.id]
                   return (
                     <div key={item.id} className="flex items-center gap-3 py-2.5 border-b border-white/5">
                       <div className="flex-1 min-w-0">
@@ -358,8 +436,21 @@ export default function Mozo() {
                           <div className="text-[11.5px] text-paper/40 mt-0.5 leading-snug line-clamp-2">{item.description}</div>
                         )}
                         <div className="text-[12.5px] text-gold mt-1 tabular-nums">{formatCLP(item.price_clp)}</div>
+                        {esMenuDia && combosEnCarrito > 0 && (
+                          <div className="text-[11px] text-paper/40 mt-0.5">
+                            {combosEnCarrito === 1 ? '1 en el pedido' : `${combosEnCarrito} en el pedido`}
+                          </div>
+                        )}
                       </div>
-                      {enCarrito ? (
+                      {esMenuDia ? (
+                        <button
+                          onClick={() => abrirMenuDia(item)}
+                          disabled={!menuDiaOpciones}
+                          className="shrink-0 w-9 h-9 rounded-lg bg-inkSoft border border-white/10 text-gold text-lg font-semibold flex items-center justify-center disabled:opacity-30"
+                        >
+                          +
+                        </button>
+                      ) : enCarrito ? (
                         <div className="shrink-0 flex items-center bg-gradient-to-br from-gold to-bronze rounded-lg overflow-hidden">
                           <button onClick={() => decrementar(item.id)} className="w-8 h-9 text-ink font-bold text-base">
                             −
@@ -408,9 +499,10 @@ export default function Mozo() {
           onClick={() => {
             setSheetMesa(false)
             setSheetCart(false)
+            setSheetMenuDia(false)
           }}
           className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 ${
-            sheetMesa || sheetCart ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            sheetMesa || sheetCart || sheetMenuDia ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         />
 
@@ -471,6 +563,11 @@ export default function Mozo() {
                       <div className="font-semibold text-sm">
                         {c.qty} × {c.item.name}
                       </div>
+                      {c.menuChoice && (
+                        <div className="text-[11.5px] text-paper/50 mt-0.5 leading-snug">
+                          {c.menuChoice.entrada} · {c.menuChoice.principal} · {c.menuChoice.postre}
+                        </div>
+                      )}
                       <div className="text-[12.5px] text-paper/40 mt-0.5">
                         <span className="text-gold font-semibold tabular-nums">{formatCLP(c.item.price_clp * c.qty)}</span>
                       </div>
@@ -505,6 +602,63 @@ export default function Mozo() {
               className="w-full mt-3.5 py-3.5 rounded-xl bg-gradient-to-br from-gold to-bronze text-ink font-head font-bold text-[15px] disabled:opacity-35"
             >
               {enviando ? 'Enviando…' : 'Enviar pedido a cocina'}
+            </button>
+          </div>
+        </div>
+
+        {/* ---- Sheet: elegir curso del Menú del Día ---- */}
+        <div className={`fixed left-0 right-0 bottom-0 z-50 flex justify-center pointer-events-none`}>
+          <div
+            className={`w-full max-w-md bg-inkSoft border border-white/10 border-b-0 rounded-t-2xl px-4.5 pt-2 pointer-events-auto transition-transform duration-300 ease-salida max-h-[78vh] overflow-y-auto ${
+              sheetMenuDia ? 'translate-y-0' : 'translate-y-full'
+            }`}
+            style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', paddingLeft: '18px', paddingRight: '18px' }}
+          >
+            <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
+            <h2 className="font-head text-lg font-semibold mt-2 mb-1">Menú del Día</h2>
+            <p className="text-[11px] text-paper/40 mb-3.5">Elegí un curso de cada uno.</p>
+
+            {menuDiaError && <p className="text-rose-400 text-xs py-4">{menuDiaError}</p>}
+
+            {menuDiaOpciones &&
+              CURSOS_MENU_DIA.map((curso) => (
+                <div key={curso} className="mb-4">
+                  <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-2">{curso}</div>
+                  <div className="flex flex-col gap-1.5">
+                    {(menuDiaOpciones[curso] || []).map((nombre) => {
+                      const sel = menuDiaSel[curso] === nombre
+                      return (
+                        <button
+                          key={nombre}
+                          onClick={() => setMenuDiaSel((prev) => ({ ...prev, [curso]: nombre }))}
+                          className={`text-left px-3.5 py-2.5 rounded-lg border text-[13px] ${
+                            sel ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink font-semibold' : 'bg-ink border-white/10 text-paper'
+                          }`}
+                        >
+                          {nombre}
+                        </button>
+                      )
+                    })}
+                    {menuDiaOpciones[curso]?.length === 0 && (
+                      <p className="text-paper/30 text-[11px] py-1">Sin opciones cargadas para este curso hoy.</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+            <input
+              value={menuDiaNota}
+              onChange={(e) => setMenuDiaNota(e.target.value)}
+              placeholder="Nota para cocina (ej: sin palta)"
+              className="w-full bg-ink border border-white/10 rounded-lg px-2.5 py-2 text-[12.5px] outline-none placeholder:text-paper/30 mb-3.5"
+            />
+
+            <button
+              onClick={confirmarMenuDia}
+              disabled={!menuDiaSel.Entrada || !menuDiaSel['Plato Principal'] || !menuDiaSel['Postres y Tentaciones']}
+              className="w-full py-3.5 rounded-xl bg-gradient-to-br from-gold to-bronze text-ink font-head font-bold text-[15px] disabled:opacity-35"
+            >
+              Agregar al pedido
             </button>
           </div>
         </div>

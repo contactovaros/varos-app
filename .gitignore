@@ -1,3 +1,15 @@
 node_modules
 dist
 .netlify
+
+# credencial de conexion directa a Postgres (para correr SQL sin pasar por el
+# editor de Supabase a mano) - nunca se versiona
+.env.db.local
+supabase/.temp/
+
+# graphify: se versiona el grafo curado (graph.json + GRAPH_REPORT.md).
+# Lo de abajo se regenera gratis con `graphify export html` / `graphify update .`
+graphify-out/graph.html
+graphify-out/cache/
+graphify-out/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/
+graphify-out/cost.json
