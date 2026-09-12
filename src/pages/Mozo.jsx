@@ -5,11 +5,13 @@ import { supabase } from '../lib/supabase'
 // (varos.cl/gestion). Ver varos-pos/DECISIONES.md, "Reemplazo de Comandas
 // (fase 1, sin Caja) · 2026-09-11".
 //
-// Sin gate de admin a propósito: mismo modelo de seguridad que ya usa la
-// pantalla de cocina del KDS (un secreto embebido en la página, no login
-// individual de Google). Decisión ya tomada para el piloto — no reabrir.
-// El Worker varos-kds ya está en producción y no se toca desde acá.
+// Sin login de Google a propósito (decisión del usuario, 2026-09-12): el
+// candado es un código corto por garzón, generado en /admin/garzones
+// (tabla `garzones` + RPC `validar_codigo_garzon`), no una cuenta. Se pide
+// una sola vez por celular y queda guardado en localStorage — cada mozo usa
+// su propio teléfono, así que no hace falta volver a pedirlo cada vez.
 const KDS_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo?k=797a0ed49a8623e452b03fc0'
+const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
 
 // Numeración de mesas por sector: placeholder razonable (no hay data real de
 // numeración exacta todavía). El usuario la puede ajustar después si hace falta.
@@ -35,7 +37,80 @@ function IconoBuscar() {
   )
 }
 
+function leerGarzonGuardado() {
+  try {
+    const raw = localStorage.getItem(GARZON_STORAGE_KEY)
+    if (!raw) return null
+    const g = JSON.parse(raw)
+    return g?.id && g?.nombre ? g : null
+  } catch {
+    return null
+  }
+}
+
+// Pantalla de candado: pide el código una sola vez por celular. No es un
+// login real — valida contra `validar_codigo_garzon` (RPC pública, no
+// expone la tabla `garzones` ni los códigos de los demás).
+function GateGarzon({ onEntrar }) {
+  const [codigo, setCodigo] = useState('')
+  const [validando, setValidando] = useState(false)
+  const [errorCodigo, setErrorCodigo] = useState('')
+
+  async function entrar() {
+    const limpio = codigo.trim()
+    if (!limpio) return
+    setValidando(true)
+    setErrorCodigo('')
+    const { data, error } = await supabase.rpc('validar_codigo_garzon', { p_codigo: limpio })
+    setValidando(false)
+    if (error) {
+      setErrorCodigo('No se pudo validar el código. Revisá la conexión e intentá de nuevo.')
+      return
+    }
+    const garzon = Array.isArray(data) ? data[0] : data
+    if (!garzon?.id) {
+      setErrorCodigo('Código incorrecto.')
+      return
+    }
+    const guardado = { id: garzon.id, nombre: garzon.nombre }
+    try {
+      localStorage.setItem(GARZON_STORAGE_KEY, JSON.stringify(guardado))
+    } catch {}
+    onEntrar(guardado)
+  }
+
+  return (
+    <div className="min-h-screen bg-ink text-paper flex items-center justify-center px-6">
+      <div className="w-full max-w-xs">
+        <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase mb-1 text-center">Varo's · Mozo</div>
+        <h1 className="font-head text-xl font-semibold text-center mb-5">Tu código de acceso</h1>
+        <input
+          value={codigo}
+          onChange={(e) => setCodigo(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && entrar()}
+          inputMode="numeric"
+          placeholder="Ej: 384021"
+          autoFocus
+          className="w-full bg-inkSoft border border-white/10 rounded-xl px-4 py-3.5 text-center font-mono text-2xl tracking-[0.25em] outline-none placeholder:text-paper/25 placeholder:tracking-normal placeholder:text-base"
+        />
+        {errorCodigo && <p className="text-rose-400 text-[12px] text-center mt-2.5 leading-relaxed">{errorCodigo}</p>}
+        <button
+          onClick={entrar}
+          disabled={validando || !codigo.trim()}
+          className="w-full mt-4 py-3.5 rounded-xl bg-gradient-to-br from-gold to-bronze text-ink font-head font-bold text-[15px] disabled:opacity-35"
+        >
+          {validando ? 'Comprobando…' : 'Entrar'}
+        </button>
+        <p className="text-center text-paper/30 text-[11px] mt-4 leading-relaxed">
+          Pedile el código a quien te registró en el sistema.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 export default function Mozo() {
+  const [garzon, setGarzon] = useState(() => leerGarzonGuardado())
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
   const [errorCarga, setErrorCarga] = useState('')
@@ -158,6 +233,7 @@ export default function Mozo() {
     const payload = {
       mesa: String(mesa.num),
       sector: mesa.sector,
+      garzon: garzon?.nombre || '',
       items: cartEntries.map(([, c]) => ({
         cant: c.qty,
         nombre: c.item.name,
@@ -191,12 +267,28 @@ export default function Mozo() {
     }
   }
 
+  function cambiarDeMozo() {
+    try {
+      localStorage.removeItem(GARZON_STORAGE_KEY)
+    } catch {}
+    setGarzon(null)
+  }
+
+  if (!garzon) {
+    return <GateGarzon onEntrar={setGarzon} />
+  }
+
   return (
     <div className="min-h-screen bg-ink text-paper">
       <div className="max-w-md mx-auto min-h-screen relative flex flex-col">
         {/* ---- Header ---- */}
         <header className="sticky top-0 z-20 bg-ink px-4 pt-4 pb-2.5 border-b border-white/5">
-          <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase mb-2">Varo's · Mozo</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase">Varo's · Mozo</div>
+            <button onClick={cambiarDeMozo} className="text-[10px] text-paper/35 underline">
+              {garzon.nombre} · cambiar
+            </button>
+          </div>
           <button
             onClick={() => setSheetMesa(true)}
             className="w-full flex items-center justify-between bg-inkSoft border border-white/10 rounded-xl px-3.5 py-2.5"
