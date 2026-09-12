@@ -329,7 +329,7 @@ export default function AdminProductos() {
             className="w-full bg-inkSoft border border-white/10 rounded-lg px-3 py-2.5 text-xs mb-3 focus:outline-none focus:border-gold/50"
           />
 
-          <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
+          <div className="flex flex-wrap gap-2 mb-3">
             <button
               onClick={() => setCategoria(null)}
               className={`shrink-0 font-head text-xs font-medium px-4 py-2 rounded-full border whitespace-nowrap ${
