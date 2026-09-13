@@ -128,6 +128,22 @@ export default function Mozo() {
 
   const [sheetMesa, setSheetMesa] = useState(false)
   const [sheetCart, setSheetCart] = useState(false)
+  // Qué sectores están desplegados en el selector de mesa — colapsados por
+  // defecto (con varios sectores y 13+ mesas en Carpa, mostrar todo abierto
+  // de una vez obligaba a scrollear demasiado).
+  const [sectoresAbiertos, setSectoresAbiertos] = useState(() => new Set())
+  function toggleSector(sector) {
+    setSectoresAbiertos((prev) => {
+      const next = new Set(prev)
+      next.has(sector) ? next.delete(sector) : next.add(sector)
+      return next
+    })
+  }
+  // Al abrir el selector con una mesa ya elegida, desplegar su sector para
+  // que se vea marcada sin tener que buscarla de nuevo.
+  useEffect(() => {
+    if (sheetMesa && mesa) setSectoresAbiertos((prev) => new Set(prev).add(mesa.sector))
+  }, [sheetMesa]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [enviando, setEnviando] = useState(false)
   const [errorEnvio, setErrorEnvio] = useState('')
@@ -566,10 +582,26 @@ export default function Mozo() {
                 Todavía no hay mesas cargadas. Pedile a un admin que las agregue en /admin/mesas-pos.
               </p>
             )}
-            {gruposMesas.map((g) => (
-              <div key={g.sector} className="mb-4">
-                <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-2">{g.sector}</div>
-                <div className="grid grid-cols-4 gap-2">
+            {gruposMesas.map((g) => {
+              const abierto = sectoresAbiertos.has(g.sector)
+              const mesaElegidaAca = mesa && mesa.sector === g.sector ? mesa.num : null
+              return (
+              <div key={g.sector} className="mb-2.5 border-b border-white/5 pb-2.5 last:border-b-0">
+                <button
+                  onClick={() => toggleSector(g.sector)}
+                  className="w-full flex items-center justify-between py-1.5"
+                >
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60">
+                    {g.sector}
+                    {mesaElegidaAca && <span className="text-gold normal-case tracking-normal font-medium"> · Mesa {mesaElegidaAca}</span>}
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-[10px] text-paper/35">{g.mesas.length} mesas</span>
+                    <span className={`text-gold text-xs transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                  </span>
+                </button>
+                {abierto && (
+                <div className="grid grid-cols-4 gap-2 mt-2">
                   {g.mesas.map((m) => {
                     const sel = mesa && mesa.num === m.numero && mesa.sector === g.sector
                     return (
@@ -585,8 +617,10 @@ export default function Mozo() {
                     )
                   })}
                 </div>
+                )}
               </div>
-            ))}
+              )
+            })}
           </div>
         </div>
 

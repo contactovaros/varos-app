@@ -22,6 +22,18 @@ export default function AdminMesasPos() {
   const [numeroNuevo, setNumeroNuevo] = useState('')
   const [creando, setCreando] = useState(false)
 
+  // Qué sectores están desplegados — colapsados por defecto, mismo criterio
+  // que /mozo (con varios sectores cargados, mostrar todo abierto obliga a
+  // scrollear de más).
+  const [sectoresAbiertos, setSectoresAbiertos] = useState(() => new Set())
+  function toggleSector(sector) {
+    setSectoresAbiertos((prev) => {
+      const next = new Set(prev)
+      next.has(sector) ? next.delete(sector) : next.add(sector)
+      return next
+    })
+  }
+
   async function cargar() {
     setCargando(true)
     const { data, error } = await supabase
@@ -88,6 +100,7 @@ export default function AdminMesasPos() {
       return
     }
     setMesas((prev) => [...prev, data])
+    setSectoresAbiertos((prev) => new Set(prev).add(sector))
     setNumeroNuevo('')
     // el sector se deja tal cual para seguir cargando varias mesas seguidas del mismo sector
   }
@@ -174,11 +187,23 @@ export default function AdminMesasPos() {
         </p>
       </div>
 
-      {/* ---- Lista agrupada por sector ---- */}
-      {grupos.map(([sector, mesasDelSector]) => (
-        <div key={sector} className="mb-5">
-          <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-1.5">{sector}</div>
-          <div className="flex flex-col">
+      {/* ---- Lista agrupada por sector, desplegable ---- */}
+      {grupos.map(([sector, mesasDelSector]) => {
+        const abierto = sectoresAbiertos.has(sector)
+        const activas = mesasDelSector.filter((m) => m.activa).length
+        return (
+        <div key={sector} className="mb-2.5 border-b border-white/5 pb-2.5 last:border-b-0">
+          <button onClick={() => toggleSector(sector)} className="w-full flex items-center justify-between py-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60">{sector}</span>
+            <span className="flex items-center gap-2">
+              <span className="text-[10px] text-paper/35">
+                {activas}/{mesasDelSector.length} activas
+              </span>
+              <span className={`text-gold text-xs transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
+            </span>
+          </button>
+          {abierto && (
+          <div className="flex flex-col mt-1">
             {mesasDelSector.map((m) => (
               <div key={m.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-white/5 last:border-b-0">
                 <div className={`text-sm font-medium ${m.activa ? 'text-paper' : 'text-paper/30 line-through'}`}>
@@ -200,8 +225,10 @@ export default function AdminMesasPos() {
               </div>
             ))}
           </div>
+          )}
         </div>
-      ))}
+        )
+      })}
       {!cargando && grupos.length === 0 && (
         <p className="text-paper/35 text-xs py-4">
           Todavía no cargaste ninguna mesa — usá el formulario de arriba. Empezá por un sector y sus mesas, después
