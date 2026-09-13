@@ -429,12 +429,26 @@ export default function Admin() {
       {/* Candado de /mozo (piloto de Comandas) — ver DECISIONES.md */}
       <Link
         to="/admin/garzones"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
+        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-3"
       >
         <div>
           <div className="font-head font-semibold text-sm">🧑‍🍳 Garzones</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
             Registrar garzones y generar el código que usan para entrar a /mozo
+          </div>
+        </div>
+        <span className="text-gold text-lg">→</span>
+      </Link>
+
+      {/* Numeración real de mesas por sector, para el selector de /mozo */}
+      <Link
+        to="/admin/mesas-pos"
+        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">🪑 Mesas del POS</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo
           </div>
         </div>
         <span className="text-gold text-lg">→</span>

@@ -21,15 +21,11 @@ const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
 // elegir el curso — el mozo tenía que escribirlo a mano en la nota.
 const CURSOS_MENU_DIA = ['Entrada', 'Plato Principal', 'Postres y Tentaciones']
 
-// Numeración de mesas por sector: placeholder razonable (no hay data real de
-// numeración exacta todavía). El usuario la puede ajustar después si hace falta.
-const SECTORES = [
-  { sector: 'Bar', nums: [1, 2, 3] },
-  { sector: 'Carpa', nums: [4, 5, 6, 7, 8, 9] },
-  { sector: 'Andino', nums: [10, 11, 12, 13, 14] },
-  { sector: 'Chic', nums: [15, 16, 17] },
-  { sector: 'Jardín', nums: [18, 19, 20, 21] }
-]
+const MESAS_POS_URL_TABLE = 'pos_mesas' // ver supabase/add_pos_mesas.sql y /admin/mesas-pos
+// Antes había una numeración de mesas inventada acá mismo (placeholder). El
+// usuario pidió sacarla: ahora la carga el propio restaurante en
+// /admin/mesas-pos, y esta pantalla la lee en vivo (ver useEffect de mesas
+// más abajo) — nunca más un número adivinado por Claude.
 
 function formatCLP(valor) {
   const n = Number(valor) || 0
@@ -146,6 +142,42 @@ export default function Mozo() {
   const [menuDiaItemActual, setMenuDiaItemActual] = useState(null)
   const [menuDiaSel, setMenuDiaSel] = useState({ Entrada: '', 'Plato Principal': '', 'Postres y Tentaciones': '' })
   const [menuDiaNota, setMenuDiaNota] = useState('')
+
+  // Mesas reales por sector, cargadas desde /admin/mesas-pos (ver
+  // supabase/add_pos_mesas.sql) — nunca inventadas acá.
+  const [mesasPos, setMesasPos] = useState([])
+  const [mesasCargando, setMesasCargando] = useState(true)
+  const [mesasError, setMesasError] = useState('')
+
+  useEffect(() => {
+    async function cargarMesasPos() {
+      setMesasCargando(true)
+      const { data, error } = await supabase
+        .from(MESAS_POS_URL_TABLE)
+        .select('*')
+        .eq('activa', true)
+        .order('sector', { ascending: true })
+        .order('orden', { ascending: true, nullsFirst: false })
+        .order('numero', { ascending: true })
+      if (error) {
+        setMesasError(error.message)
+        setMesasPos([])
+      } else {
+        setMesasPos(data ?? [])
+      }
+      setMesasCargando(false)
+    }
+    cargarMesasPos()
+  }, [])
+
+  const gruposMesas = useMemo(() => {
+    const porSector = {}
+    for (const m of mesasPos) {
+      if (!porSector[m.sector]) porSector[m.sector] = []
+      porSector[m.sector].push(m)
+    }
+    return Object.entries(porSector).map(([sector, lista]) => ({ sector, mesas: lista }))
+  }, [mesasPos])
 
   useEffect(() => {
     async function cargar() {
@@ -516,21 +548,32 @@ export default function Mozo() {
           >
             <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
             <h2 className="font-head text-lg font-semibold mt-2 mb-3.5">Elegir mesa</h2>
-            {SECTORES.map((g) => (
+            {mesasCargando && <p className="text-center text-paper/35 text-xs py-8">Cargando mesas…</p>}
+            {mesasError && (
+              <p className="text-center text-rose-400 text-xs py-6 leading-relaxed">
+                No se pudo cargar la lista de mesas: {mesasError}
+              </p>
+            )}
+            {!mesasCargando && !mesasError && gruposMesas.length === 0 && (
+              <p className="text-center text-paper/35 text-xs py-8 leading-relaxed">
+                Todavía no hay mesas cargadas. Pedile a un admin que las agregue en /admin/mesas-pos.
+              </p>
+            )}
+            {gruposMesas.map((g) => (
               <div key={g.sector} className="mb-4">
                 <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-2">{g.sector}</div>
                 <div className="grid grid-cols-4 gap-2">
-                  {g.nums.map((n) => {
-                    const sel = mesa && mesa.num === n && mesa.sector === g.sector
+                  {g.mesas.map((m) => {
+                    const sel = mesa && mesa.num === m.numero && mesa.sector === g.sector
                     return (
                       <button
-                        key={n}
-                        onClick={() => elegirMesa(n, g.sector)}
+                        key={m.id}
+                        onClick={() => elegirMesa(m.numero, g.sector)}
                         className={`aspect-square rounded-lg border font-semibold text-[15px] flex items-center justify-center ${
                           sel ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink' : 'bg-ink border-white/10 text-paper'
                         }`}
                       >
-                        {n}
+                        {m.numero}
                       </button>
                     )
                   })}
