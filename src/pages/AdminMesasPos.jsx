@@ -29,7 +29,9 @@ export default function AdminMesasPos() {
       .select('*')
       .order('sector', { ascending: true })
       .order('orden', { ascending: true, nullsFirst: false })
-      .order('numero', { ascending: true })
+      // numero NO se ordena en la base (es texto, "7B" tiene que poder existir) —
+      // el orden numérico real (1,2,3…13, no 1,10,11…2,3) se hace client-side
+      // más abajo con localeCompare, igual que en Mozo.jsx.
     if (error) {
       setError(error.message)
       setMesas([])
@@ -62,6 +64,9 @@ export default function AdminMesasPos() {
     for (const m of mesas) {
       if (!porSector[m.sector]) porSector[m.sector] = []
       porSector[m.sector].push(m)
+    }
+    for (const lista of Object.values(porSector)) {
+      lista.sort((a, b) => a.numero.localeCompare(b.numero, 'es', { numeric: true }))
     }
     return Object.entries(porSector)
   }, [mesas])

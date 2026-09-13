@@ -158,7 +158,9 @@ export default function Mozo() {
         .eq('activa', true)
         .order('sector', { ascending: true })
         .order('orden', { ascending: true, nullsFirst: false })
-        .order('numero', { ascending: true })
+      // numero NO se ordena en la base: es texto ("7B" tiene que poder existir),
+      // así que un order() de Postgres lo deja alfabético (1,10,11,...,2,3). El
+      // orden numérico real se hace client-side más abajo con localeCompare.
       if (error) {
         setMesasError(error.message)
         setMesasPos([])
@@ -175,6 +177,11 @@ export default function Mozo() {
     for (const m of mesasPos) {
       if (!porSector[m.sector]) porSector[m.sector] = []
       porSector[m.sector].push(m)
+    }
+    // Orden numérico real (1,2,3…13), no alfabético (1,10,11…2,3) — numero es
+    // texto en la base para poder tener "7B" el día que haga falta.
+    for (const lista of Object.values(porSector)) {
+      lista.sort((a, b) => a.numero.localeCompare(b.numero, 'es', { numeric: true }))
     }
     return Object.entries(porSector).map(([sector, lista]) => ({ sector, mesas: lista }))
   }, [mesasPos])
