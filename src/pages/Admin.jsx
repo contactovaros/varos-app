@@ -60,7 +60,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/productos',
     mobileHeading: '💲 Productos',
-    icon: '💲',
+    icon: 'i-tag',
     label: 'Productos',
     desc: 'Precio, disponibilidad y qué se muestra en la carta pública de varos.cl',
     accent: 'gold'
@@ -68,7 +68,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/garzones',
     mobileHeading: '🧑‍🍳 Garzones',
-    icon: '🧑‍🍳',
+    icon: 'i-tray',
     label: 'Garzones',
     desc: 'Registrar garzones y generar el código que usan para entrar a /mozo',
     accent: 'gold'
@@ -76,7 +76,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/caja',
     mobileHeading: '💰 Caja',
-    icon: '💰',
+    icon: 'i-cash',
     label: 'Caja',
     desc: 'Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php',
     accent: 'gold'
@@ -84,7 +84,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/mesas-pos',
     mobileHeading: '🪑 Mesas del POS',
-    icon: '🪑',
+    icon: 'i-grid',
     label: 'Mesas del POS',
     desc: 'La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo',
     accent: 'gold'
@@ -92,7 +92,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/mesa-trabajo',
     mobileHeading: '🗂️ Mesa de trabajo',
-    icon: '🗂️',
+    icon: 'i-clip',
     label: 'Mesa de trabajo',
     desc: 'Reservas del día junto al plano — toca una mesa reservada para ver el cliente y escribirle por WhatsApp',
     accent: 'ember'
@@ -100,7 +100,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/mesas',
     mobileHeading: '🥂 Editar planos y mesas',
-    icon: '🥂',
+    icon: 'i-compass',
     label: 'Editar planos y mesas',
     desc: 'Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas',
     accent: 'ember'
@@ -108,7 +108,7 @@ const NAV_ITEMS = [
   {
     to: '/admin/plano',
     mobileHeading: '📐 Plano de la terraza',
-    icon: '📐',
+    icon: 'i-plan',
     label: 'Plano de la terraza',
     desc: 'Recinto de 9 × 24 m — mover, girar y medir cada mesa y equipo, y publicarlo cuando quieras',
     accent: 'ember'
@@ -116,12 +116,50 @@ const NAV_ITEMS = [
   {
     to: '/admin/resenas',
     mobileHeading: 'Consultor de reseñas',
-    icon: '🔎',
+    icon: 'i-chat',
     label: 'Consultor de reseñas',
     desc: 'Preguntale a tus reseñas de Google qué reclama y qué celebra la gente',
     accent: 'ember'
   }
 ]
+
+// Sprite con los 8 íconos monocromos de la Dirección "Escaneo" (ver mockup
+// aprobado por el usuario). Se define una sola vez, oculto, y cada ícono se
+// referencia con <use href="#i-tag">. Trazo fino (stroke-width 1.5), sin
+// relleno — el mismo lenguaje visual que ya usa BottomNav.
+function IconSprite() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true">
+      <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 11.5V5a2 2 0 0 1 2-2h6.5L21 11.5 12.5 20 3 11.5Z" /><circle cx="8" cy="8" r="1.3" fill="currentColor" stroke="none" /></symbol>
+      <symbol id="i-tray" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="4" rx="1" /><circle cx="8" cy="6" r="2.2" /><circle cx="16" cy="6" r="2.2" /><path d="M4 13v6h16v-6" /></symbol>
+      <symbol id="i-cash" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="1.5" /><path d="M3 10h18" /><circle cx="17" cy="14.5" r="1.4" fill="currentColor" stroke="none" /></symbol>
+      <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></symbol>
+      <symbol id="i-clip" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="1.5" /><rect x="9" y="2.5" width="6" height="3" rx="1" /><path d="M8 10h8M8 13.5h8M8 17h5" /></symbol>
+      <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><path d="m9 15 3-6 3 6-3-1.5Z" /></symbol>
+      <symbol id="i-plan" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5" /><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="8" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="16" r="0.9" fill="currentColor" stroke="none" /></symbol>
+      <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4V5Z" /><path d="m12 8.5.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3Z" fill="currentColor" stroke="none" /></symbol>
+    </svg>
+  )
+}
+
+// Un ícono del sprite de arriba, listo para usar con el mismo trazo en
+// cualquier tamaño (grilla mobile o sidebar compacta de escritorio).
+function NavIcon({ id, className = 'w-4 h-4' }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <use href={`#${id}`} />
+    </svg>
+  )
+}
 
 const NAV_ACCENTS = {
   ember: {
@@ -138,19 +176,19 @@ const NAV_ACCENTS = {
   }
 }
 
-// Tarjeta grande de siempre — queda solo para mobile (lg:hidden en quien la usa).
-function NavCardFull({ item }) {
-  const a = NAV_ACCENTS[item.accent]
+// Grilla de escaneo — solo mobile: ícono + label corto, sin descripción a la
+// vista (la descripción larga queda de tooltip). Gana velocidad de lectura
+// sobre personalidad: es lo que el dueño mira parado en el local muchas veces
+// al día, no algo para detenerse a leer.
+function NavGridMobile({ item }) {
   return (
     <Link
       to={item.to}
-      className={`group flex items-center justify-between bg-inkSoft border ${a.border} rounded-2xl p-4 transition-[transform,background-color,border-color] duration-150 ease-salida ${a.hover} ${a.active} active:scale-[0.98] motion-reduce:active:scale-100`}
+      title={item.desc}
+      className="flex flex-col items-center justify-center gap-1.5 bg-inkSoft rounded-lg py-3.5 transition-colors duration-150 ease-salida hover:bg-white/5 active:bg-white/5"
     >
-      <div>
-        <div className="font-head font-semibold text-sm">{item.mobileHeading}</div>
-        <div className="text-[11px] text-paper/45 mt-0.5">{item.desc}</div>
-      </div>
-      <span className={`${a.text} text-lg shrink-0 transition-transform duration-150 ease-salida group-hover:translate-x-0.5 group-active:translate-x-0.5`}>→</span>
+      <NavIcon id={item.icon} className="w-5 h-5" />
+      <span className="font-head text-[10px] text-center leading-tight">{item.label}</span>
     </Link>
   )
 }
@@ -165,7 +203,7 @@ function NavCardCompact({ item }) {
       title={item.desc}
       className={`flex items-center gap-2.5 bg-inkSoft border ${a.border} rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida ${a.hover} ${a.active}`}
     >
-      <span className="text-base shrink-0 leading-none">{item.icon}</span>
+      <NavIcon id={item.icon} className="w-4 h-4 shrink-0" />
       <span className="font-head text-xs font-medium truncate">{item.label}</span>
     </Link>
   )
@@ -718,6 +756,7 @@ export default function Admin() {
 
   return (
     <div className="px-4 pt-8 pb-10 lg:px-6">
+      <IconSprite />
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
@@ -730,8 +769,8 @@ export default function Admin() {
 
       {/* En mobile esto es una sola columna, igual que siempre. En desktop se
           parte en dos: la navegación queda fija a la izquierda y el resto
-          (stats, premios pendientes, acordeones) respira con más ancho a la
-          derecha. */}
+          (stats, premios pendientes, listas siempre visibles, Ajustes) respira
+          con más ancho a la derecha. */}
       <div className="lg:flex lg:items-start lg:gap-6">
         <nav className="hidden lg:flex lg:flex-col lg:gap-1.5 lg:w-56 lg:shrink-0 lg:sticky lg:top-6">
           <div className="font-mono text-[10px] tracking-[0.2em] text-paper/35 uppercase px-2 mb-1">Navegación</div>
@@ -741,22 +780,29 @@ export default function Admin() {
         </nav>
 
         <div className="lg:flex-1 lg:min-w-0">
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-              <div className="text-[11px] text-paper/50 mb-1">Socios</div>
-              <div className="font-display text-3xl">{customers.length}</div>
+          {/* Franja de stats sin cajas individuales — se lee de un vistazo,
+              cero clics. Dirección "Escaneo": el dueño la mira parado en el
+              local, no se sienta a leer tarjetas. */}
+          <div className="flex divide-x divide-white/10 bg-inkSoft rounded-xl py-3 mb-6">
+            <div className="flex-1 text-center">
+              <div className="font-display text-2xl tabular-nums">{customers.length}</div>
+              <div className="font-mono text-[9px] text-paper/35 uppercase tracking-wider mt-0.5">Socios</div>
             </div>
-            <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-              <div className="text-[11px] text-paper/50 mb-1">Canjes registrados</div>
-              <div className="font-display text-3xl text-ember">{redemptions.length}</div>
+            <div className="flex-1 text-center">
+              <div className="font-display text-2xl text-ember tabular-nums">{redemptions.length}</div>
+              <div className="font-mono text-[9px] text-paper/35 uppercase tracking-wider mt-0.5">Canjes</div>
+            </div>
+            <div className="flex-1 text-center">
+              <div className="font-display text-2xl tabular-nums">{inactive.length}</div>
+              <div className="font-mono text-[9px] text-paper/35 uppercase tracking-wider mt-0.5">Inactivos</div>
             </div>
           </div>
 
-          {/* Las mismas 8 tarjetas de navegación, pero solo en mobile — en
-              desktop ya están en la barra fija de arriba. */}
-          <div className="lg:hidden flex flex-col gap-3 mb-6">
+          {/* Las mismas 8 rutas de navegación, pero como grilla de íconos —
+              solo en mobile; en desktop ya están en la barra fija de arriba. */}
+          <div className="lg:hidden grid grid-cols-4 gap-2 mb-6">
             {NAV_ITEMS.map((item) => (
-              <NavCardFull key={item.to} item={item} />
+              <NavGridMobile key={item.to} item={item} />
             ))}
           </div>
 
@@ -791,64 +837,13 @@ export default function Admin() {
         </div>
       )}
 
-      <Seccion titulo="📱 QR de bienvenida del local">
-        <div className="flex flex-col items-center text-center gap-3">
-          <p className="text-xs text-paper/55 max-w-xs">
-            Imprime este código y ponlo en tus mesas o en la entrada. Cada cliente lo escanea con la cámara
-            de su celular, entra con su email y su visita queda registrada automáticamente (+1 estrella ⭐).
-          </p>
-          <div className="bg-white p-3 rounded-xl">
-            <QRCodeSVG value={checkinUrl} size={160} />
-          </div>
-          <input
-            value={checkinUrl}
-            onChange={(e) => setCheckinUrl(e.target.value)}
-            className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-center"
-          />
-          <p className="text-[10px] text-paper/35">
-            Ahora mismo apunta a tu dirección local — cuando publiques la app (paso 6 del README), reemplaza este texto
-            por tu URL final (ej. https://club.varos.cl/checkin) antes de imprimir el QR definitivo.
-          </p>
+      {/* ---- CLIENTES: siempre visible, sin acordeón — es lo primero que el
+          dueño necesita ver de un vistazo, junto con Menú e Historial. ---- */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-head text-xs font-semibold">Clientes</span>
+          <span className="font-mono text-[10px] text-paper/35">{customers.length}</span>
         </div>
-      </Seccion>
-
-      {/* ---- PREMIO DE 5 ESTRELLAS (nuevo) ---- */}
-      <Seccion titulo="🎁 Premio por 5 estrellas">
-        <div className="flex flex-col gap-2">
-          <p className="text-[11px] text-paper/45">
-            Lo que gana el cliente al completar sus 5 visitas. Se muestra en su ticket ganador.
-          </p>
-          <div className="flex gap-2">
-            <input
-              value={premioEstrellas}
-              onChange={(e) => setPremioEstrellas(e.target.value)}
-              placeholder="Ej: Postre a elección"
-              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-            />
-            <button
-              onClick={guardarPremioEstrellas}
-              disabled={savingPremio}
-              className="px-4 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
-            >
-              {savingPremio ? 'Guardando…' : 'Guardar'}
-            </button>
-            <button
-              onClick={toggleVisiblePremio}
-              className={`px-3 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${premioVisible ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-            >
-              {premioVisible ? 'Visible' : 'No visible'}
-            </button>
-          </div>
-          <p className="text-[10px] text-paper/35">
-            {premioVisible
-              ? 'El cliente ve el nombre del premio en su ticket ganador.'
-              : 'El cliente NO ve el nombre del premio — solo el garzón sabrá cuál es.'}
-          </p>
-        </div>
-      </Seccion>
-
-      {/* ---- CLIENTES Y SU PREMIO POR ESTRELLAS (nuevo) ---- */}
-      <Seccion titulo="⭐ Clientes — premio al llegar a 5 estrellas" subtitulo={`${customers.length} clientes`}>
         <TablaClientesDesktop
           customers={customers}
           premioEstrellas={premioEstrellas}
@@ -856,7 +851,7 @@ export default function Admin() {
           quitarEstrella={quitarEstrella}
           eliminarCliente={eliminarCliente}
         />
-        <div className="lg:hidden">
+        <div className="lg:hidden max-h-72 overflow-y-auto">
         {customers.map((c) => (
           <div key={c.id} className="flex flex-col gap-1.5 py-2 border-b border-white/5 last:border-b-0 text-xs">
             <div className="flex justify-between items-center gap-2">
@@ -893,10 +888,14 @@ export default function Admin() {
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
         </div>
-      </Seccion>
+      </div>
 
-      {/* ---- MENÚ (nuevo) ---- */}
-      <Seccion titulo="🍽️ Menú del restaurante" subtitulo={`${menuItems.length} platos`}>
+      {/* ---- MENÚ: siempre visible, sin acordeón ---- */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-head text-xs font-semibold">Menú</span>
+          <span className="font-mono text-[10px] text-paper/35">{menuItems.length}</span>
+        </div>
         <div className="flex flex-col gap-2 mb-3">
           <input
             placeholder="Nombre del plato"
@@ -944,7 +943,7 @@ export default function Admin() {
           updateDishPrice={updateDishPrice}
           deleteDish={deleteDish}
         />
-        <div className="lg:hidden flex flex-col">
+        <div className="lg:hidden flex flex-col max-h-72 overflow-y-auto">
           {menuItems.map((m) => (
             <div key={m.id} className="flex items-center justify-between gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
               <div className="flex-1">
@@ -967,237 +966,16 @@ export default function Admin() {
           ))}
           {menuItems.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no has agregado platos — usa el formulario de arriba.</p>}
         </div>
-      </Seccion>
+      </div>
 
-      {/* ---- CAMPAÑAS / NOTIFICACIONES (nuevo) ---- */}
-      <Seccion titulo="📣 Campañas y notificaciones" subtitulo={`${promotions.length} campañas`}>
-        <p className="text-[11px] text-paper/45 mb-2">
-          Escribe un título y un mensaje, elige a quién va dirigido, y aparecerá dentro de la app del cliente en su Club Varo's.
-        </p>
-        <div className="flex flex-col gap-2 mb-3">
-          <input
-            placeholder="Título (ej. 2x1 en pisco sour)"
-            value={newPromo.title}
-            onChange={(e) => setNewPromo({ ...newPromo, title: e.target.value })}
-            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          />
-          <input
-            placeholder="Mensaje para el cliente"
-            value={newPromo.message}
-            onChange={(e) => setNewPromo({ ...newPromo, message: e.target.value })}
-            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          />
-          <select
-            value={newPromo.target_customer_id}
-            onChange={(e) => setNewPromo({ ...newPromo, target_customer_id: e.target.value })}
-            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          >
-            <option value="">Todos los clientes</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>{c.full_name}</option>
-            ))}
-          </select>
-          <label className="flex items-center gap-2 text-[11px] text-paper/60 px-1">
-            <input
-              type="checkbox"
-              checked={newPromo.enviarPush}
-              onChange={(e) => setNewPromo({ ...newPromo, enviarPush: e.target.checked })}
-            />
-            🔔 Enviar también como notificación push (a quienes las activaron)
-          </label>
-          <button
-            onClick={addPromo}
-            disabled={enviandoPush}
-            className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
-          >
-            {enviandoPush ? 'Enviando push…' : '+ Enviar campaña'}
-          </button>
-          {pushResultado && <p className="text-[11px] text-paper/50">{pushResultado}</p>}
+      {/* ---- HISTORIAL DE CANJES: siempre visible, sin acordeón ---- */}
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="font-head text-xs font-semibold">Historial de canjes</span>
+          <span className="font-mono text-[10px] text-paper/35">{redemptions.length}</span>
         </div>
-        {promotions.map((p) => (
-          <div key={p.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <div className="flex-1">
-              <div className="text-paper">{p.title}</div>
-              <div className="text-paper/40 text-[10px]">{p.message}</div>
-              <div className="text-ember/70 text-[10px] mt-0.5">
-                {p.target_customer_id ? (customers.find((c) => c.id === p.target_customer_id)?.full_name ?? 'Cliente eliminado') : 'Todos los clientes'}
-              </div>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              <button
-                onClick={() => togglePromo(p.id, p.active)}
-                className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${p.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-              >
-                {p.active ? 'Activa' : 'Inactiva'}
-              </button>
-              <button onClick={() => deletePromo(p.id)} className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
-                Eliminar
-              </button>
-            </div>
-          </div>
-        ))}
-        {promotions.length === 0 && <p className="text-paper/35 text-xs">Sin campañas creadas.</p>}
-      </Seccion>
-
-      {/* ---- ALERTAS POR CERCANÍA / GPS (nuevo) ---- */}
-      <Seccion titulo="📍 Alertas por cercanía (GPS)" subtitulo={`${locationAlerts.length} alertas`}>
-        <p className="text-[11px] text-paper/45 mb-3">
-          Un mensaje distinto según en qué coordenada esté el cliente. Ojo: NO es una notificación push del celular
-          (eso requiere una app nativa) — es un aviso que aparece dentro de la app cuando el cliente la tiene abierta
-          y su GPS lo ubica cerca de ese punto, en el día y horario que configures.
-        </p>
-        <div className="flex flex-col gap-2 mb-4 pb-4 border-b border-white/5">
-          <input
-            placeholder="Título (ej. Publicidad zona 3)"
-            value={newAlert.titulo}
-            onChange={(e) => setNewAlert({ ...newAlert, titulo: e.target.value })}
-            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          />
-          <input
-            placeholder="Mensaje para el cliente"
-            value={newAlert.mensaje}
-            onChange={(e) => setNewAlert({ ...newAlert, mensaje: e.target.value })}
-            className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
-          />
-          <div className="flex gap-2">
-            <input
-              placeholder="Latitud (ej. -18.489485)"
-              value={newAlert.lat}
-              onChange={(e) => setNewAlert({ ...newAlert, lat: e.target.value })}
-              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
-            />
-            <input
-              placeholder="Longitud (ej. -70.285883)"
-              value={newAlert.lng}
-              onChange={(e) => setNewAlert({ ...newAlert, lng: e.target.value })}
-              className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
-            />
-          </div>
-          <button onClick={addLocationAlert} className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink">
-            + Agregar coordenada
-          </button>
-        </div>
-
-        {locationAlerts.map((a) => (
-          <div key={a.id} className="flex flex-col gap-2 py-3 border-b border-white/5 last:border-b-0 text-xs">
-            <div className="flex justify-between items-start gap-2">
-              <input
-                defaultValue={a.titulo}
-                onBlur={(e) => e.target.value !== a.titulo && updateAlertField(a.id, 'titulo', e.target.value)}
-                className="flex-1 bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper font-head font-semibold"
-              />
-              <button
-                onClick={() => updateAlertField(a.id, 'activo', !a.activo)}
-                className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${a.activo ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-              >
-                {a.activo ? 'Activa' : 'Inactiva'}
-              </button>
-            </div>
-            <textarea
-              defaultValue={a.mensaje}
-              onBlur={(e) => e.target.value !== a.mensaje && updateAlertField(a.id, 'mensaje', e.target.value)}
-              className="bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper/70 resize-none"
-              rows={2}
-            />
-            <div className="text-paper/35 text-[10px] font-mono">
-              📍 {a.lat}, {a.lng} — radio {a.radio_metros} m
-            </div>
-            <div className="flex items-center gap-1 flex-wrap">
-              {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((letra, dia) => (
-                <button
-                  key={dia}
-                  onClick={() => toggleAlertDia(a, dia)}
-                  className={`w-6 h-6 rounded-md border text-[10px] ${
-                    (a.dias_semana ?? []).includes(dia) || !a.dias_semana?.length
-                      ? 'border-ember/40 text-ember'
-                      : 'border-white/10 text-paper/30'
-                  }`}
-                  title={(a.dias_semana ?? []).length === 0 ? 'Todos los días (toca para elegir días específicos)' : undefined}
-                >
-                  {letra}
-                </button>
-              ))}
-              <span className="text-paper/30 text-[10px] ml-1">{(a.dias_semana ?? []).length === 0 ? 'todos los días' : 'días marcados'}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-paper/40 text-[10px]">Desde</span>
-              <input
-                type="time"
-                defaultValue={a.hora_inicio ?? ''}
-                onBlur={(e) => updateAlertField(a.id, 'hora_inicio', e.target.value || null)}
-                className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
-              />
-              <span className="text-paper/40 text-[10px]">hasta</span>
-              <input
-                type="time"
-                defaultValue={a.hora_fin ?? ''}
-                onBlur={(e) => updateAlertField(a.id, 'hora_fin', e.target.value || null)}
-                className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
-              />
-              <button onClick={() => deleteLocationAlert(a.id)} className="ml-auto px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
-                Eliminar
-              </button>
-            </div>
-          </div>
-        ))}
-        {locationAlerts.length === 0 && <p className="text-paper/35 text-xs">Sin alertas configuradas.</p>}
-      </Seccion>
-
-      <Seccion titulo="💰 Regla de puntos" subtitulo={`Cada ${rule} CLP = 1 punto`}>
-        <div className="flex items-center gap-2 text-xs">
-          <span>Cada</span>
-          <input type="number" value={rule} onChange={(e) => updateRule(Number(e.target.value))} className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember" />
-          <span>CLP = 1 punto</span>
-        </div>
-      </Seccion>
-
-      <Seccion titulo="🏆 Recompensas" subtitulo={`${rewards.length} recompensas`}>
-        <p className="text-[11px] text-paper/40 mb-2">Elige qué recompensas ven tus clientes en "Canjea tus puntos".</p>
-        {rewards.map((r) => (
-          <div key={r.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <span className={r.active ? 'text-paper' : 'text-paper/30 line-through'}>{r.icon} {r.name}</span>
-            <input
-              type="number"
-              value={r.cost_points}
-              onChange={(e) => updateRewardCost(r.id, Number(e.target.value))}
-              className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember"
-            />
-            <button
-              onClick={() => toggleReward(r.id, r.active)}
-              className={`px-2 py-1.5 rounded-md border text-[10px] whitespace-nowrap ${r.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
-            >
-              {r.active ? 'Visible' : 'Oculta'}
-            </button>
-          </div>
-        ))}
-        {rewards.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no tienes recompensas creadas.</p>}
-      </Seccion>
-
-      <Seccion titulo="📊 Ranking de clientes">
-        {customers.slice(0, 8).map((c, i) => (
-          <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <span><span className="font-mono text-ember mr-2">{i + 1}</span>{c.full_name}</span>
-            <span className="font-mono">{c.points}</span>
-          </div>
-        ))}
-        {customers.length === 0 && <p className="text-paper/35 text-xs">Sin datos aún.</p>}
-      </Seccion>
-
-      <Seccion titulo="😴 Clientes inactivos (+30 días)" subtitulo={`${inactive.length} clientes`}>
-        {inactive.map((c) => (
-          <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
-            <span>{c.full_name}</span>
-            <span className="font-mono text-wineSoft bg-wine/20 px-2 py-0.5 rounded-full">
-              {Math.floor((now - new Date(c.last_visit_at).getTime()) / 86400000)} días
-            </span>
-          </div>
-        ))}
-        {inactive.length === 0 && <p className="text-paper/35 text-xs">No hay clientes inactivos por ahora.</p>}
-      </Seccion>
-
-      <Seccion titulo="🧾 Historial de canjes" subtitulo={`${redemptions.length} canjes`}>
         <TablaCanjesDesktop redemptions={redemptions} />
-        <div className="lg:hidden">
+        <div className="lg:hidden max-h-72 overflow-y-auto">
         {redemptions.map((r) => (
           <div key={r.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span>{r.customers?.full_name} — {r.rewards?.name}</span>
@@ -1205,6 +983,322 @@ export default function Admin() {
           </div>
         ))}
         {redemptions.length === 0 && <p className="text-paper/35 text-xs">Sin canjes todavía.</p>}
+        </div>
+      </div>
+
+      {/* ---- AJUSTES: todo lo demás vive acá, colapsado por defecto — un
+          solo acordeón largo con sub-encabezados simples, no 8 acordeones
+          anidados. ---- */}
+      <Seccion titulo="⚙️ Ajustes">
+        <div className="flex flex-col gap-6">
+          {/* QR de bienvenida del local */}
+          <div>
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35 mb-3">QR de bienvenida del local</div>
+            <div className="flex flex-col items-center text-center gap-3">
+              <p className="text-xs text-paper/55 max-w-xs">
+                Imprime este código y ponlo en tus mesas o en la entrada. Cada cliente lo escanea con la cámara
+                de su celular, entra con su email y su visita queda registrada automáticamente (+1 estrella ⭐).
+              </p>
+              <div className="bg-white p-3 rounded-xl">
+                <QRCodeSVG value={checkinUrl} size={160} />
+              </div>
+              <input
+                value={checkinUrl}
+                onChange={(e) => setCheckinUrl(e.target.value)}
+                className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-[11px] font-mono text-center"
+              />
+              <p className="text-[10px] text-paper/35">
+                Ahora mismo apunta a tu dirección local — cuando publiques la app (paso 6 del README), reemplaza este texto
+                por tu URL final (ej. https://club.varos.cl/checkin) antes de imprimir el QR definitivo.
+              </p>
+            </div>
+          </div>
+
+          {/* Premio por 5 estrellas: único sub-encabezado en gold dentro de
+              Ajustes — sigue tratado como la misma familia que la tarjeta
+              gold de premios pendientes, arriba de todo. */}
+          <div>
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-gold/70 mb-3">Premio por 5 estrellas</div>
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] text-paper/45">
+                Lo que gana el cliente al completar sus 5 visitas. Se muestra en su ticket ganador.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={premioEstrellas}
+                  onChange={(e) => setPremioEstrellas(e.target.value)}
+                  placeholder="Ej: Postre a elección"
+                  className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+                />
+                <button
+                  onClick={guardarPremioEstrellas}
+                  disabled={savingPremio}
+                  className="px-4 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+                >
+                  {savingPremio ? 'Guardando…' : 'Guardar'}
+                </button>
+                <button
+                  onClick={toggleVisiblePremio}
+                  className={`px-3 rounded-lg font-head font-semibold text-xs border whitespace-nowrap ${premioVisible ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+                >
+                  {premioVisible ? 'Visible' : 'No visible'}
+                </button>
+              </div>
+              <p className="text-[10px] text-paper/35">
+                {premioVisible
+                  ? 'El cliente ve el nombre del premio en su ticket ganador.'
+                  : 'El cliente NO ve el nombre del premio — solo el garzón sabrá cuál es.'}
+              </p>
+            </div>
+          </div>
+
+          {/* Campañas y notificaciones */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35">Campañas y notificaciones</span>
+              <span className="font-mono text-[10px] text-paper/35">{promotions.length}</span>
+            </div>
+            <p className="text-[11px] text-paper/45 mb-2">
+              Escribe un título y un mensaje, elige a quién va dirigido, y aparecerá dentro de la app del cliente en su Club Varo's.
+            </p>
+            <div className="flex flex-col gap-2 mb-3">
+              <input
+                placeholder="Título (ej. 2x1 en pisco sour)"
+                value={newPromo.title}
+                onChange={(e) => setNewPromo({ ...newPromo, title: e.target.value })}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+              />
+              <input
+                placeholder="Mensaje para el cliente"
+                value={newPromo.message}
+                onChange={(e) => setNewPromo({ ...newPromo, message: e.target.value })}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+              />
+              <select
+                value={newPromo.target_customer_id}
+                onChange={(e) => setNewPromo({ ...newPromo, target_customer_id: e.target.value })}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+              >
+                <option value="">Todos los clientes</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>{c.full_name}</option>
+                ))}
+              </select>
+              <label className="flex items-center gap-2 text-[11px] text-paper/60 px-1">
+                <input
+                  type="checkbox"
+                  checked={newPromo.enviarPush}
+                  onChange={(e) => setNewPromo({ ...newPromo, enviarPush: e.target.checked })}
+                />
+                🔔 Enviar también como notificación push (a quienes las activaron)
+              </label>
+              <button
+                onClick={addPromo}
+                disabled={enviandoPush}
+                className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink disabled:opacity-50"
+              >
+                {enviandoPush ? 'Enviando push…' : '+ Enviar campaña'}
+              </button>
+              {pushResultado && <p className="text-[11px] text-paper/50">{pushResultado}</p>}
+            </div>
+            {promotions.map((p) => (
+              <div key={p.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
+                <div className="flex-1">
+                  <div className="text-paper">{p.title}</div>
+                  <div className="text-paper/40 text-[10px]">{p.message}</div>
+                  <div className="text-ember/70 text-[10px] mt-0.5">
+                    {p.target_customer_id ? (customers.find((c) => c.id === p.target_customer_id)?.full_name ?? 'Cliente eliminado') : 'Todos los clientes'}
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <button
+                    onClick={() => togglePromo(p.id, p.active)}
+                    className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${p.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+                  >
+                    {p.active ? 'Activa' : 'Inactiva'}
+                  </button>
+                  <button onClick={() => deletePromo(p.id)} className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+            {promotions.length === 0 && <p className="text-paper/35 text-xs">Sin campañas creadas.</p>}
+          </div>
+
+          {/* Alertas por cercanía (GPS) */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35">Alertas por cercanía (GPS)</span>
+              <span className="font-mono text-[10px] text-paper/35">{locationAlerts.length}</span>
+            </div>
+            <p className="text-[11px] text-paper/45 mb-3">
+              Un mensaje distinto según en qué coordenada esté el cliente. Ojo: NO es una notificación push del celular
+              (eso requiere una app nativa) — es un aviso que aparece dentro de la app cuando el cliente la tiene abierta
+              y su GPS lo ubica cerca de ese punto, en el día y horario que configures.
+            </p>
+            <div className="flex flex-col gap-2 mb-4 pb-4 border-b border-white/5">
+              <input
+                placeholder="Título (ej. Publicidad zona 3)"
+                value={newAlert.titulo}
+                onChange={(e) => setNewAlert({ ...newAlert, titulo: e.target.value })}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+              />
+              <input
+                placeholder="Mensaje para el cliente"
+                value={newAlert.mensaje}
+                onChange={(e) => setNewAlert({ ...newAlert, mensaje: e.target.value })}
+                className="bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+              />
+              <div className="flex gap-2">
+                <input
+                  placeholder="Latitud (ej. -18.489485)"
+                  value={newAlert.lat}
+                  onChange={(e) => setNewAlert({ ...newAlert, lat: e.target.value })}
+                  className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+                />
+                <input
+                  placeholder="Longitud (ej. -70.285883)"
+                  value={newAlert.lng}
+                  onChange={(e) => setNewAlert({ ...newAlert, lng: e.target.value })}
+                  className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs font-mono"
+                />
+              </div>
+              <button onClick={addLocationAlert} className="py-2.5 rounded-lg font-head font-semibold text-xs bg-gradient-to-br from-ember to-emberDark text-ink">
+                + Agregar coordenada
+              </button>
+            </div>
+
+            {locationAlerts.map((a) => (
+              <div key={a.id} className="flex flex-col gap-2 py-3 border-b border-white/5 last:border-b-0 text-xs">
+                <div className="flex justify-between items-start gap-2">
+                  <input
+                    defaultValue={a.titulo}
+                    onBlur={(e) => e.target.value !== a.titulo && updateAlertField(a.id, 'titulo', e.target.value)}
+                    className="flex-1 bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper font-head font-semibold"
+                  />
+                  <button
+                    onClick={() => updateAlertField(a.id, 'activo', !a.activo)}
+                    className={`px-2 py-1 rounded-md text-[10px] border whitespace-nowrap ${a.activo ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+                  >
+                    {a.activo ? 'Activa' : 'Inactiva'}
+                  </button>
+                </div>
+                <textarea
+                  defaultValue={a.mensaje}
+                  onBlur={(e) => e.target.value !== a.mensaje && updateAlertField(a.id, 'mensaje', e.target.value)}
+                  className="bg-ink border border-white/10 rounded-lg px-2 py-1.5 text-paper/70 resize-none"
+                  rows={2}
+                />
+                <div className="text-paper/35 text-[10px] font-mono">
+                  📍 {a.lat}, {a.lng} — radio {a.radio_metros} m
+                </div>
+                <div className="flex items-center gap-1 flex-wrap">
+                  {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((letra, dia) => (
+                    <button
+                      key={dia}
+                      onClick={() => toggleAlertDia(a, dia)}
+                      className={`w-6 h-6 rounded-md border text-[10px] ${
+                        (a.dias_semana ?? []).includes(dia) || !a.dias_semana?.length
+                          ? 'border-ember/40 text-ember'
+                          : 'border-white/10 text-paper/30'
+                      }`}
+                      title={(a.dias_semana ?? []).length === 0 ? 'Todos los días (toca para elegir días específicos)' : undefined}
+                    >
+                      {letra}
+                    </button>
+                  ))}
+                  <span className="text-paper/30 text-[10px] ml-1">{(a.dias_semana ?? []).length === 0 ? 'todos los días' : 'días marcados'}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-paper/40 text-[10px]">Desde</span>
+                  <input
+                    type="time"
+                    defaultValue={a.hora_inicio ?? ''}
+                    onBlur={(e) => updateAlertField(a.id, 'hora_inicio', e.target.value || null)}
+                    className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
+                  />
+                  <span className="text-paper/40 text-[10px]">hasta</span>
+                  <input
+                    type="time"
+                    defaultValue={a.hora_fin ?? ''}
+                    onBlur={(e) => updateAlertField(a.id, 'hora_fin', e.target.value || null)}
+                    className="bg-ink border border-white/10 rounded-lg px-2 py-1 text-[11px] font-mono"
+                  />
+                  <button onClick={() => deleteLocationAlert(a.id)} className="ml-auto px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap">
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+            {locationAlerts.length === 0 && <p className="text-paper/35 text-xs">Sin alertas configuradas.</p>}
+          </div>
+
+          {/* Regla de puntos */}
+          <div>
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35 mb-3">Regla de puntos — cada {rule} CLP = 1 punto</div>
+            <div className="flex items-center gap-2 text-xs">
+              <span>Cada</span>
+              <input type="number" value={rule} onChange={(e) => updateRule(Number(e.target.value))} className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember" />
+              <span>CLP = 1 punto</span>
+            </div>
+          </div>
+
+          {/* Recompensas */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35">Recompensas</span>
+              <span className="font-mono text-[10px] text-paper/35">{rewards.length}</span>
+            </div>
+            <p className="text-[11px] text-paper/40 mb-2">Elige qué recompensas ven tus clientes en "Canjea tus puntos".</p>
+            {rewards.map((r) => (
+              <div key={r.id} className="flex justify-between items-center gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
+                <span className={r.active ? 'text-paper' : 'text-paper/30 line-through'}>{r.icon} {r.name}</span>
+                <input
+                  type="number"
+                  value={r.cost_points}
+                  onChange={(e) => updateRewardCost(r.id, Number(e.target.value))}
+                  className="w-20 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember"
+                />
+                <button
+                  onClick={() => toggleReward(r.id, r.active)}
+                  className={`px-2 py-1.5 rounded-md border text-[10px] whitespace-nowrap ${r.active ? 'border-ember/40 text-ember' : 'border-white/10 text-paper/40'}`}
+                >
+                  {r.active ? 'Visible' : 'Oculta'}
+                </button>
+              </div>
+            ))}
+            {rewards.length === 0 && <p className="text-paper/35 text-xs py-2">Aún no tienes recompensas creadas.</p>}
+          </div>
+
+          {/* Ranking de clientes */}
+          <div>
+            <div className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35 mb-3">Ranking de clientes</div>
+            {customers.slice(0, 8).map((c, i) => (
+              <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
+                <span><span className="font-mono text-ember mr-2">{i + 1}</span>{c.full_name}</span>
+                <span className="font-mono">{c.points}</span>
+              </div>
+            ))}
+            {customers.length === 0 && <p className="text-paper/35 text-xs">Sin datos aún.</p>}
+          </div>
+
+          {/* Clientes inactivos */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <span className="font-mono text-[10px] tracking-[0.2em] uppercase text-paper/35">Clientes inactivos (+30 días)</span>
+              <span className="font-mono text-[10px] text-paper/35">{inactive.length}</span>
+            </div>
+            {inactive.map((c) => (
+              <div key={c.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
+                <span>{c.full_name}</span>
+                <span className="font-mono text-wineSoft bg-wine/20 px-2 py-0.5 rounded-full">
+                  {Math.floor((now - new Date(c.last_visit_at).getTime()) / 86400000)} días
+                </span>
+              </div>
+            ))}
+            {inactive.length === 0 && <p className="text-paper/35 text-xs">No hay clientes inactivos por ahora.</p>}
+          </div>
         </div>
       </Seccion>
         </div>
