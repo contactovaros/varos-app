@@ -73,6 +73,7 @@ export default function App() {
   // desktop — se ensancha solo en las pantallas de admin que necesitan mostrar
   // una lista o plano junto a un panel lateral fijo: mesas, plano y productos.
   const anchoAmplio =
+    location.pathname === '/admin' ||
     location.pathname === '/admin/mesas' ||
     location.pathname === '/admin/plano' ||
     location.pathname === '/admin/productos'

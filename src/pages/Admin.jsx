@@ -9,18 +9,394 @@ function formatFechaCorta(iso) {
   return new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
 }
 
-function Seccion({ titulo, subtitulo, children }) {
+// Acordeón con estado propio (no <details> nativo): el salto brusco del
+// <details>/<summary> del navegador no se puede animar de forma confiable
+// entre navegadores. Con grid-template-rows 0fr→1fr conseguimos una
+// transición real y mantenemos la accesibilidad con aria-expanded en el botón.
+function Seccion({ titulo, subtitulo, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
-    <details className="group bg-inkSoft border border-white/5 rounded-2xl mb-4">
-      <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+    <div className="bg-inkSoft border border-white/5 rounded-2xl mb-4 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left transition-colors duration-150 hover:bg-white/[0.03] active:bg-white/[0.04]"
+      >
         <div>
           <div className="font-head font-semibold text-sm">{titulo}</div>
-          {subtitulo && <div className="text-[11px] text-paper/40 mt-0.5">{subtitulo}</div>}
+          {subtitulo && (
+            <span className="inline-block mt-1 text-[10px] font-mono text-ember/90 bg-ember/10 border border-ember/20 rounded-full px-2 py-0.5">
+              {subtitulo}
+            </span>
+          )}
         </div>
-        <span className="text-ember text-sm shrink-0 transition-transform duration-200 group-open:rotate-180">▾</span>
-      </summary>
-      <div className="px-4 pb-4">{children}</div>
-    </details>
+        <span
+          className={`text-ember text-sm shrink-0 transition-transform duration-200 ease-salida ${open ? 'rotate-180' : ''}`}
+        >
+          ▾
+        </span>
+      </button>
+      <div
+        className="grid transition-[grid-template-rows] duration-300 ease-salida motion-reduce:transition-none"
+        style={{ gridTemplateRows: open ? '1fr' : '0fr' }}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div className="px-4 pb-4">{children}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Las 8 tarjetas de navegación a pantallas completas (Link, no contenido
+// in-page). Un solo array alimenta dos formas de mostrarlas: tarjetas grandes
+// apiladas en el flujo (mobile) y una barra compacta fija a la izquierda
+// (desktop) — mismo destino y mismo texto, solo cambia la densidad.
+const NAV_ITEMS = [
+  {
+    to: '/admin/mesa-trabajo',
+    mobileHeading: '🗂️ Mesa de trabajo',
+    icon: '🗂️',
+    label: 'Mesa de trabajo',
+    desc: 'Reservas del día junto al plano — toca una mesa reservada para ver el cliente y escribirle por WhatsApp',
+    accent: 'ember'
+  },
+  {
+    to: '/admin/mesas',
+    mobileHeading: '🥂 Editar planos y mesas',
+    icon: '🥂',
+    label: 'Editar planos y mesas',
+    desc: 'Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas',
+    accent: 'ember'
+  },
+  {
+    to: '/admin/plano',
+    mobileHeading: '📐 Plano de la terraza',
+    icon: '📐',
+    label: 'Plano de la terraza',
+    desc: 'Recinto de 9 × 24 m — mover, girar y medir cada mesa y equipo, y publicarlo cuando quieras',
+    accent: 'ember'
+  },
+  {
+    to: '/admin/resenas',
+    mobileHeading: 'Consultor de reseñas',
+    icon: '🔎',
+    label: 'Consultor de reseñas',
+    desc: 'Preguntale a tus reseñas de Google qué reclama y qué celebra la gente',
+    accent: 'ember'
+  },
+  {
+    to: '/admin/productos',
+    mobileHeading: '💲 Productos',
+    icon: '💲',
+    label: 'Productos',
+    desc: 'Precio, disponibilidad y qué se muestra en la carta pública de varos.cl',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/garzones',
+    mobileHeading: '🧑‍🍳 Garzones',
+    icon: '🧑‍🍳',
+    label: 'Garzones',
+    desc: 'Registrar garzones y generar el código que usan para entrar a /mozo',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/mesas-pos',
+    mobileHeading: '🪑 Mesas del POS',
+    icon: '🪑',
+    label: 'Mesas del POS',
+    desc: 'La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/caja',
+    mobileHeading: '💰 Caja',
+    icon: '💰',
+    label: 'Caja',
+    desc: 'Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php',
+    accent: 'gold'
+  }
+]
+
+const NAV_ACCENTS = {
+  ember: {
+    border: 'border-ember/20',
+    hover: 'hover:bg-ember/5 hover:border-ember/40',
+    active: 'active:bg-ember/5 active:border-ember/40',
+    text: 'text-ember'
+  },
+  gold: {
+    border: 'border-gold/25',
+    hover: 'hover:bg-gold/5 hover:border-gold/45',
+    active: 'active:bg-gold/5 active:border-gold/45',
+    text: 'text-gold'
+  }
+}
+
+// Tarjeta grande de siempre — queda solo para mobile (lg:hidden en quien la usa).
+function NavCardFull({ item }) {
+  const a = NAV_ACCENTS[item.accent]
+  return (
+    <Link
+      to={item.to}
+      className={`group flex items-center justify-between bg-inkSoft border ${a.border} rounded-2xl p-4 transition-[transform,background-color,border-color] duration-150 ease-salida ${a.hover} ${a.active} active:scale-[0.98] motion-reduce:active:scale-100`}
+    >
+      <div>
+        <div className="font-head font-semibold text-sm">{item.mobileHeading}</div>
+        <div className="text-[11px] text-paper/45 mt-0.5">{item.desc}</div>
+      </div>
+      <span className={`${a.text} text-lg shrink-0 transition-transform duration-150 ease-salida group-hover:translate-x-0.5 group-active:translate-x-0.5`}>→</span>
+    </Link>
+  )
+}
+
+// Versión compacta para la barra fija de escritorio: ícono + label, la
+// descripción larga queda como tooltip (title) en vez de ocupar dos líneas.
+function NavCardCompact({ item }) {
+  const a = NAV_ACCENTS[item.accent]
+  return (
+    <Link
+      to={item.to}
+      title={item.desc}
+      className={`flex items-center gap-2.5 bg-inkSoft border ${a.border} rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida ${a.hover} ${a.active}`}
+    >
+      <span className="text-base shrink-0 leading-none">{item.icon}</span>
+      <span className="font-head text-xs font-medium truncate">{item.label}</span>
+    </Link>
+  )
+}
+
+// Header de columna clickeable para ordenar una tabla de escritorio.
+function ThOrdenable({ label, active, dir, onClick, align = 'left' }) {
+  return (
+    <th className={`py-2 px-2 font-normal ${align === 'right' ? 'text-right' : 'text-left'}`}>
+      <button
+        type="button"
+        onClick={onClick}
+        className={`inline-flex items-center gap-1 transition-colors hover:text-paper/80 ${active ? 'text-ember' : 'text-paper/40'}`}
+      >
+        {label}
+        <span className="text-[9px] w-2.5 inline-block">{active ? (dir === 'asc' ? '▲' : '▼') : ''}</span>
+      </button>
+    </th>
+  )
+}
+
+// ---- Tabla de escritorio: Clientes (dentro de "⭐ Clientes") ----
+function TablaClientesDesktop({ customers, premioEstrellas, agregarEstrella, quitarEstrella, eliminarCliente }) {
+  const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState('nombre')
+  const [sortDir, setSortDir] = useState('asc')
+
+  function toggleSort(key) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const filas = customers
+    .filter((c) => (c.full_name ?? '').toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => {
+      const diff =
+        sortKey === 'estrellas'
+          ? (a.estrellas_actuales ?? 0) - (b.estrellas_actuales ?? 0)
+          : (a.full_name ?? '').localeCompare(b.full_name ?? '')
+      return sortDir === 'asc' ? diff : -diff
+    })
+
+  return (
+    <div className="hidden lg:block">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar cliente…"
+        className="w-full mb-3 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+      />
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr className="border-b border-white/5 text-[10px] uppercase tracking-wide">
+            <ThOrdenable label="Cliente" active={sortKey === 'nombre'} dir={sortDir} onClick={() => toggleSort('nombre')} />
+            <ThOrdenable label="Estrellas" active={sortKey === 'estrellas'} dir={sortDir} onClick={() => toggleSort('estrellas')} />
+            <th className="py-2 px-2 font-normal text-left text-paper/40">Premio</th>
+            <th className="py-2 px-2 font-normal text-right text-paper/40">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((c) => (
+            <tr key={c.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+              <td className="py-2 px-2 text-paper">{c.full_name}</td>
+              <td className="py-2 px-2 font-mono text-paper/70">{c.estrellas_actuales ?? 0} / 5 ⭐</td>
+              <td className="py-2 px-2 text-ember/80">{premioEstrellas ? premioEstrellas : 'Sin premio configurado'}</td>
+              <td className="py-2 px-2">
+                <div className="flex justify-end items-center gap-1.5">
+                  <button
+                    onClick={() => quitarEstrella(c)}
+                    disabled={(c.estrellas_actuales ?? 0) <= 0}
+                    className="w-6 h-6 rounded-md border border-white/10 text-paper/60 disabled:opacity-30 hover:border-white/25 transition-colors"
+                  >
+                    −
+                  </button>
+                  <button
+                    onClick={() => agregarEstrella(c)}
+                    className="w-6 h-6 rounded-md border border-ember/40 text-ember hover:bg-ember/10 transition-colors"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => eliminarCliente(c)}
+                    className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap hover:bg-wine/10 transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {filas.length === 0 && <p className="text-paper/35 text-xs py-3">Sin resultados.</p>}
+    </div>
+  )
+}
+
+// ---- Tabla de escritorio: Menú (dentro de "🍽️ Menú del restaurante") ----
+function TablaMenuDesktop({ menuItems, toggleDish, updateDishPrice, deleteDish }) {
+  const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState('nombre')
+  const [sortDir, setSortDir] = useState('asc')
+
+  function toggleSort(key) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir('asc')
+    }
+  }
+
+  const filas = menuItems
+    .filter((m) => `${m.name} ${m.category}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => {
+      let diff = 0
+      if (sortKey === 'precio') diff = (a.price_clp ?? 0) - (b.price_clp ?? 0)
+      else if (sortKey === 'categoria') diff = (a.category ?? '').localeCompare(b.category ?? '')
+      else diff = (a.name ?? '').localeCompare(b.name ?? '')
+      return sortDir === 'asc' ? diff : -diff
+    })
+
+  return (
+    <div className="hidden lg:block">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar plato o categoría…"
+        className="w-full mb-3 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+      />
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr className="border-b border-white/5 text-[10px] uppercase tracking-wide">
+            <ThOrdenable label="Plato" active={sortKey === 'nombre'} dir={sortDir} onClick={() => toggleSort('nombre')} />
+            <ThOrdenable label="Categoría" active={sortKey === 'categoria'} dir={sortDir} onClick={() => toggleSort('categoria')} />
+            <ThOrdenable label="Precio" active={sortKey === 'precio'} dir={sortDir} onClick={() => toggleSort('precio')} />
+            <th className="py-2 px-2 font-normal text-right text-paper/40">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((m) => (
+            <tr key={m.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+              <td className={`py-2 px-2 ${m.available ? 'text-paper' : 'text-paper/30 line-through'}`}>{m.name}</td>
+              <td className="py-2 px-2 text-paper/50">{m.category}</td>
+              <td className="py-2 px-2">
+                <input
+                  type="number"
+                  value={m.price_clp}
+                  onChange={(e) => updateDishPrice(m.id, Number(e.target.value))}
+                  className="w-24 bg-ink border border-white/10 rounded-lg px-2 py-1.5 font-mono text-ember"
+                />
+              </td>
+              <td className="py-2 px-2">
+                <div className="flex justify-end items-center gap-1.5">
+                  <button
+                    onClick={() => toggleDish(m.id, m.available)}
+                    className="px-2 py-1 rounded-md border border-white/10 text-[10px] whitespace-nowrap hover:border-white/25 transition-colors"
+                  >
+                    {m.available ? 'Ocultar' : 'Mostrar'}
+                  </button>
+                  <button
+                    onClick={() => deleteDish(m.id)}
+                    className="px-2 py-1 rounded-md border border-wine/40 text-wineSoft text-[10px] whitespace-nowrap hover:bg-wine/10 transition-colors"
+                  >
+                    Eliminar
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {filas.length === 0 && <p className="text-paper/35 text-xs py-3">Sin resultados.</p>}
+    </div>
+  )
+}
+
+// ---- Tabla de escritorio: Historial de canjes ----
+function TablaCanjesDesktop({ redemptions }) {
+  const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState('fecha')
+  const [sortDir, setSortDir] = useState('desc')
+
+  function toggleSort(key) {
+    if (sortKey === key) setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
+    else {
+      setSortKey(key)
+      setSortDir(key === 'fecha' ? 'desc' : 'asc')
+    }
+  }
+
+  const filas = redemptions
+    .filter((r) => `${r.customers?.full_name ?? ''} ${r.rewards?.name ?? ''}`.toLowerCase().includes(query.toLowerCase()))
+    .sort((a, b) => {
+      let diff = 0
+      if (sortKey === 'puntos') diff = (a.points_spent ?? 0) - (b.points_spent ?? 0)
+      else if (sortKey === 'recompensa') diff = (a.rewards?.name ?? '').localeCompare(b.rewards?.name ?? '')
+      else if (sortKey === 'fecha') diff = new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0)
+      else diff = (a.customers?.full_name ?? '').localeCompare(b.customers?.full_name ?? '')
+      return sortDir === 'asc' ? diff : -diff
+    })
+
+  return (
+    <div className="hidden lg:block">
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Buscar cliente o recompensa…"
+        className="w-full mb-3 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs"
+      />
+      <table className="w-full text-xs border-collapse">
+        <thead>
+          <tr className="border-b border-white/5 text-[10px] uppercase tracking-wide">
+            <ThOrdenable label="Cliente" active={sortKey === 'nombre'} dir={sortDir} onClick={() => toggleSort('nombre')} />
+            <ThOrdenable label="Recompensa" active={sortKey === 'recompensa'} dir={sortDir} onClick={() => toggleSort('recompensa')} />
+            <ThOrdenable label="Puntos" active={sortKey === 'puntos'} dir={sortDir} onClick={() => toggleSort('puntos')} align="right" />
+            <ThOrdenable label="Fecha" active={sortKey === 'fecha'} dir={sortDir} onClick={() => toggleSort('fecha')} align="right" />
+          </tr>
+        </thead>
+        <tbody>
+          {filas.map((r) => (
+            <tr key={r.id} className="border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors">
+              <td className="py-2 px-2 text-paper">{r.customers?.full_name ?? 'Cliente eliminado'}</td>
+              <td className="py-2 px-2 text-paper/60">{r.rewards?.name}</td>
+              <td className="py-2 px-2 font-mono text-wineSoft text-right">-{r.points_spent}</td>
+              <td className="py-2 px-2 text-paper/40 text-right">{formatFechaCorta(r.created_at)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      {filas.length === 0 && <p className="text-paper/35 text-xs py-3">Sin resultados.</p>}
+    </div>
   )
 }
 
@@ -338,7 +714,7 @@ export default function Admin() {
   }
 
   return (
-    <div className="px-4 pt-8 pb-10">
+    <div className="px-4 pt-8 pb-10 lg:px-6">
       <div className="flex justify-between items-start mb-6">
         <div>
           <div className="font-mono text-[10px] tracking-[0.3em] text-ember uppercase">Varo's</div>
@@ -349,126 +725,38 @@ export default function Admin() {
         </button>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-          <div className="text-[11px] text-paper/50 mb-1">Socios</div>
-          <div className="font-display text-3xl">{customers.length}</div>
-        </div>
-        <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
-          <div className="text-[11px] text-paper/50 mb-1">Canjes registrados</div>
-          <div className="font-display text-3xl text-ember">{redemptions.length}</div>
-        </div>
-      </div>
+      {/* En mobile esto es una sola columna, igual que siempre. En desktop se
+          parte en dos: la navegación queda fija a la izquierda y el resto
+          (stats, premios pendientes, acordeones) respira con más ancho a la
+          derecha. */}
+      <div className="lg:flex lg:items-start lg:gap-6">
+        <nav className="hidden lg:flex lg:flex-col lg:gap-1.5 lg:w-56 lg:shrink-0 lg:sticky lg:top-6">
+          <div className="font-mono text-[10px] tracking-[0.2em] text-paper/35 uppercase px-2 mb-1">Navegación</div>
+          {NAV_ITEMS.map((item) => (
+            <NavCardCompact key={item.to} item={item} />
+          ))}
+        </nav>
 
-      <Link
-        to="/admin/mesa-trabajo"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">🗂️ Mesa de trabajo</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Reservas del día junto al plano — toca una mesa reservada para ver el cliente y escribirle por WhatsApp
+        <div className="lg:flex-1 lg:min-w-0">
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
+              <div className="text-[11px] text-paper/50 mb-1">Socios</div>
+              <div className="font-display text-3xl">{customers.length}</div>
+            </div>
+            <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
+              <div className="text-[11px] text-paper/50 mb-1">Canjes registrados</div>
+              <div className="font-display text-3xl text-ember">{redemptions.length}</div>
+            </div>
           </div>
-        </div>
-        <span className="text-ember text-lg">→</span>
-      </Link>
 
-      <Link
-        to="/admin/mesas"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">🥂 Editar planos y mesas</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas
+          {/* Las mismas 8 tarjetas de navegación, pero solo en mobile — en
+              desktop ya están en la barra fija de arriba. */}
+          <div className="lg:hidden flex flex-col gap-3 mb-6">
+            {NAV_ITEMS.map((item) => (
+              <NavCardFull key={item.to} item={item} />
+            ))}
           </div>
-        </div>
-        <span className="text-ember text-lg">→</span>
-      </Link>
 
-      <Link
-        to="/admin/plano"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">📐 Plano de la terraza</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Recinto de 9 × 24 m — mover, girar y medir cada mesa y equipo, y publicarlo cuando quieras
-          </div>
-        </div>
-        <span className="text-ember text-lg">→</span>
-      </Link>
-
-      <Link
-        to="/admin/resenas"
-        className="flex items-center justify-between bg-inkSoft border border-ember/20 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">Consultor de reseñas</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Preguntale a tus reseñas de Google qué reclama y qué celebra la gente
-          </div>
-        </div>
-        <span className="text-ember text-lg">→</span>
-      </Link>
-
-      {/* Primer módulo del reemplazo del POS viejo — ver DECISIONES.md */}
-      <Link
-        to="/admin/productos"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">💲 Productos</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Precio, disponibilidad y qué se muestra en la carta pública de varos.cl
-          </div>
-        </div>
-        <span className="text-gold text-lg">→</span>
-      </Link>
-
-      {/* Candado de /mozo (piloto de Comandas) — ver DECISIONES.md */}
-      <Link
-        to="/admin/garzones"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">🧑‍🍳 Garzones</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Registrar garzones y generar el código que usan para entrar a /mozo
-          </div>
-        </div>
-        <span className="text-gold text-lg">→</span>
-      </Link>
-
-      {/* Numeración real de mesas por sector, para el selector de /mozo */}
-      <Link
-        to="/admin/mesas-pos"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-3"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">🪑 Mesas del POS</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo
-          </div>
-        </div>
-        <span className="text-gold text-lg">→</span>
-      </Link>
-
-      {/* Caja fase 1 — cobrar y cerrar mesa, ver varos-pos/DECISIONES.md */}
-      <Link
-        to="/admin/caja"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
-      >
-        <div>
-          <div className="font-head font-semibold text-sm">💰 Caja</div>
-          <div className="text-[11px] text-paper/45 mt-0.5">
-            Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php
-          </div>
-        </div>
-        <span className="text-gold text-lg">→</span>
-      </Link>
-
-      {/* ---- QR DE CHECK-IN DEL LOCAL (nuevo) ---- */}
       {/* Premios pendientes: va abierto y arriba de todo, y no dentro de un
           acordeón, porque es lo único del panel que tiene a una persona
           esperando algo. Si no hay ninguno pendiente, desaparece. */}
@@ -558,6 +846,14 @@ export default function Admin() {
 
       {/* ---- CLIENTES Y SU PREMIO POR ESTRELLAS (nuevo) ---- */}
       <Seccion titulo="⭐ Clientes — premio al llegar a 5 estrellas" subtitulo={`${customers.length} clientes`}>
+        <TablaClientesDesktop
+          customers={customers}
+          premioEstrellas={premioEstrellas}
+          agregarEstrella={agregarEstrella}
+          quitarEstrella={quitarEstrella}
+          eliminarCliente={eliminarCliente}
+        />
+        <div className="lg:hidden">
         {customers.map((c) => (
           <div key={c.id} className="flex flex-col gap-1.5 py-2 border-b border-white/5 last:border-b-0 text-xs">
             <div className="flex justify-between items-center gap-2">
@@ -593,6 +889,7 @@ export default function Admin() {
           </div>
         ))}
         {customers.length === 0 && <p className="text-paper/35 text-xs py-2">Sin clientes registrados aún.</p>}
+        </div>
       </Seccion>
 
       {/* ---- MENÚ (nuevo) ---- */}
@@ -638,7 +935,13 @@ export default function Admin() {
           </button>
         </div>
 
-        <div className="flex flex-col">
+        <TablaMenuDesktop
+          menuItems={menuItems}
+          toggleDish={toggleDish}
+          updateDishPrice={updateDishPrice}
+          deleteDish={deleteDish}
+        />
+        <div className="lg:hidden flex flex-col">
           {menuItems.map((m) => (
             <div key={m.id} className="flex items-center justify-between gap-2 py-2 border-b border-white/5 last:border-b-0 text-xs">
               <div className="flex-1">
@@ -890,6 +1193,8 @@ export default function Admin() {
       </Seccion>
 
       <Seccion titulo="🧾 Historial de canjes" subtitulo={`${redemptions.length} canjes`}>
+        <TablaCanjesDesktop redemptions={redemptions} />
+        <div className="lg:hidden">
         {redemptions.map((r) => (
           <div key={r.id} className="flex justify-between items-center py-2 border-b border-white/5 last:border-b-0 text-xs">
             <span>{r.customers?.full_name} — {r.rewards?.name}</span>
@@ -897,7 +1202,10 @@ export default function Admin() {
           </div>
         ))}
         {redemptions.length === 0 && <p className="text-paper/35 text-xs">Sin canjes todavía.</p>}
+        </div>
       </Seccion>
+        </div>
+      </div>
     </div>
   )
 }
