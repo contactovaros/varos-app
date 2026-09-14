@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
 
 // Pantalla del mozo — fase 2 del reemplazo incremental del POS viejo
 // (varos.cl/gestion). Ver varos-pos/DECISIONES.md, "Reemplazo de Comandas
@@ -115,6 +116,8 @@ function GateGarzon({ onEntrar }) {
 
 export default function Mozo() {
   const [garzon, setGarzon] = useState(() => leerGarzonGuardado())
+  const [avisoEstado, setAvisoEstado] = useState('desconocida')
+  const [avisoError, setAvisoError] = useState('')
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
   const [errorCarga, setErrorCarga] = useState('')
@@ -399,6 +402,21 @@ export default function Mozo() {
     }
   }
 
+  useEffect(() => {
+    if (!garzon) return
+    estadoNotificacionesGarzon(garzon.id).then(setAvisoEstado)
+  }, [garzon])
+
+  async function activarAvisos() {
+    setAvisoError('')
+    try {
+      await activarNotificacionesGarzon(garzon.id)
+      setAvisoEstado('activa')
+    } catch (err) {
+      setAvisoError(err.message || 'No se pudo activar el aviso.')
+    }
+  }
+
   function cambiarDeMozo() {
     try {
       localStorage.removeItem(GARZON_STORAGE_KEY)
@@ -421,6 +439,16 @@ export default function Mozo() {
               {garzon.nombre} · cambiar
             </button>
           </div>
+          {(avisoEstado === 'inactiva' || avisoEstado === 'desconocida') && (
+            <button
+              onClick={activarAvisos}
+              className="w-full flex items-center justify-between bg-gold/10 border border-gold/30 rounded-xl px-3.5 py-2 mb-2"
+            >
+              <span className="text-[11.5px] text-gold">🔔 Avisarme cuando un plato esté listo</span>
+              <span className="text-gold text-[11px] font-semibold">Activar</span>
+            </button>
+          )}
+          {avisoError && <p className="text-rose-400 text-[10.5px] mb-2 leading-relaxed">{avisoError}</p>}
           <button
             onClick={() => setSheetMesa(true)}
             className="w-full flex items-center justify-between bg-inkSoft border border-white/10 rounded-xl px-3.5 py-2.5"

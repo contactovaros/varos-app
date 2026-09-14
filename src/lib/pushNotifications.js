@@ -89,3 +89,72 @@ export async function activarNotificaciones() {
 
   return sub
 }
+
+// --- Garzones ("tu plato está listo") ---------------------------------
+// Mismo mecanismo de Web Push que arriba, pero atado a un garzon_id en vez
+// de a auth.uid(): el garzón entra a /mozo con un código de 6 dígitos, no
+// tiene sesión de Supabase Auth. Ver supabase/add_garzon_push_subscriptions.sql.
+
+export async function estadoNotificacionesGarzon(garzonId) {
+  if (!pushSoportado()) return 'no-soportado'
+  if (!garzonId) return 'inactiva'
+
+  try {
+    const registro = await navigator.serviceWorker.ready
+    const sub = await registro.pushManager.getSubscription()
+    if (!sub) return 'inactiva'
+
+    const { data, error } = await supabase
+      .from('garzon_push_subscriptions')
+      .select('id')
+      .eq('endpoint', sub.toJSON().endpoint)
+      .eq('garzon_id', garzonId)
+      .maybeSingle()
+
+    if (error) {
+      console.warn('[push] no se pudo comprobar la suscripción del garzón', error)
+      return 'desconocida'
+    }
+    return data ? 'activa' : 'inactiva'
+  } catch (e) {
+    console.warn('[push] no se pudo comprobar la suscripción del garzón', e)
+    return 'desconocida'
+  }
+}
+
+export async function activarNotificacionesGarzon(garzonId) {
+  if (!pushSoportado()) {
+    throw new Error(
+      'Este navegador no soporta notificaciones push. En iPhone, primero agrega esta página a tu pantalla de inicio (compartir → "Agregar a inicio") y ábrela desde ahí.'
+    )
+  }
+  if (!garzonId) throw new Error('Falta identificar al garzón')
+
+  const permiso = await Notification.requestPermission()
+  if (permiso !== 'granted') {
+    throw new Error('No diste permiso de notificaciones — actívalo desde los ajustes de tu navegador.')
+  }
+
+  const registro = await navigator.serviceWorker.ready
+  let sub = await registro.pushManager.getSubscription()
+  if (!sub) {
+    sub = await registro.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY)
+    })
+  }
+
+  const json = sub.toJSON()
+  const { error } = await supabase.rpc('guardar_suscripcion_push_garzon', {
+    p_garzon_id: garzonId,
+    p_endpoint: json.endpoint,
+    p_p256dh: json.keys.p256dh,
+    p_auth: json.keys.auth
+  })
+  if (error) {
+    console.error('[push] error al guardar la suscripción del garzón', error)
+    throw error
+  }
+
+  return sub
+}
