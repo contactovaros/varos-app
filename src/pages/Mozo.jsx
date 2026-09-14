@@ -154,6 +154,7 @@ export default function Mozo() {
   // '' de error si el Worker no respondió.
   const [menuDiaOpciones, setMenuDiaOpciones] = useState(null)
   const [menuDiaError, setMenuDiaError] = useState('')
+  const [menuDiaStale, setMenuDiaStale] = useState(false)
   const [sheetMenuDia, setSheetMenuDia] = useState(false)
   const [menuDiaItemActual, setMenuDiaItemActual] = useState(null)
   const [menuDiaSel, setMenuDiaSel] = useState({ Entrada: '', 'Plato Principal': '', 'Postres y Tentaciones': '' })
@@ -239,6 +240,12 @@ export default function Mozo() {
           if (porCurso[it.curso]) porCurso[it.curso].push(it.nombre)
         }
         setMenuDiaOpciones(porCurso)
+        // El worker marca `stale` cuando el puente (userscript en la PC de
+        // caja) lleva rato sin refrescar este catálogo — pasa siempre que el
+        // restaurante está cerrado, y podría pasar en medio de un servicio
+        // si el puente se cae. El garzón tiene que saberlo antes de ofrecer
+        // estas opciones, no elegirlas a ciegas creyendo que son las de hoy.
+        setMenuDiaStale(Boolean(data?.stale))
       } catch (err) {
         setMenuDiaError('No se pudo cargar el Menú del Día de hoy.')
       }
@@ -701,6 +708,12 @@ export default function Mozo() {
             <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
             <h2 className="font-head text-lg font-semibold mt-2 mb-1">Menú del Día</h2>
             <p className="text-[11px] text-paper/40 mb-3.5">Elegí un curso de cada uno.</p>
+
+            {menuDiaStale && (
+              <p className="text-[11.5px] text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-3.5 leading-relaxed">
+                ⚠ Este listado podría no ser el de hoy — confirmá con cocina antes de ofrecerlo.
+              </p>
+            )}
 
             {menuDiaError && <p className="text-rose-400 text-xs py-4">{menuDiaError}</p>}
 
