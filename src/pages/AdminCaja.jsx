@@ -36,6 +36,10 @@ function formatCLP(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CL')
 }
 
+function formatHora(iso) {
+  return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
+}
+
 export default function AdminCaja() {
   const { isAdmin, loading: authLoading, session, customer } = useAuth()
 
@@ -57,6 +61,7 @@ export default function AdminCaja() {
   const [toast, setToast] = useState('')
 
   const [resumenHoy, setResumenHoy] = useState(null)
+  const [detalleAbierto, setDetalleAbierto] = useState(false)
 
   useEffect(() => {
     if (!isAdmin) return
@@ -125,8 +130,9 @@ export default function AdminCaja() {
       const hoy = new Date().toISOString().slice(0, 10)
       const { data } = await supabase
         .from('pos_cobros')
-        .select('total, medio_pago')
+        .select('mesa, sector, garzon, total, medio_pago, cobrado_por, created_at')
         .gte('created_at', hoy + 'T00:00:00')
+        .order('created_at', { ascending: false })
       if (!data) return
       const porMedio = {}
       let total = 0
@@ -134,7 +140,10 @@ export default function AdminCaja() {
         porMedio[c.medio_pago] = (porMedio[c.medio_pago] || 0) + Number(c.total)
         total += Number(c.total)
       }
-      setResumenHoy({ total, porMedio, cantidad: data.length })
+      // El detalle fila por fila — antes solo se veía el total del día, sin
+      // forma de saber qué mesa se cobró ni a qué hora (pedido del usuario,
+      // 2026-09-14): "y el registro de caja dónde lo veo".
+      setResumenHoy({ total, porMedio, cantidad: data.length, detalle: data })
     }
     if (isAdmin) cargarResumen()
   }, [isAdmin, toast])
@@ -303,6 +312,34 @@ export default function AdminCaja() {
             ))}
           </div>
           <div className="text-[11px] text-paper/35 mt-1.5">{resumenHoy.cantidad} mesa(s) cobrada(s)</div>
+
+          <button
+            onClick={() => setDetalleAbierto((v) => !v)}
+            className="text-[11px] text-gold underline mt-2.5"
+          >
+            {detalleAbierto ? 'Ocultar detalle' : 'Ver registro de caja'}
+          </button>
+
+          {detalleAbierto && (
+            <div className="mt-3 pt-3 border-t border-white/5 divide-y divide-white/5">
+              {resumenHoy.detalle.map((c, i) => (
+                <div key={i} className="flex items-center justify-between gap-3 py-2 text-xs">
+                  <div className="min-w-0">
+                    <div className="text-paper">Mesa {c.mesa} · {c.sector}</div>
+                    <div className="text-paper/35 text-[10px] truncate">
+                      {formatHora(c.created_at)} · {c.garzon || 'sin garzón'} · cobró {c.cobrado_por}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className="text-gold font-medium tabular-nums">{formatCLP(c.total)}</div>
+                    <div className="text-paper/35 text-[10px]">
+                      {MEDIOS_PAGO.find((m) => m.value === c.medio_pago)?.label || c.medio_pago}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
