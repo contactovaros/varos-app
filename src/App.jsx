@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import BottomNav from './components/BottomNav.jsx'
+import AdminLayout from './components/AdminLayout.jsx'
 import Menu from './pages/Menu.jsx'
 import Cart from './pages/Cart.jsx'
 import Club from './pages/Club.jsx'
@@ -20,6 +21,10 @@ import AdminProductos from './pages/AdminProductos.jsx'
 import AdminGarzones from './pages/AdminGarzones.jsx'
 import AdminMesasPos from './pages/AdminMesasPos.jsx'
 import AdminCaja from './pages/AdminCaja.jsx'
+import AdminClientes from './pages/AdminClientes.jsx'
+import AdminMenuInterno from './pages/AdminMenuInterno.jsx'
+import AdminCanjes from './pages/AdminCanjes.jsx'
+import AdminAjustes from './pages/AdminAjustes.jsx'
 import Plano from './pages/Plano.jsx'
 import PlanoFlujo from './pages/PlanoFlujo.jsx'
 import { useAuth } from './context/AuthContext.jsx'
@@ -86,16 +91,27 @@ export default function App() {
           <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
           <Route path="/club" element={<Club />} />
           <Route path="/perfil" element={<Navigate to="/club" replace />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/admin/mesas" element={<AdminMesas />} />
-          <Route path="/admin/reservas" element={<AdminReservas />} />
-          <Route path="/admin/mesa-trabajo" element={<AdminMesaTrabajo />} />
-          <Route path="/admin/resenas" element={<AdminResenas />} />
-          <Route path="/admin/plano" element={<AdminPlano />} />
-          <Route path="/admin/productos" element={<AdminProductos />} />
-          <Route path="/admin/garzones" element={<AdminGarzones />} />
-          <Route path="/admin/mesas-pos" element={<AdminMesasPos />} />
-          <Route path="/admin/caja" element={<AdminCaja />} />
+          {/* Las 10 pantallas de admin comparten AdminLayout (navegación
+              persistente — grilla/tira + sidebar) para poder saltar de una a
+              otra sin volver a /admin. Rutas hijas relativas, sin el
+              prefijo /admin/. Cada página conserva su propio chequeo
+              isAdmin — el layout no gatea nada. */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Admin />} />
+            <Route path="mesas" element={<AdminMesas />} />
+            <Route path="reservas" element={<AdminReservas />} />
+            <Route path="mesa-trabajo" element={<AdminMesaTrabajo />} />
+            <Route path="resenas" element={<AdminResenas />} />
+            <Route path="plano" element={<AdminPlano />} />
+            <Route path="productos" element={<AdminProductos />} />
+            <Route path="garzones" element={<AdminGarzones />} />
+            <Route path="mesas-pos" element={<AdminMesasPos />} />
+            <Route path="caja" element={<AdminCaja />} />
+            <Route path="clientes" element={<AdminClientes />} />
+            <Route path="menu" element={<AdminMenuInterno />} />
+            <Route path="canjes" element={<AdminCanjes />} />
+            <Route path="ajustes" element={<AdminAjustes />} />
+          </Route>
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>
