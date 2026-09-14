@@ -76,12 +76,20 @@ export default function App() {
 
   // El resto de la app va en una columna de ancho móvil, centrada, incluso en
   // desktop — se ensancha solo en las pantallas de admin que necesitan mostrar
-  // una lista o plano junto a un panel lateral fijo: mesas, plano y productos.
+  // una lista o plano junto a un panel lateral fijo: mesas, plano, productos,
+  // y las páginas nuevas con tablas de escritorio (clientes, menú, canjes,
+  // ajustes). Ojo: AdminLayout.jsx mantiene su propia copia de esta lista
+  // (ADMIN_WIDE_PATHS) para decidir sidebar vs. tira de nav — si se agrega
+  // una ruta acá, hay que agregarla ahí también.
   const anchoAmplio =
     location.pathname === '/admin' ||
     location.pathname === '/admin/mesas' ||
     location.pathname === '/admin/plano' ||
-    location.pathname === '/admin/productos'
+    location.pathname === '/admin/productos' ||
+    location.pathname === '/admin/clientes' ||
+    location.pathname === '/admin/menu' ||
+    location.pathname === '/admin/canjes' ||
+    location.pathname === '/admin/ajustes'
 
   return (
     <CartProvider>

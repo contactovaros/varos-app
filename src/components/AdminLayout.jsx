@@ -2,14 +2,25 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { IconSprite, NAV_ITEMS, NavCardCompact, NavGridMobile } from './AdminNav.jsx'
 import { AdminDataProvider } from '../context/AdminDataContext.jsx'
 
-// Mismas 4 rutas que App.jsx ensancha a lg:max-w-7xl (su `anchoAmplio`): son
+// Mismas rutas que App.jsx ensancha a lg:max-w-7xl (su `anchoAmplio`): son
 // las que ya tienen aire de sobra en desktop para una sidebar de 224px al
 // costado. Duplicamos esta lista chica acá — a propósito, sin tocar
 // App.jsx — porque son las únicas donde el sidebar sticky no aprieta el
 // contenido; el resto de /admin se queda en max-w-md incluso en escritorio,
 // así que ahí la navegación persistente va como tira horizontal, igual que
-// en mobile.
-const ADMIN_WIDE_PATHS = ['/admin', '/admin/mesas', '/admin/plano', '/admin/productos']
+// en mobile. Clientes/Menú/Canjes/Ajustes entran acá también: sus tablas de
+// escritorio (buscador + columnas ordenables) necesitan el mismo ancho que
+// mesas/plano/productos, si no quedan apretadas dentro de max-w-md.
+const ADMIN_WIDE_PATHS = [
+  '/admin',
+  '/admin/mesas',
+  '/admin/plano',
+  '/admin/productos',
+  '/admin/clientes',
+  '/admin/menu',
+  '/admin/canjes',
+  '/admin/ajustes'
+]
 
 // Layout compartido de TODO /admin: pone la navegación (tira compacta o
 // sidebar, según haya espacio) arriba/al costado de cualquier página hija y
