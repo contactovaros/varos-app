@@ -53,7 +53,42 @@ function Seccion({ titulo, subtitulo, children, defaultOpen = false }) {
 // in-page). Un solo array alimenta dos formas de mostrarlas: tarjetas grandes
 // apiladas en el flujo (mobile) y una barra compacta fija a la izquierda
 // (desktop) — mismo destino y mismo texto, solo cambia la densidad.
+// Orden por prioridad (pedido explícito del usuario, 2026-09-14): el sistema
+// nuevo de POS/comandas va primero — es lo que se usa a diario ahora mismo —,
+// las herramientas más viejas (planos, reseñas) quedan después.
 const NAV_ITEMS = [
+  {
+    to: '/admin/productos',
+    mobileHeading: '💲 Productos',
+    icon: '💲',
+    label: 'Productos',
+    desc: 'Precio, disponibilidad y qué se muestra en la carta pública de varos.cl',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/garzones',
+    mobileHeading: '🧑‍🍳 Garzones',
+    icon: '🧑‍🍳',
+    label: 'Garzones',
+    desc: 'Registrar garzones y generar el código que usan para entrar a /mozo',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/caja',
+    mobileHeading: '💰 Caja',
+    icon: '💰',
+    label: 'Caja',
+    desc: 'Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php',
+    accent: 'gold'
+  },
+  {
+    to: '/admin/mesas-pos',
+    mobileHeading: '🪑 Mesas del POS',
+    icon: '🪑',
+    label: 'Mesas del POS',
+    desc: 'La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo',
+    accent: 'gold'
+  },
   {
     to: '/admin/mesa-trabajo',
     mobileHeading: '🗂️ Mesa de trabajo',
@@ -85,38 +120,6 @@ const NAV_ITEMS = [
     label: 'Consultor de reseñas',
     desc: 'Preguntale a tus reseñas de Google qué reclama y qué celebra la gente',
     accent: 'ember'
-  },
-  {
-    to: '/admin/productos',
-    mobileHeading: '💲 Productos',
-    icon: '💲',
-    label: 'Productos',
-    desc: 'Precio, disponibilidad y qué se muestra en la carta pública de varos.cl',
-    accent: 'gold'
-  },
-  {
-    to: '/admin/garzones',
-    mobileHeading: '🧑‍🍳 Garzones',
-    icon: '🧑‍🍳',
-    label: 'Garzones',
-    desc: 'Registrar garzones y generar el código que usan para entrar a /mozo',
-    accent: 'gold'
-  },
-  {
-    to: '/admin/mesas-pos',
-    mobileHeading: '🪑 Mesas del POS',
-    icon: '🪑',
-    label: 'Mesas del POS',
-    desc: 'La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo',
-    accent: 'gold'
-  },
-  {
-    to: '/admin/caja',
-    mobileHeading: '💰 Caja',
-    icon: '💰',
-    label: 'Caja',
-    desc: 'Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php',
-    accent: 'gold'
   }
 ]
 
