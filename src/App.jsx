@@ -19,6 +19,7 @@ import AdminPlano from './pages/AdminPlano.jsx'
 import AdminProductos from './pages/AdminProductos.jsx'
 import AdminGarzones from './pages/AdminGarzones.jsx'
 import AdminMesasPos from './pages/AdminMesasPos.jsx'
+import AdminCaja from './pages/AdminCaja.jsx'
 import Plano from './pages/Plano.jsx'
 import PlanoFlujo from './pages/PlanoFlujo.jsx'
 import { useAuth } from './context/AuthContext.jsx'
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/admin/productos" element={<AdminProductos />} />
           <Route path="/admin/garzones" element={<AdminGarzones />} />
           <Route path="/admin/mesas-pos" element={<AdminMesasPos />} />
+          <Route path="/admin/caja" element={<AdminCaja />} />
           <Route path="/checkin" element={<CheckIn />} />
           <Route path="/mostrar-qr" element={<MostrarQR />} />
         </Routes>

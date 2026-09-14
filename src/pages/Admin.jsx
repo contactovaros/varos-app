@@ -443,12 +443,26 @@ export default function Admin() {
       {/* Numeración real de mesas por sector, para el selector de /mozo */}
       <Link
         to="/admin/mesas-pos"
-        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
+        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-3"
       >
         <div>
           <div className="font-head font-semibold text-sm">🪑 Mesas del POS</div>
           <div className="text-[11px] text-paper/45 mt-0.5">
             La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo
+          </div>
+        </div>
+        <span className="text-gold text-lg">→</span>
+      </Link>
+
+      {/* Caja fase 1 — cobrar y cerrar mesa, ver varos-pos/DECISIONES.md */}
+      <Link
+        to="/admin/caja"
+        className="flex items-center justify-between bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-6"
+      >
+        <div>
+          <div className="font-head font-semibold text-sm">💰 Caja</div>
+          <div className="text-[11px] text-paper/45 mt-0.5">
+            Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php
           </div>
         </div>
         <span className="text-gold text-lg">→</span>
