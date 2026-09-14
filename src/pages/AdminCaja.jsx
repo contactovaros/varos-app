@@ -72,6 +72,41 @@ export default function AdminCaja() {
     cargar()
   }, [isAdmin])
 
+  // Qué mesas tienen algo pendiente en cocina, para no tener que abrir cada
+  // sector y tocar cada mesa a ciegas — antes de esto no había forma de saber
+  // dónde estaba una comanda sin adivinar (encontrado 2026-09-14: una comanda
+  // real de Gustavo en Mesa 7 · Carpa quedó "invisible" solo porque nadie
+  // sabía en qué mesa buscarla). Se recarga cada 20s, el mismo TTL de caché
+  // que ya usa el propio /state del KDS.
+  const [mesasPendientes, setMesasPendientes] = useState(() => new Set())
+
+  useEffect(() => {
+    if (!isAdmin) return
+    let cancelado = false
+    async function cargarPendientes() {
+      try {
+        const res = await fetch(KDS_STATE_URL)
+        if (!res.ok) return
+        const data = await res.json()
+        const claves = new Set(
+          (data.comandas || [])
+            .filter((c) => (c.items || []).length > 0)
+            .map((c) => `${c.mesa}|${c.sector}`)
+        )
+        if (!cancelado) setMesasPendientes(claves)
+      } catch {
+        // silencioso — el badge es una ayuda visual, no crítica; si falla, la
+        // mesa se sigue pudiendo elegir a mano igual que siempre
+      }
+    }
+    cargarPendientes()
+    const id = setInterval(cargarPendientes, 20000)
+    return () => {
+      cancelado = true
+      clearInterval(id)
+    }
+  }, [isAdmin])
+
   useEffect(() => {
     if (!isAdmin) return
     async function cargarPrecios() {
@@ -103,6 +138,20 @@ export default function AdminCaja() {
     }
     if (isAdmin) cargarResumen()
   }, [isAdmin, toast])
+
+  // Abrir solo el/los sectores que tienen algo pendiente — si no hay ninguno
+  // pendiente en absoluto, no tocamos lo que el admin ya haya abierto a mano.
+  useEffect(() => {
+    if (mesasPendientes.size === 0) return
+    setSectoresAbiertos((prev) => {
+      const next = new Set(prev)
+      for (const clave of mesasPendientes) {
+        const sector = clave.split('|')[1]
+        if (sector) next.add(sector)
+      }
+      return next
+    })
+  }, [mesasPendientes])
 
   const gruposMesas = useMemo(() => {
     const porSector = {}
@@ -262,10 +311,18 @@ export default function AdminCaja() {
           <p className="text-paper/50 text-xs mb-3">Elegí la mesa a cobrar.</p>
           {gruposMesas.map(([sector, mesasDelSector]) => {
             const abierto = sectoresAbiertos.has(sector)
+            const pendientesDelSector = mesasDelSector.filter((m) => mesasPendientes.has(`${m.numero}|${sector}`)).length
             return (
               <div key={sector} className="mb-2.5 border-b border-white/5 pb-2.5 last:border-b-0">
                 <button onClick={() => toggleSector(sector)} className="w-full flex items-center justify-between py-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60">{sector}</span>
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60 flex items-center gap-1.5">
+                    {sector}
+                    {pendientesDelSector > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-gold text-ink text-[10px] font-bold normal-case tracking-normal">
+                        {pendientesDelSector}
+                      </span>
+                    )}
+                  </span>
                   <span className="flex items-center gap-2">
                     <span className="text-[10px] text-paper/35">{mesasDelSector.length} mesas</span>
                     <span className={`text-gold text-xs transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
@@ -273,15 +330,23 @@ export default function AdminCaja() {
                 </button>
                 {abierto && (
                   <div className="grid grid-cols-4 gap-2 mt-1">
-                    {mesasDelSector.map((m) => (
-                      <button
-                        key={m.id}
-                        onClick={() => elegirMesa(m.numero, sector)}
-                        className="py-3 rounded-lg bg-ink border border-white/10 text-sm font-medium"
-                      >
-                        {m.numero}
-                      </button>
-                    ))}
+                    {mesasDelSector.map((m) => {
+                      const pendiente = mesasPendientes.has(`${m.numero}|${sector}`)
+                      return (
+                        <button
+                          key={m.id}
+                          onClick={() => elegirMesa(m.numero, sector)}
+                          className={`relative py-3 rounded-lg border text-sm font-medium ${
+                            pendiente ? 'bg-gold/10 border-gold/50 text-gold' : 'bg-ink border-white/10'
+                          }`}
+                        >
+                          {m.numero}
+                          {pendiente && (
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-gold" aria-hidden="true" />
+                          )}
+                        </button>
+                      )
+                    })}
                   </div>
                 )}
               </div>
