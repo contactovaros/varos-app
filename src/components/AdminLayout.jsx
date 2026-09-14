@@ -1,5 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom'
-import { IconSprite, NAV_ITEMS, NavCardCompact, NavGridMobile } from './AdminNav.jsx'
+import { IconSprite, NAV_ITEMS, NavCardCompact, NavStrip } from './AdminNav.jsx'
 import { AdminDataProvider } from '../context/AdminDataContext.jsx'
 
 // Mismas rutas que App.jsx ensancha a lg:max-w-7xl (su `anchoAmplio`): son
@@ -48,11 +48,7 @@ export default function AdminLayout() {
             mobile (el sidebar de arriba la reemplaza en desktop); en las
             páginas angostas queda visible siempre, porque ahí no hay
             sidebar — es la única navegación que tienen en escritorio. */}
-        <div className={`${ancho ? 'lg:hidden ' : ''}flex gap-2 overflow-x-auto px-4 pt-4 pb-2`}>
-          {NAV_ITEMS.map((item) => (
-            <NavGridMobile key={item.to} item={item} compact />
-          ))}
-        </div>
+        <NavStrip className={ancho ? 'lg:hidden' : ''} />
 
         {/* El estado del club (clientes, menú, canjes, ajustes…) se carga acá,
             una sola vez para toda la subruta /admin — así Clientes, Ajustes,

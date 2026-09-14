@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
 
 // Navegación compartida de todo /admin: el sprite de íconos, el array de
 // destinos y las dos formas de mostrarlos (grilla/tira compacta en mobile,
@@ -180,14 +181,17 @@ const NAV_ACCENTS = {
 // AdminLayout) sin pesar tanto como la grilla grande original de /admin —
 // ahí se muestra en tira horizontal con scroll en vez de grid 4×2.
 export function NavGridMobile({ item, compact = false }) {
+  const location = useLocation()
+  const active = location.pathname === item.to
   return (
     <Link
       to={item.to}
       title={item.desc}
+      data-nav-active={active ? 'true' : undefined}
       className={
         compact
-          ? 'flex flex-col items-center justify-center gap-1 bg-inkSoft rounded-lg py-2 w-16 shrink-0 transition-colors duration-150 ease-salida hover:bg-white/5 active:bg-white/5'
-          : 'flex flex-col items-center justify-center gap-1.5 bg-inkSoft rounded-lg py-3.5 transition-colors duration-150 ease-salida hover:bg-white/5 active:bg-white/5'
+          ? `flex flex-col items-center justify-center gap-1 rounded-lg py-2 w-16 shrink-0 border transition-colors duration-150 ease-salida ${active ? 'bg-ember/10 border-ember/50 text-ember' : 'bg-inkSoft border-transparent hover:bg-white/5 active:bg-white/5'}`
+          : `flex flex-col items-center justify-center gap-1.5 rounded-lg py-3.5 border transition-colors duration-150 ease-salida ${active ? 'bg-ember/10 border-ember/50 text-ember' : 'bg-inkSoft border-transparent hover:bg-white/5 active:bg-white/5'}`
       }
     >
       <NavIcon id={item.icon} className={compact ? 'w-4 h-4' : 'w-5 h-5'} />
@@ -196,15 +200,67 @@ export function NavGridMobile({ item, compact = false }) {
   )
 }
 
+// Envoltorio de la tira horizontal: la hace autodesplazarse hasta la página
+// activa al entrar o cambiar de ruta (si no, entrar directo a Canjes o
+// Ajustes — los últimos del array — los deja fuera de vista, obligando a
+// swipear a ciegas) y agrega degradés en los bordes cuando hay más ítems
+// fuera de pantalla, para que se note que la tira scrollea.
+export function NavStrip({ className = '' }) {
+  const containerRef = useRef(null)
+  const location = useLocation()
+  const [showLeft, setShowLeft] = useState(false)
+  const [showRight, setShowRight] = useState(false)
+
+  const updateFades = () => {
+    const el = containerRef.current
+    if (!el) return
+    setShowLeft(el.scrollLeft > 0)
+    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const activeEl = el.querySelector('[data-nav-active="true"]')
+    if (activeEl) {
+      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      activeEl.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduceMotion ? 'auto' : 'instant' })
+    }
+    updateFades()
+  }, [location.pathname])
+
+  return (
+    <div className={`relative ${className}`}>
+      <div ref={containerRef} onScroll={updateFades} className="flex gap-2 overflow-x-auto px-4 pt-4 pb-2">
+        {NAV_ITEMS.map((item) => (
+          <NavGridMobile key={item.to} item={item} compact />
+        ))}
+      </div>
+      {showLeft && (
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-ink to-transparent" />
+      )}
+      {showRight && (
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-ink to-transparent" />
+      )}
+    </div>
+  )
+}
+
 // Versión compacta para la barra fija de escritorio: ícono + label, la
 // descripción larga queda como tooltip (title) en vez de ocupar dos líneas.
 export function NavCardCompact({ item }) {
   const a = NAV_ACCENTS[item.accent]
+  const location = useLocation()
+  const active = location.pathname === item.to
   return (
     <Link
       to={item.to}
       title={item.desc}
-      className={`flex items-center gap-2.5 bg-inkSoft border ${a.border} rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida ${a.hover} ${a.active}`}
+      className={
+        active
+          ? 'flex items-center gap-2.5 bg-ember/10 border border-ember/50 text-ember rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida'
+          : `flex items-center gap-2.5 bg-inkSoft border ${a.border} rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida ${a.hover} ${a.active}`
+      }
     >
       <NavIcon id={item.icon} className="w-4 h-4 shrink-0" />
       <span className="font-head text-xs font-medium truncate">{item.label}</span>
