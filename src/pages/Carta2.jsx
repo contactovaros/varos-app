@@ -147,14 +147,12 @@ export default function Carta2() {
 
   return (
     <div className="min-h-screen bg-ink px-5 pt-10 pb-14">
-      {/* Wordmark cursivo en texto, no imagen — fuente Alex Brush cargada en
-          index.html. Se evita el badge circular tipo app de la primera
-          pasada, que no se parecía a la firma dorada de la carta real. */}
+      {/* Wordmark real, no una aproximación con fuente: es el mismo PNG
+          (`bg_logo.png`) que usa `varos.cl/carta` hoy — se sacó de la copia
+          estática que ya se había crawleado (`varos-cl-copia/carta/`), así
+          que es pixel-idéntico al de la carta real, no una interpretación. */}
       <header className="text-center mb-5">
-        <div className="text-gold leading-none" style={{ fontFamily: '"Alex Brush", cursive', fontSize: '3.25rem' }}>
-          Varo&apos;s
-        </div>
-        <p className="text-paper/60 text-[11px] tracking-[0.35em] uppercase font-serif mt-0.5">Restaurant</p>
+        <img src="/varos-wordmark-carta.png" alt="Varo's Restaurant" className="mx-auto w-64 max-w-full h-auto" />
         <p className="text-paper/30 text-[10px] mt-2">
           {cargando ? 'Cargando la carta…' : `${items.length} platos disponibles`}
         </p>
