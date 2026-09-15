@@ -13,21 +13,44 @@ import { supabase } from '../lib/supabase'
 // microcopy abajo, pedido explícito de varos-negocio para no confundirse con
 // /pedidos, que sí existe en el sitio de WordPress).
 //
-// Sin realtime ni polling: es una página React normal con su propio fetch al
-// montar. Si el admin cambia un precio o la visibilidad desde
-// /admin/productos, alcanza con recargar esta página para verlo reflejado —
-// no hace falta más para esta primera versión interna.
+// Sin realtime ni polling: fetch propio al montar. Si el admin cambia un
+// precio o la visibilidad desde /admin/productos, alcanza con recargar esta
+// página para verlo reflejado.
 //
-// Rediseño 2026-09-15: el usuario mandó una captura de la carta real de
-// varos.cl/carta (WordPress) pidiendo que esta se le parezca. Se adoptó el
-// lenguaje visual — pestañas de categoría (una a la vez, no scroll con todo
-// mezclado), título dorado, ítems en itálica con línea punteada al precio,
-// footer con el teléfono en dorado — pero SIN hardcodear la lista de
-// categorías ni sus subgrupos: acá `menu_items` solo tiene una columna
-// `category` plana, sin subcategoría, así que no existe el subgrupo
-// "Entrada / Plato Principal / Postres" en rojo vino que se ve en la
-// referencia — se arma solo desde lo que hay en la base para no
-// desactualizarse.
+// Rediseño 2026-09-15 (segunda pasada): el usuario mandó una captura de la
+// carta real de varos.cl/carta pidiendo fidelidad visual — la primera pasada
+// (badge circular tipo app + pestañas-pill + orden alfabético) "ni se
+// parecía". Esta versión: wordmark cursivo en texto (fuente Alex Brush, ver
+// index.html), pestañas de texto plano en DOS filas (categorías de comida +
+// fila separada de bebidas en `diamond`, mismo agrupamiento que la carta
+// real), en el orden real del menú — no alfabético. El orden está fijo acá
+// porque son los 10 nombres de categoría reales que ya existen en
+// `menu_items` (confirmados contra la captura), no una lista inventada; una
+// categoría nueva que no esté en esta lista cae al final del grupo "comida"
+// por defecto, así nunca desaparece de la carta aunque no esté prevista.
+
+// Las categorías reales en `menu_items` vienen casi todas en MAYÚSCULA (menos
+// "Menú del Día") — se compara normalizado (mayúscula + sin tildes) para no
+// depender de que la mayúscula/tilde exacta se mantenga igual para siempre.
+function normalizarCategoria(s) {
+  return String(s || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .trim()
+}
+
+const ORDEN_CATEGORIAS = [
+  'MENU DEL DIA',
+  'NUESTRO BAR',
+  'APERITIVOS',
+  'ENTRADAS FRIAS Y CALIENTES',
+  'PLATOS PRINCIPALES',
+  'NINOS',
+  'GUARNICIONES',
+  'POSTRES & TENTACIONES'
+].map(normalizarCategoria)
+const CATEGORIAS_BEBIDAS = ['MOCKTAILS (SIN ALCOHOL)', 'VINOS & ESPUMANTES'].map(normalizarCategoria)
 
 function formatCLP(valor) {
   const n = Number(valor) || 0
@@ -63,9 +86,6 @@ export default function Carta2() {
     }
   }, [])
 
-  // Agrupado por categoría, orden manual (`orden`) dentro de cada una y por
-  // nombre cuando no hay uno definido — mismo criterio que /admin/productos,
-  // para que el orden que ve el admin sea el mismo que ve el cliente.
   const categorias = useMemo(() => {
     const porCategoria = new Map()
     for (const item of items) {
@@ -73,7 +93,15 @@ export default function Carta2() {
       if (!porCategoria.has(cat)) porCategoria.set(cat, [])
       porCategoria.get(cat).push(item)
     }
-    const nombres = Array.from(porCategoria.keys()).sort((a, b) => a.localeCompare(b, 'es'))
+    const ordenConocido = [...ORDEN_CATEGORIAS, ...CATEGORIAS_BEBIDAS]
+    const nombres = Array.from(porCategoria.keys()).sort((a, b) => {
+      const ia = ordenConocido.indexOf(normalizarCategoria(a))
+      const ib = ordenConocido.indexOf(normalizarCategoria(b))
+      if (ia === -1 && ib === -1) return a.localeCompare(b, 'es')
+      if (ia === -1) return 1
+      if (ib === -1) return -1
+      return ia - ib
+    })
     return nombres.map((nombre) => {
       const platos = [...porCategoria.get(nombre)].sort((a, b) => {
         const oa = a.orden ?? 9999
@@ -85,9 +113,9 @@ export default function Carta2() {
     })
   }, [items])
 
-  // La pestaña activa por defecto es la primera categoría una vez que llegan
-  // los datos; si la categoría activa deja de existir (recarga con otros
-  // datos) se vuelve a la primera disponible.
+  const categoriasComida = categorias.filter((c) => !CATEGORIAS_BEBIDAS.includes(normalizarCategoria(c.nombre)))
+  const categoriasBebida = categorias.filter((c) => CATEGORIAS_BEBIDAS.includes(normalizarCategoria(c.nombre)))
+
   useEffect(() => {
     if (categorias.length === 0) {
       setCategoriaActiva(null)
@@ -101,18 +129,33 @@ export default function Carta2() {
 
   const seleccion = categorias.find((c) => c.nombre === categoriaActiva)
 
+  function Pestana({ nombre, color }) {
+    const activa = nombre === categoriaActiva
+    return (
+      <button
+        type="button"
+        onClick={() => setCategoriaActiva(nombre)}
+        className={
+          'text-[11px] sm:text-xs font-head font-semibold uppercase tracking-wide transition-colors whitespace-nowrap ' +
+          (activa ? 'text-ember' : color === 'diamond' ? 'text-diamond/70 hover:text-diamond' : 'text-paper/70 hover:text-paper')
+        }
+      >
+        {nombre}
+      </button>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-ink px-5 pt-10 pb-14">
-      {/* Emblema: mismo badge dorado que ya usa el Club (evita improvisar una
-          fuente script nueva — ver /admin, TarjetaFidelidad.jsx). Trae el
-          "Varo's" cursivo y "Restaurant" en serif ya integrados. */}
-      <header className="text-center mb-6">
-        <img
-          src="/logo-varos.png"
-          alt="Varo's Restaurant"
-          className="w-20 h-20 mx-auto mb-2 drop-shadow-[0_0_20px_rgba(227,179,65,0.25)]"
-        />
-        <p className="text-paper/35 text-[11px] mt-1">
+      {/* Wordmark cursivo en texto, no imagen — fuente Alex Brush cargada en
+          index.html. Se evita el badge circular tipo app de la primera
+          pasada, que no se parecía a la firma dorada de la carta real. */}
+      <header className="text-center mb-5">
+        <div className="text-gold leading-none" style={{ fontFamily: '"Alex Brush", cursive', fontSize: '3.25rem' }}>
+          Varo&apos;s
+        </div>
+        <p className="text-paper/60 text-[11px] tracking-[0.35em] uppercase font-serif mt-0.5">Restaurant</p>
+        <p className="text-paper/30 text-[10px] mt-2">
           {cargando ? 'Cargando la carta…' : `${items.length} platos disponibles`}
         </p>
       </header>
@@ -120,7 +163,7 @@ export default function Carta2() {
       {/* Microcopy obligatorio: visible arriba, no al pie en chico — pedido
           explícito de varos-negocio para que nadie la confunda con un
           sistema de pedidos (ya existe /pedidos en el sitio de WordPress). */}
-      <div className="bg-inkSoft border border-gold/20 rounded-2xl px-4 py-3 mb-6 text-center">
+      <div className="bg-inkSoft border border-gold/20 rounded-2xl px-4 py-3 mb-7 text-center">
         <p className="text-sm text-gold font-head font-medium">Para pedir, avisale a tu mozo</p>
         <p className="text-paper/40 text-[11px] mt-1">Esta carta es solo para mirar los platos y precios.</p>
       </div>
@@ -137,40 +180,41 @@ export default function Carta2() {
 
       {categorias.length > 0 && (
         <>
-          {/* Pestañas de categoría, una fila con scroll horizontal — como la
-              carta real: se elige una categoría a la vez, no todo mezclado. */}
-          <nav className="flex gap-1.5 overflow-x-auto pb-1 mb-6 -mx-5 px-5 scrollbar-none">
-            {categorias.map(({ nombre }) => {
-              const activa = nombre === categoriaActiva
-              return (
-                <button
-                  key={nombre}
-                  type="button"
-                  onClick={() => setCategoriaActiva(nombre)}
-                  className={
-                    'shrink-0 px-3 py-1.5 rounded-full text-[10px] font-semibold uppercase tracking-[0.1em] transition-colors ' +
-                    (activa
-                      ? 'bg-gradient-to-br from-ember to-emberDark text-ink'
-                      : 'text-paper/50 border border-white/10')
-                  }
-                >
-                  {nombre}
-                </button>
-              )
-            })}
+          {/* Pestañas de texto plano (no pills), en dos filas — igual que la
+              carta real: la fila principal de comida, y una fila separada
+              y centrada solo para bebidas, en `diamond`. */}
+          <nav className="mb-1.5">
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2">
+              {categoriasComida.map(({ nombre }) => (
+                <Pestana key={nombre} nombre={nombre} color="ember" />
+              ))}
+            </div>
           </nav>
+          {categoriasBebida.length > 0 && (
+            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-6 pb-4 border-b border-white/5">
+              {categoriasBebida.map(({ nombre }) => (
+                <Pestana key={nombre} nombre={nombre} color="diamond" />
+              ))}
+            </nav>
+          )}
+          {categoriasBebida.length === 0 && <div className="mb-6" />}
 
           {seleccion && (
-            <section>
-              <h2 className="font-display text-2xl text-gold tracking-wide mb-4">{seleccion.nombre}</h2>
-              <div className="flex flex-col gap-3">
+            <section className="max-w-lg mx-auto">
+              <div className="flex items-baseline gap-2 mb-3">
+                <h2 className="text-gold font-head font-semibold text-sm uppercase tracking-wide shrink-0">
+                  {seleccion.nombre}
+                </h2>
+                <span className="flex-1 min-w-[8px] border-b border-dotted border-gold/30 translate-y-[-3px]" />
+              </div>
+              <div className="flex flex-col gap-2.5">
                 {seleccion.platos.map((plato) => (
                   <div key={plato.id}>
                     <div className="flex items-baseline gap-2">
-                      <span className="text-paper/30 text-xs shrink-0">*</span>
-                      <span className="italic text-paper/75 text-sm min-w-0 truncate">{plato.name}</span>
-                      <span className="flex-1 min-w-[8px] border-b border-dotted border-paper/20 translate-y-[-4px]" />
-                      <span className="font-mono text-xs tabular-nums text-gold whitespace-nowrap shrink-0">
+                      <span className="text-paper/25 text-[10px] shrink-0">*</span>
+                      <span className="italic text-paper/80 text-[13px] leading-snug">{plato.name}</span>
+                      <span className="flex-1 min-w-[6px] border-b border-dotted border-paper/15 translate-y-[-3px]" />
+                      <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
                         {formatCLP(plato.price_clp)}
                       </span>
                     </div>
