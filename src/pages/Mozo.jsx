@@ -85,6 +85,39 @@ function leerGarzonGuardado() {
   }
 }
 
+// Antes, si el garzón refrescaba la página a mitad de armar un pedido (sin
+// querer, o porque el celular se quedó sin batería y se prendió de nuevo),
+// se perdía todo — el carrito solo vivía en memoria hasta tocar "Enviar".
+// Se guarda en el propio celular (no en el servidor: es un borrador, todavía
+// no es un pedido real) y se restaura solo al volver a abrir /mozo.
+const PEDIDO_EN_CURSO_KEY = 'varos_mozo_pedido_en_curso'
+
+function leerPedidoEnCurso() {
+  try {
+    const raw = localStorage.getItem(PEDIDO_EN_CURSO_KEY)
+    if (!raw) return { mesa: null, cart: {} }
+    const p = JSON.parse(raw)
+    return { mesa: p?.mesa ?? null, cart: p?.cart ?? {} }
+  } catch {
+    return { mesa: null, cart: {} }
+  }
+}
+
+function guardarPedidoEnCurso(mesa, cart) {
+  try {
+    // Nada que guardar: no ensuciar el localStorage con un borrador vacío.
+    if (!mesa && Object.keys(cart).length === 0) {
+      localStorage.removeItem(PEDIDO_EN_CURSO_KEY)
+      return
+    }
+    localStorage.setItem(PEDIDO_EN_CURSO_KEY, JSON.stringify({ mesa, cart }))
+  } catch {
+    // localStorage lleno o bloqueado (modo privado) — el pedido sigue
+    // funcionando en memoria, solo no sobrevive a un refresh. No es motivo
+    // para romper el flujo de tomar el pedido.
+  }
+}
+
 // Pantalla de candado: pide el código una sola vez por celular. No es un
 // login real — valida contra `validar_codigo_garzon` (RPC pública, no
 // expone la tabla `garzones` ni los códigos de los demás).
@@ -154,12 +187,18 @@ export default function Mozo() {
   const [cargando, setCargando] = useState(true)
   const [errorCarga, setErrorCarga] = useState('')
 
-  const [mesa, setMesa] = useState(null) // { num, sector }
+  const [mesa, setMesa] = useState(() => leerPedidoEnCurso().mesa) // { num, sector }
   const [busqueda, setBusqueda] = useState('')
   const [categoriaActiva, setCategoriaActiva] = useState(null)
 
   // id de menu_items -> { qty, nota, item }
-  const [cart, setCart] = useState({})
+  const [cart, setCart] = useState(() => leerPedidoEnCurso().cart)
+
+  // Persiste el borrador a cada cambio — así un refresh accidental (o el
+  // celular quedándose sin batería) no borra un pedido a mitad de armar.
+  useEffect(() => {
+    guardarPedidoEnCurso(mesa, cart)
+  }, [mesa, cart])
 
   const [sheetMesa, setSheetMesa] = useState(false)
   const [sheetCart, setSheetCart] = useState(false)
