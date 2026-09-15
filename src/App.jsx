@@ -11,6 +11,7 @@ import CheckIn from './pages/CheckIn.jsx'
 import MostrarQR from './pages/MostrarQR.jsx'
 import CompletarPerfil from './pages/CompletarPerfil.jsx'
 import Reservas from './pages/Reservas.jsx'
+import Carta2 from './pages/Carta2.jsx'
 import Mozo from './pages/Mozo.jsx'
 import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
@@ -41,6 +42,15 @@ export default function App() {
   // hacerlo sin crear cuenta ni iniciar sesión.
   if (location.pathname === '/reservas') {
     return <Reservas />
+  }
+
+  // Carta pública de solo lectura ("carta2.0", nombre de trabajo — ver
+  // DECISIONES.md). Pública igual que /reservas: cualquiera con el link debe
+  // poder mirar la carta sin cuenta. Sin link visible desde ningún lado de la
+  // app todavía — se abre a mano por URL mientras se prueba (ver ruta en la
+  // decisión, ESTADO: decidido, sin ejecutar → en progreso).
+  if (location.pathname === '/carta2') {
+    return <Carta2 />
   }
 
   // Pantalla del mozo: sin gate de admin, a propósito — mismo modelo de

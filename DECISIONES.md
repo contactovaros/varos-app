@@ -4,6 +4,37 @@ Más nueva arriba.
 
 ---
 
+## Carta pública fuera del hosting frágil de GTD ("carta2.0") · 2026-09-15 · varos-app + varos.cl
+
+**ESTADO: decidido, sin ejecutar.** Retoma el pendiente abierto en la decisión "Reusar `menu_items`..." (2026-09-11, más abajo): "si la carta pública de varos.cl pasa a alimentarse de esta tabla en vez del PHP viejo."
+
+**Contexto** — `varos.cl/carta` vive en WordPress+Elementor sobre el hosting compartido de GTD, que ya colapsó una vez por una ráfaga de subida de fotos (ver `project_varos_hosting_fragil` en memoria). `/admin/productos` de varos-app **ya sincroniza en vivo contra `varos.cl/carta`** (192/206 platos) — o sea que ya existe una dependencia real de esa página, no es solo contenido de marketing. Ayer se probó de punta a punta el piloto `/mozo` → KDS (Gustavo, Mesa 7, Carpa) — funciona, y es independiente de esto. Se hizo una copia estática de referencia de `/carta` (crawler propio, lento a propósito, en `varos-cl-copia/`) para no depender de memoria visual. `varos.cl/reservas` ya prueba el patrón "URL en varos.cl, página real en Netlify" (redirect 301 vía plugin Redirection) hace más de una semana sin problemas — mismo mecanismo a reusar acá. Consultado `varos-negocio`: no hay antecedente de carta digital en Varo's; el precedente más cercano (cuenta AyHungry) fracasó por estar desconectado del flujo del mozo, no por ser digital — carta2.0 no compite con ese flujo, lo acompaña.
+
+**Opciones**
+1. No tocar nada, `/carta` sigue en WordPress — costo: sigue expuesta al hosting que ya colapsó una vez; no resuelve nada. Riesgo: bajo a corto plazo (ya funciona hoy). Reversible: N/A.
+2. Carta2.0 como copia estática congelada (la que ya se crawleó) fuera de GTD, con redirect desde varos.cl — costo: se desactualiza sola apenas cambie un plato, y crea una **tercera fuente de verdad** del menú (WordPress + copia estática + `/admin/productos`). Riesgo: medio. Reversible: sí.
+3. Carta2.0 como página nueva dentro de varos-app (Netlify), de **solo lectura** (sin carrito, sin botón de pedido — el cliente mira, le dice al mozo, el mozo carga en `/mozo` como ya hace), leyendo **el mismo dato que ya alimenta `/admin/productos`** en vez de una copia congelada, con link/redirect 301 desde `varos.cl` (mismo patrón ya probado de `/reservas`). Riesgo: bajo — no toca gestion.php ni el KDS, una sola fuente de verdad. Reversible: sí, es aditiva.
+
+**Decisión** — Opción 3. La carta física en las mesas y `varos.cl/carta` actual **siguen activas en paralelo** — no se apaga nada todavía (recomendación explícita de `varos-negocio`: pilotear en pocas mesas antes de generalizar, sobre todo por los fines de semana con matrimonios y público variado).
+
+**Qué perdemos** — Editar el *layout visual* de la carta pública deja de ser 100%-Elementor; para eso hay que tocar varos-app. Y la barra de direcciones va a mostrar el dominio de Netlify en vez de `varos.cl/...` en el momento en que se arme el redirect — mismo costo cosmético ya aceptado para `/reservas`.
+
+**Plan**
+1. Confirmar con quien construyó `/admin/productos` que carta2.0 puede leer el mismo dato sin duplicar el fetch ni arriesgar ese sync existente. (se verifica: el sync de `/admin/productos` sigue andando igual después)
+2. Construir la página de solo lectura (diseño de referencia: `varos-cl-copia/`), con microcopy visible tipo "Para pedir, avisale al mozo" — para que nadie la confunda con un sistema de pedidos (ya existe `/pedidos` en el nav de WordPress, riesgo de confusión real marcado por `varos-negocio`). (se verifica: se ve bien en mobile, que es donde se usa en mesa)
+3. Confirmar con el dueño si hay QR físicos ya impresos apuntando a la carta vieja, antes de imprimir cualquier QR nuevo.
+4. Publicar y pilotear en pocas mesas — no reemplazar la carta física todavía. (se verifica: unos días de uso real, sin quejas de "¿esto es para pedir?")
+5. Recién ahí, y solo si se decide seguir: redirect 301 desde `varos.cl/carta` (plugin Redirection, mismo patrón de `/reservas`) y evaluar si la vieja se retira o queda de respaldo. (se verifica: `/admin/productos` sigue sincronizando bien después del cambio)
+
+**Cómo se vuelve atrás** — Antes del paso 5: borrar la página nueva no afecta nada, `varos.cl/carta` sigue intacta. Después del paso 5: desactivar el redirect en el plugin Redirection revierte todo en un clic.
+
+**Pendiente / a confirmar con el usuario**
+- ¿Hay QR físicos ya impresos que apunten a la carta vieja?
+- Nombre final de la ruta pública — "carta2.0" es nombre de trabajo, no algo para decir en voz alta o imprimir en un QR (¿`/carta-nueva`? ¿`/menu`?).
+- ¿La ficha de Google Business o redes sociales linkean directo a `/carta`? (no se encontró evidencia, pero no se descartó del todo — sí se sabe que apuntan a `/reservas`).
+
+---
+
 ## Reusar `menu_items` para el primer módulo del reemplazo del POS (Productos) · 2026-09-11 · varos-app
 
 **Contexto** — Ver `varos-pos/DECISIONES.md` para el programa completo (reemplazo incremental del PHP de `varos.cl/gestion`). Este módulo es el primer paso: Productos/Menú. `varos-app` ya tiene `public.menu_items` (name/description/price_clp/category/image_url/available, RLS: select público, all admins) con un CRUD básico en `/admin` — construida para el flujo de pedidos-por-puntos del Club, hoy dormido (casi no se usa, pocas filas reales).
