@@ -405,6 +405,7 @@ export default function Mozo() {
     setErrorCargaCobro('')
     setErrorCobro('')
     setTotalManualCobro('')
+    setPropinaActiva(true)
     setCargandoCobro(true)
     setComandasCobro([])
     try {
@@ -449,7 +450,18 @@ export default function Mozo() {
     [lineasCobro]
   )
   const hayLineasSinPrecioCobro = lineasCobro.some((l) => l.subtotal == null)
-  const totalFinalCobro = totalManualCobro !== '' ? Number(totalManualCobro) : totalCalculadoCobro
+
+  // Propina sugerida del 10% sobre el subtotal — pedido explícito
+  // (2026-09-15). "Sugerida" = viene activada por defecto (así se ofrece en
+  // el local), pero el garzón la puede sacar con un toque si el cliente no
+  // quiere dejarla. Se calcula sobre el subtotal de los ítems, nunca sobre
+  // un total editado a mano (si el garzón ya está corrigiendo el total a
+  // mano, esa cifra manda entera, la propina no se le vuelve a sumar
+  // encima).
+  const [propinaActiva, setPropinaActiva] = useState(true)
+  const propinaSugerida = Math.round(totalCalculadoCobro * 0.1)
+  const totalConPropina = totalCalculadoCobro + (propinaActiva ? propinaSugerida : 0)
+  const totalFinalCobro = totalManualCobro !== '' ? Number(totalManualCobro) : totalConPropina
 
   async function confirmarCobro() {
     if (!mesaCobrando || !lineasCobro.length || !totalFinalCobro) return
@@ -809,17 +821,6 @@ export default function Mozo() {
               {garzon.nombre} · cambiar
             </button>
           </div>
-          <button
-            onClick={() => setSheetComandas(true)}
-            className="w-full flex items-center justify-between bg-inkSoft border border-gold/25 rounded-xl px-3.5 py-2 mb-2"
-          >
-            <span className="text-[11.5px] text-gold font-head font-medium">🧾 Comandas — ver y editar pedidos</span>
-            {mesasPendientes.size > 0 && (
-              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-ink text-[10px] font-bold">
-                {mesasPendientes.size}
-              </span>
-            )}
-          </button>
           {(avisoEstado === 'inactiva' || avisoEstado === 'desconocida') && (
             <button
               onClick={activarAvisos}
@@ -885,6 +886,23 @@ export default function Mozo() {
               ))}
             </div>
           )}
+
+          {/* Botón de Comandas: a propósito debajo de las pestañas de
+              categoría, no arriba de todo — pedido explícito (2026-09-15)
+              para que no compita por espacio con la identidad/mesa/aviso, y
+              sigue fijo igual (todo este <header> es sticky), así que nunca
+              hay que volver a scrollear arriba para llegar a él. */}
+          <button
+            onClick={() => setSheetComandas(true)}
+            className="w-full flex items-center justify-between bg-inkSoft border border-gold/25 rounded-xl px-3.5 py-2 mt-2.5"
+          >
+            <span className="text-[11.5px] text-gold font-head font-medium">🧾 Comandas — ver y editar pedidos</span>
+            {mesasPendientes.size > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-ink text-[10px] font-bold">
+                {mesasPendientes.size}
+              </span>
+            )}
+          </button>
         </header>
 
         {/* ---- Lista de platos ---- */}
@@ -1030,9 +1048,32 @@ export default function Mozo() {
                         ⚠ Algún ítem no tiene precio cargado — ajustá el total a mano abajo antes de cobrar.
                       </p>
                     )}
+
+                    <div className="flex items-center justify-between text-[13px] text-paper/60 mb-1.5">
+                      <span>Subtotal</span>
+                      <span className="tabular-nums">{formatCLP(totalCalculadoCobro)}</span>
+                    </div>
+                    <button
+                      onClick={() => setPropinaActiva((v) => !v)}
+                      disabled={totalManualCobro !== ''}
+                      className="w-full flex items-center justify-between text-[13px] py-1.5 mb-2.5 disabled:opacity-40"
+                    >
+                      <span className="flex items-center gap-2 text-paper/60">
+                        <span
+                          className={`w-4 h-4 rounded border flex items-center justify-center text-[10px] ${
+                            propinaActiva ? 'bg-gold border-gold text-ink' : 'border-white/20'
+                          }`}
+                        >
+                          {propinaActiva ? '✓' : ''}
+                        </span>
+                        Propina sugerida (10%)
+                      </span>
+                      <span className="tabular-nums text-gold">{formatCLP(propinaSugerida)}</span>
+                    </button>
+
                     <label className="text-[10px] uppercase tracking-wide text-paper/40 block mb-1.5">Total a cobrar</label>
                     <input
-                      value={totalManualCobro !== '' ? totalManualCobro : totalCalculadoCobro}
+                      value={totalManualCobro !== '' ? totalManualCobro : totalConPropina}
                       onChange={(e) => setTotalManualCobro(e.target.value.replace(/[^0-9]/g, ''))}
                       inputMode="numeric"
                       className="w-full bg-ink border border-white/10 rounded-lg px-3.5 py-3 text-lg font-head font-semibold text-gold tabular-nums mb-3.5"
