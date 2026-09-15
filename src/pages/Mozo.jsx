@@ -13,7 +13,23 @@ import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/
 // su propio teléfono, así que no hace falta volver a pedirlo cada vez.
 const KDS_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo?k=797a0ed49a8623e452b03fc0'
 const KDS_EDITAR_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-editar?k=797a0ed49a8623e452b03fc0'
+const KDS_DETALLE_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?k=797a0ed49a8623e452b03fc0'
+const KDS_CERRAR_MESA_URL = 'https://varos-kds.varosnocturno.workers.dev/cerrar-mesa?k=797a0ed49a8623e452b03fc0'
 const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
+
+const MEDIOS_PAGO = [
+  { value: 'efectivo', label: 'Efectivo' },
+  { value: 'tarjeta', label: 'Tarjeta' },
+  { value: 'transferencia', label: 'Transferencia' }
+]
+const SIN_TILDE = { á: 'a', é: 'e', í: 'i', ó: 'o', ú: 'u', ñ: 'n' }
+function normalizarNombre(s) {
+  return String(s || '')
+    .toLowerCase()
+    .replace(/[áéíóúñ]/g, (c) => SIN_TILDE[c])
+    .replace(/^[-+*\s]+/, '')
+    .trim()
+}
 const MENU_CATALOG_URL = 'https://varos-kds.varosnocturno.workers.dev/menu-catalog?k=797a0ed49a8623e452b03fc0'
 const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
 
@@ -144,7 +160,14 @@ function GateGarzon({ onEntrar }) {
       setErrorCodigo('Código incorrecto.')
       return
     }
-    const guardado = { id: garzon.id, nombre: garzon.nombre }
+    // El código se guarda también (no solo id/nombre) porque la RPC de
+    // cobro (registrar_cobro_garzon) lo revalida en cada cobro — es la única
+    // forma de que un garzón sin sesión real pueda escribir en pos_cobros de
+    // forma segura. Garzones que ya habían entrado ANTES de este cambio no
+    // van a tener `codigo` guardado hasta que vuelvan a entrar una vez
+    // ("cambiar" arriba a la derecha) — mientras tanto pueden seguir
+    // pidiendo normal, solo no van a poder cobrar hasta relogearse.
+    const guardado = { id: garzon.id, nombre: garzon.nombre, codigo: limpio }
     try {
       localStorage.setItem(GARZON_STORAGE_KEY, JSON.stringify(guardado))
     } catch {}
@@ -290,9 +313,7 @@ export default function Mozo() {
     setCargandoDetalle(true)
     setComandaEditando(null)
     try {
-      const res = await fetch(
-        `https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?id=${encodeURIComponent(id)}&k=797a0ed49a8623e452b03fc0`
-      )
+      const res = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(id)}`)
       if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo cargar el pedido'))
       const data = await res.json()
       setComandaEditando({
@@ -348,6 +369,124 @@ export default function Mozo() {
       next.has(sector) ? next.delete(sector) : next.add(sector)
       return next
     })
+  }
+
+  // Cobrar una mesa, sin cuenta de Google — pedido explícito (2026-09-15).
+  // Pasa por la RPC registrar_cobro_garzon (ver
+  // supabase/add_registrar_cobro_garzon.sql), que revalida el código del
+  // garzón adentro y recién ahí escribe en pos_cobros (RLS normal exige
+  // admin; la RPC corre security definer). Mismo criterio de precio que
+  // /admin/caja: Menú del Día usa su propio precio de contenedor, el resto
+  // busca por nombre en el catálogo ya cargado — y ya trae los items SIN
+  // filtrar (mismo /pedido-nuevo-detalle del editor), así que las bebidas sí
+  // se cobran (bug ya encontrado y arreglado también en /admin/caja).
+  const [mesaCobrando, setMesaCobrando] = useState(null) // { num, sector }
+  const [comandasCobro, setComandasCobro] = useState([]) // items sin filtrar, todas las comandas de la mesa
+  const [cargandoCobro, setCargandoCobro] = useState(false)
+  const [errorCargaCobro, setErrorCargaCobro] = useState('')
+  const [medioPagoCobro, setMedioPagoCobro] = useState('efectivo')
+  const [totalManualCobro, setTotalManualCobro] = useState('')
+  const [cobrando, setCobrando] = useState(false)
+  const [errorCobro, setErrorCobro] = useState('')
+  const [toastCobro, setToastCobro] = useState('')
+
+  const precioMenuDia = useMemo(
+    () => items.find((i) => i.category === 'Menú del Día')?.price_clp || 0,
+    [items]
+  )
+  const mapaPreciosCobro = useMemo(() => {
+    const m = new Map()
+    for (const it of items) m.set(normalizarNombre(it.name), it.price_clp)
+    return m
+  }, [items])
+
+  async function abrirCobro(num, sector) {
+    setMesaCobrando({ num, sector })
+    setErrorCargaCobro('')
+    setErrorCobro('')
+    setTotalManualCobro('')
+    setCargandoCobro(true)
+    setComandasCobro([])
+    try {
+      const lista = comandasPorMesa.get(`${num}|${sector}`) || []
+      const completas = await Promise.all(
+        lista.map(async (c) => {
+          if (!c.editable) return { ...c, items: [], sinFiltrar: false }
+          const r = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(c.id)}`)
+          if (!r.ok) return { ...c, items: [], sinFiltrar: false }
+          const detalle = await r.json()
+          return { ...c, items: detalle.items || [], sinFiltrar: true }
+        })
+      )
+      setComandasCobro(completas)
+    } catch (err) {
+      setErrorCargaCobro('No se pudo cargar el pedido: ' + err.message)
+    } finally {
+      setCargandoCobro(false)
+    }
+  }
+
+  const lineasCobro = useMemo(() => {
+    const out = []
+    for (const c of comandasCobro) {
+      for (const it of c.items || []) {
+        const esMenuDia = Array.isArray(it.menus) && it.menus.length > 0
+        const precioUnit = esMenuDia ? precioMenuDia : mapaPreciosCobro.get(normalizarNombre(it.nombre))
+        out.push({
+          nombre: it.nombre,
+          cant: it.cant,
+          precioUnit: precioUnit ?? null,
+          subtotal: precioUnit != null ? precioUnit * it.cant : null
+        })
+      }
+    }
+    return out
+  }, [comandasCobro, precioMenuDia, mapaPreciosCobro])
+
+  const hayComandaSinFiltrar = comandasCobro.some((c) => !c.sinFiltrar)
+  const totalCalculadoCobro = useMemo(
+    () => lineasCobro.reduce((s, l) => s + (l.subtotal ?? 0), 0),
+    [lineasCobro]
+  )
+  const hayLineasSinPrecioCobro = lineasCobro.some((l) => l.subtotal == null)
+  const totalFinalCobro = totalManualCobro !== '' ? Number(totalManualCobro) : totalCalculadoCobro
+
+  async function confirmarCobro() {
+    if (!mesaCobrando || !lineasCobro.length || !totalFinalCobro) return
+    if (!garzon.codigo) {
+      setErrorCobro('Tu sesión es de antes de este cambio — tocá "cambiar" arriba y volvé a entrar con tu código para poder cobrar.')
+      return
+    }
+    setCobrando(true)
+    setErrorCobro('')
+    try {
+      const { error } = await supabase.rpc('registrar_cobro_garzon', {
+        p_codigo: garzon.codigo,
+        p_mesa: String(mesaCobrando.num),
+        p_sector: mesaCobrando.sector,
+        p_items: lineasCobro.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit })),
+        p_total: totalFinalCobro,
+        p_medio_pago: medioPagoCobro
+      })
+      if (error) throw error
+      try {
+        await fetch(KDS_CERRAR_MESA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mesa: String(mesaCobrando.num), sector: mesaCobrando.sector })
+        })
+      } catch {
+        // el cobro ya quedó registrado aunque falle el cierre en el KDS
+      }
+      setToastCobro(`Mesa ${mesaCobrando.num} cobrada — ${formatCLP(totalFinalCobro)}`)
+      setTimeout(() => setToastCobro(''), 2500)
+      setMesaCobrando(null)
+      setComandasCobro([])
+    } catch (err) {
+      setErrorCobro('No se pudo registrar el cobro: ' + (err.message || 'error desconocido'))
+    } finally {
+      setCobrando(false)
+    }
   }
   // Qué sectores están desplegados en el selector de mesa — colapsados por
   // defecto (con varios sectores y 13+ mesas en Carpa, mostrar todo abierto
@@ -850,7 +989,85 @@ export default function Mozo() {
             style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', paddingLeft: '18px', paddingRight: '18px' }}
           >
             <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
-            {comandaEditando ? (
+            {mesaCobrando ? (
+              <>
+                <button
+                  onClick={() => {
+                    setMesaCobrando(null)
+                    setComandasCobro([])
+                  }}
+                  className="text-paper/40 text-xs mt-2 mb-2 underline"
+                >
+                  ← volver a Comandas
+                </button>
+                <h2 className="font-head text-lg font-semibold mb-1">
+                  Cobrar Mesa {mesaCobrando.num} · {mesaCobrando.sector}
+                </h2>
+                {cargandoCobro && <p className="text-paper/35 text-xs py-4">Cargando pedido…</p>}
+                {errorCargaCobro && <p className="text-rose-400 text-xs py-2 leading-relaxed">{errorCargaCobro}</p>}
+                {hayComandaSinFiltrar && (
+                  <p className="text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                    ⚠ Esta mesa tiene una comanda que viene de gestion.php — no se pudo traer sin filtrar, revisá con cocina si falta algo antes de cobrar.
+                  </p>
+                )}
+                {!cargandoCobro && lineasCobro.length > 0 && (
+                  <>
+                    <div className="bg-ink border border-white/10 rounded-2xl p-3.5 mb-3.5">
+                      {lineasCobro.map((l, i) => (
+                        <div key={i} className="flex items-center justify-between gap-2 py-1.5 border-b border-white/5 last:border-b-0 text-[13px]">
+                          <span>
+                            <span className="text-paper/40 mr-1.5">{l.cant}×</span>
+                            {l.nombre}
+                          </span>
+                          <span className="tabular-nums shrink-0">
+                            {l.subtotal != null ? formatCLP(l.subtotal) : <span className="text-amber-400">revisar precio</span>}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {hayLineasSinPrecioCobro && (
+                      <p className="text-[11px] text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                        ⚠ Algún ítem no tiene precio cargado — ajustá el total a mano abajo antes de cobrar.
+                      </p>
+                    )}
+                    <label className="text-[10px] uppercase tracking-wide text-paper/40 block mb-1.5">Total a cobrar</label>
+                    <input
+                      value={totalManualCobro !== '' ? totalManualCobro : totalCalculadoCobro}
+                      onChange={(e) => setTotalManualCobro(e.target.value.replace(/[^0-9]/g, ''))}
+                      inputMode="numeric"
+                      className="w-full bg-ink border border-white/10 rounded-lg px-3.5 py-3 text-lg font-head font-semibold text-gold tabular-nums mb-3.5"
+                    />
+                    <label className="text-[10px] uppercase tracking-wide text-paper/40 block mb-1.5">Medio de pago</label>
+                    <div className="flex gap-2 mb-4">
+                      {MEDIOS_PAGO.map((m) => (
+                        <button
+                          key={m.value}
+                          onClick={() => setMedioPagoCobro(m.value)}
+                          className={`flex-1 py-2.5 rounded-lg border text-[13px] font-medium ${
+                            medioPagoCobro === m.value
+                              ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink font-semibold'
+                              : 'bg-ink border-white/10 text-paper'
+                          }`}
+                        >
+                          {m.label}
+                        </button>
+                      ))}
+                    </div>
+                    {errorCobro && <p className="text-rose-400 text-xs mb-3 leading-relaxed">{errorCobro}</p>}
+                    <button
+                      onClick={confirmarCobro}
+                      disabled={cobrando || !totalFinalCobro}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-br from-gold to-bronze text-ink font-head font-bold text-[15px] disabled:opacity-50"
+                    >
+                      {cobrando ? 'Cobrando…' : `Cobrar ${formatCLP(totalFinalCobro)}`}
+                    </button>
+                  </>
+                )}
+                {!cargandoCobro && lineasCobro.length === 0 && !errorCargaCobro && (
+                  <p className="text-paper/35 text-xs py-6 text-center">Esta mesa no tiene ítems para cobrar.</p>
+                )}
+              </>
+            ) : comandaEditando ? (
               <>
                 <button onClick={() => setComandaEditando(null)} className="text-paper/40 text-xs mt-2 mb-2 underline">
                   ← volver a Comandas
@@ -925,22 +1142,40 @@ export default function Mozo() {
                         </span>
                       </button>
                       {abierto && (
-                        <div className="flex flex-col gap-1.5 mt-1.5">
-                          {comandasSector.map((c) => (
-                            <button
-                              key={c.id}
-                              onClick={() => c.editable && abrirComandaParaEditar(c.id)}
-                              disabled={!c.editable}
-                              className="flex items-center justify-between bg-ink border border-white/10 rounded-lg px-3 py-2.5 disabled:opacity-50 text-left"
-                            >
-                              <span className="text-[13px]">
-                                Mesa {c.mesa} · {c.hora} <span className="text-paper/35">· {c.cantItems} ítem(s)</span>
-                                {!c.editable && (
-                                  <span className="block text-[10px] text-paper/30">viene de gestion.php, no editable acá</span>
-                                )}
-                              </span>
-                              {c.editable && <span className="text-gold text-xs shrink-0">Editar ›</span>}
-                            </button>
+                        <div className="flex flex-col gap-2.5 mt-1.5">
+                          {Object.entries(
+                            comandasSector.reduce((acc, c) => {
+                              ;(acc[c.mesa] ||= []).push(c)
+                              return acc
+                            }, {})
+                          ).map(([numMesa, comandasMesa]) => (
+                            <div key={numMesa}>
+                              <button
+                                onClick={() => abrirCobro(numMesa, g.sector)}
+                                className="w-full flex items-center justify-between bg-gold/10 border border-gold/30 rounded-lg px-3 py-2 mb-1.5"
+                              >
+                                <span className="text-[12px] font-semibold text-gold">Mesa {numMesa}</span>
+                                <span className="text-gold text-[11px] font-semibold">💰 Cobrar ›</span>
+                              </button>
+                              <div className="flex flex-col gap-1.5">
+                                {comandasMesa.map((c) => (
+                                  <button
+                                    key={c.id}
+                                    onClick={() => c.editable && abrirComandaParaEditar(c.id)}
+                                    disabled={!c.editable}
+                                    className="flex items-center justify-between bg-ink border border-white/10 rounded-lg px-3 py-2.5 disabled:opacity-50 text-left"
+                                  >
+                                    <span className="text-[13px]">
+                                      {c.hora} <span className="text-paper/35">· {c.cantItems} ítem(s)</span>
+                                      {!c.editable && (
+                                        <span className="block text-[10px] text-paper/30">viene de gestion.php, no editable acá</span>
+                                      )}
+                                    </span>
+                                    {c.editable && <span className="text-gold text-xs shrink-0">Editar ›</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
                       )}
@@ -960,6 +1195,7 @@ export default function Mozo() {
             setSheetMenuDia(false)
             setSheetComandas(false)
             setComandaEditando(null)
+            setMesaCobrando(null)
           }}
           className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 ${
             sheetMesa || sheetCart || sheetMenuDia || sheetComandas ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -1181,11 +1417,11 @@ export default function Mozo() {
         {/* ---- Toast de confirmación ---- */}
         <div
           className={`fixed left-1/2 top-4.5 z-[60] -translate-x-1/2 transition-transform duration-300 ${
-            toast ? 'translate-y-0' : '-translate-y-[180%]'
+            toast || toastCobro ? 'translate-y-0' : '-translate-y-[180%]'
           }`}
         >
           <div className="flex items-center gap-2.5 bg-[#16301F] border border-[#2C6B44] text-[#B9F0CB] rounded-xl px-4.5 py-3 font-semibold text-[13.5px] whitespace-nowrap shadow-lg">
-            ✓ Pedido enviado a cocina
+            {toastCobro ? `✓ ${toastCobro}` : '✓ Pedido enviado a cocina'}
           </div>
         </div>
       </div>
