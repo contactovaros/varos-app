@@ -89,6 +89,8 @@ export default function AdminProductos() {
   const [seleccionadoId, setSeleccionadoId] = useState(null)
   const [precioForm, setPrecioForm] = useState('')
   const [guardandoPrecio, setGuardandoPrecio] = useState(false)
+  const [descripcionForm, setDescripcionForm] = useState('')
+  const [guardandoDescripcion, setGuardandoDescripcion] = useState(false)
 
   // Panel de creación: cuando está abierto, reemplaza al de edición. `null`
   // = cerrado. Objeto de formulario aparte del de edición (no `nuevo`, para
@@ -142,6 +144,10 @@ export default function AdminProductos() {
     setPrecioForm(seleccionado ? String(seleccionado.price_clp ?? '') : '')
   }, [seleccionadoId, seleccionado?.price_clp])
 
+  useEffect(() => {
+    setDescripcionForm(seleccionado ? (seleccionado.description ?? '') : '')
+  }, [seleccionadoId, seleccionado?.description])
+
   function seleccionar(item) {
     setNuevoProducto(null) // seleccionar un producto existente cierra el panel de creación
     setSeleccionadoId(item.id === seleccionadoId ? null : item.id)
@@ -174,6 +180,26 @@ export default function AdminProductos() {
       syncCampoConPos(seleccionado, 'Precio', nuevo)
     }
     setGuardandoPrecio(false)
+  }
+
+  // Antes no había forma de editar la descripción de un plato que ya existía
+  // — el campo solo se llenaba al crearlo. Se pidió específicamente para
+  // poder escribir el desglose de "Entrada / Plato Principal / Postre" del
+  // Menú del Día (ver Carta2.jsx, que ahora renderiza cada línea aparte).
+  async function guardarDescripcion() {
+    if (!seleccionado) return
+    const nueva = descripcionForm.trim() || null
+    if (nueva === (seleccionado.description ?? null)) return
+    setGuardandoDescripcion(true)
+    const anterior = seleccionado.description
+    setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, description: nueva } : i)))
+    const { error: err } = await supabase.from('menu_items').update({ description: nueva }).eq('id', seleccionado.id)
+    if (err) {
+      setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, description: anterior } : i)))
+      setDescripcionForm(anterior ?? '')
+      alert('No se pudo guardar la descripción: ' + err.message)
+    }
+    setGuardandoDescripcion(false)
   }
 
   async function marcarDisponible(item, disponible) {
@@ -597,6 +623,24 @@ export default function AdminProductos() {
                     />
                     <span className="self-center text-[10px] text-paper/30 w-14">
                       {guardandoPrecio ? 'Guardando…' : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[10px] uppercase tracking-wide text-paper/40 mb-1.5">
+                    Descripción <span className="text-paper/25">(opcional — una línea por renglón, ej. "Entrada: ..." para el desglose del Menú del Día)</span>
+                  </label>
+                  <div className="flex gap-2">
+                    <textarea
+                      value={descripcionForm}
+                      onChange={(e) => setDescripcionForm(e.target.value)}
+                      onBlur={guardarDescripcion}
+                      rows={3}
+                      className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-y"
+                    />
+                    <span className="self-start mt-2 text-[10px] text-paper/30 w-14 shrink-0">
+                      {guardandoDescripcion ? 'Guardando…' : ''}
                     </span>
                   </div>
                 </div>
