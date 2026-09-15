@@ -15,6 +15,7 @@ import { supabase } from '../lib/supabase'
 // permanente que hoy no existe en ningún lado.
 
 const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
+const KDS_DETALLE_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?k=797a0ed49a8623e452b03fc0'
 const KDS_CERRAR_MESA_URL = 'https://varos-kds.varosnocturno.workers.dev/cerrar-mesa?k=797a0ed49a8623e452b03fc0'
 const MEDIOS_PAGO = [
   { value: 'efectivo', label: 'Efectivo' },
@@ -194,7 +195,30 @@ export default function AdminCaja() {
       const propias = (data.comandas || []).filter(
         (c) => String(c.mesa) === String(numero) && c.sector === sector
       )
-      setComandas(propias)
+
+      // /state le saca las bebidas a los items a propósito (es la vista que
+      // arma la pantalla de cocina, a la que no le importan los tragos) —
+      // cobrar directo con esos datos venía omitiendo las bebidas del total
+      // en silencio (encontrado 2026-09-15). Para las comandas "N-" (nacidas
+      // en /mozo) hay un endpoint que devuelve el pedido sin filtrar; se pide
+      // uno por uno y se reemplazan los items. Las que vienen del puente con
+      // gestion.php no tienen ese endpoint todavía — quedan con la vista
+      // filtrada como hasta ahora (limitación conocida, no nueva).
+      const completas = await Promise.all(
+        propias.map(async (c) => {
+          if (!String(c.id).startsWith('N-')) return c
+          try {
+            const r = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(c.id)}`)
+            if (!r.ok) return c
+            const detalle = await r.json()
+            return { ...c, items: detalle.items || c.items }
+          } catch {
+            return c
+          }
+        })
+      )
+
+      setComandas(completas)
       setTotalManual('')
     } catch (err) {
       setErrorComandas('No se pudo cargar el estado de cocina: ' + err.message)
