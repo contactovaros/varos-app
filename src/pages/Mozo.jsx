@@ -12,6 +12,7 @@ import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/
 // una sola vez por celular y queda guardado en localStorage — cada mozo usa
 // su propio teléfono, así que no hace falta volver a pedirlo cada vez.
 const KDS_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo?k=797a0ed49a8623e452b03fc0'
+const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
 const MENU_CATALOG_URL = 'https://varos-kds.varosnocturno.workers.dev/menu-catalog?k=797a0ed49a8623e452b03fc0'
 const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
 
@@ -199,6 +200,36 @@ export default function Mozo() {
   useEffect(() => {
     guardarPedidoEnCurso(mesa, cart)
   }, [mesa, cart])
+
+  // Qué mesas ya tienen un pedido pendiente en cocina — antes el garzón
+  // elegía la mesa a ciegas, sin saber si ya estaba ocupada por otro pedido
+  // (propio o de otro garzón). Mismo mecanismo que ya se agregó a
+  // /admin/caja: se lee el mismo /state del KDS, sin duplicar nada.
+  const [mesasPendientes, setMesasPendientes] = useState(() => new Set())
+  useEffect(() => {
+    let cancelado = false
+    async function cargarPendientes() {
+      try {
+        const res = await fetch(KDS_STATE_URL)
+        if (!res.ok) return
+        const data = await res.json()
+        const claves = new Set(
+          (data.comandas || [])
+            .filter((c) => (c.items || []).length > 0)
+            .map((c) => `${c.mesa}|${c.sector}`)
+        )
+        if (!cancelado) setMesasPendientes(claves)
+      } catch {
+        // silencioso — es una ayuda visual, no crítica
+      }
+    }
+    cargarPendientes()
+    const id = setInterval(cargarPendientes, 20000)
+    return () => {
+      cancelado = true
+      clearInterval(id)
+    }
+  }, [])
 
   const [sheetMesa, setSheetMesa] = useState(false)
   const [sheetCart, setSheetCart] = useState(false)
@@ -704,15 +735,21 @@ export default function Mozo() {
             {gruposMesas.map((g) => {
               const abierto = sectoresAbiertos.has(g.sector)
               const mesaElegidaAca = mesa && mesa.sector === g.sector ? mesa.num : null
+              const pendientesDelSector = g.mesas.filter((m) => mesasPendientes.has(`${m.numero}|${g.sector}`)).length
               return (
               <div key={g.sector} className="mb-2.5 border-b border-white/5 pb-2.5 last:border-b-0">
                 <button
                   onClick={() => toggleSector(g.sector)}
                   className="w-full flex items-center justify-between py-1.5"
                 >
-                  <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60">
+                  <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60 flex items-center gap-1.5">
                     {g.sector}
                     {mesaElegidaAca && <span className="text-gold normal-case tracking-normal font-medium"> · Mesa {mesaElegidaAca}</span>}
+                    {pendientesDelSector > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-gold text-ink text-[10px] font-bold normal-case tracking-normal">
+                        {pendientesDelSector}
+                      </span>
+                    )}
                   </span>
                   <span className="flex items-center gap-2">
                     <span className="text-[10px] text-paper/35">{g.mesas.length} mesas</span>
@@ -723,15 +760,23 @@ export default function Mozo() {
                 <div className="grid grid-cols-4 gap-2 mt-2">
                   {g.mesas.map((m) => {
                     const sel = mesa && mesa.num === m.numero && mesa.sector === g.sector
+                    const pendiente = mesasPendientes.has(`${m.numero}|${g.sector}`)
                     return (
                       <button
                         key={m.id}
                         onClick={() => elegirMesa(m.numero, g.sector)}
-                        className={`aspect-square rounded-lg border font-semibold text-[15px] flex items-center justify-center ${
-                          sel ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink' : 'bg-ink border-white/10 text-paper'
+                        className={`relative aspect-square rounded-lg border font-semibold text-[15px] flex items-center justify-center ${
+                          sel
+                            ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink'
+                            : pendiente
+                            ? 'bg-gold/10 border-gold/50 text-gold'
+                            : 'bg-ink border-white/10 text-paper'
                         }`}
                       >
                         {m.numero}
+                        {pendiente && !sel && (
+                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-gold" aria-hidden="true" />
+                        )}
                       </button>
                     )
                   })}
