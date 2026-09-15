@@ -22,6 +22,38 @@ const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
 // elegir el curso — el mozo tenía que escribirlo a mano en la nota.
 const CURSOS_MENU_DIA = ['Entrada', 'Plato Principal', 'Postres y Tentaciones']
 
+// Respaldo cuando /menu-catalog no tiene nada (el puente con gestion.php
+// caído, o directamente sin usarlo — piloto "solo sistema nuevo" del
+// 2026-09-15): parsea el mismo formato "Entrada: a, b, c" que ya escribe el
+// admin en Descripción (ver AdminProductos.jsx) para que carta2.0 muestre el
+// desglose. Reusa ese mismo texto en vez de pedir cargarlo dos veces.
+const ALIAS_CURSO_MENU_DIA = {
+  entrada: 'Entrada',
+  'plato principal': 'Plato Principal',
+  principal: 'Plato Principal',
+  postre: 'Postres y Tentaciones',
+  postres: 'Postres y Tentaciones',
+  'postres y tentaciones': 'Postres y Tentaciones'
+}
+
+function parseCursosDeDescripcion(descripcion) {
+  if (!descripcion) return null
+  const porCurso = { Entrada: [], 'Plato Principal': [], 'Postres y Tentaciones': [] }
+  let encontrado = false
+  for (const linea of descripcion.split('\n')) {
+    const m = linea.trim().match(/^([^:]{1,28}):\s*(.+)$/)
+    if (!m) continue
+    const curso = ALIAS_CURSO_MENU_DIA[m[1].trim().toLowerCase()]
+    if (!curso) continue
+    const opciones = m[2].split(',').map((s) => s.trim()).filter(Boolean)
+    if (opciones.length) {
+      porCurso[curso].push(...opciones)
+      encontrado = true
+    }
+  }
+  return encontrado ? porCurso : null
+}
+
 const MESAS_POS_URL_TABLE = 'pos_mesas' // ver supabase/add_pos_mesas.sql y /admin/mesas-pos
 // Antes había una numeración de mesas inventada acá mismo (placeholder). El
 // usuario pidió sacarla: ahora la carga el propio restaurante en
@@ -318,6 +350,19 @@ export default function Mozo() {
     setSheetMenuDia(true)
     setMenuDiaItemActual(item)
   }
+
+  // Si /menu-catalog no trajo nada para ninguno de los 3 cursos (puente con
+  // gestion.php caído, o ni siquiera en uso), se usa el desglose escrito a
+  // mano en la Descripción del producto como respaldo — mismo texto que ya
+  // lee carta2.0, no hay que cargarlo dos veces.
+  const kdsMenuDiaVacio =
+    !menuDiaOpciones || CURSOS_MENU_DIA.every((curso) => !(menuDiaOpciones[curso]?.length))
+  const cursosDeRespaldo = useMemo(
+    () => parseCursosDeDescripcion(menuDiaItemActual?.description),
+    [menuDiaItemActual]
+  )
+  const usandoRespaldoMenuDia = kdsMenuDiaVacio && Boolean(cursosDeRespaldo)
+  const menuDiaOpcionesEfectivas = usandoRespaldoMenuDia ? cursosDeRespaldo : menuDiaOpciones
 
   function confirmarMenuDia() {
     const { Entrada, 'Plato Principal': principal, 'Postres y Tentaciones': postre } = menuDiaSel
@@ -737,20 +782,26 @@ export default function Mozo() {
             <h2 className="font-head text-lg font-semibold mt-2 mb-1">Menú del Día</h2>
             <p className="text-[11px] text-paper/40 mb-3.5">Elegí un curso de cada uno.</p>
 
-            {menuDiaStale && (
-              <p className="text-[11.5px] text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-3.5 leading-relaxed">
-                ⚠ Este listado podría no ser el de hoy — confirmá con cocina antes de ofrecerlo.
+            {usandoRespaldoMenuDia ? (
+              <p className="text-[11.5px] text-diamond bg-diamond/10 border border-diamond/25 rounded-lg px-3 py-2 mb-3.5 leading-relaxed">
+                ℹ️ Sin conexión con gestion.php — usando el desglose cargado a mano en Productos.
               </p>
+            ) : (
+              menuDiaStale && (
+                <p className="text-[11.5px] text-amber-400 bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-3.5 leading-relaxed">
+                  ⚠ Este listado podría no ser el de hoy — confirmá con cocina antes de ofrecerlo.
+                </p>
+              )
             )}
 
-            {menuDiaError && <p className="text-rose-400 text-xs py-4">{menuDiaError}</p>}
+            {menuDiaError && !cursosDeRespaldo && <p className="text-rose-400 text-xs py-4">{menuDiaError}</p>}
 
-            {menuDiaOpciones &&
+            {menuDiaOpcionesEfectivas &&
               CURSOS_MENU_DIA.map((curso) => (
                 <div key={curso} className="mb-4">
                   <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-2">{curso}</div>
                   <div className="flex flex-col gap-1.5">
-                    {(menuDiaOpciones[curso] || []).map((nombre) => {
+                    {(menuDiaOpcionesEfectivas[curso] || []).map((nombre) => {
                       const sel = menuDiaSel[curso] === nombre
                       return (
                         <button
@@ -764,7 +815,7 @@ export default function Mozo() {
                         </button>
                       )
                     })}
-                    {menuDiaOpciones[curso]?.length === 0 && (
+                    {menuDiaOpcionesEfectivas[curso]?.length === 0 && (
                       <p className="text-paper/30 text-[11px] py-1">Sin opciones cargadas para este curso hoy.</p>
                     )}
                   </div>
