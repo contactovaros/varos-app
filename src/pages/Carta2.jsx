@@ -52,6 +52,34 @@ const ORDEN_CATEGORIAS = [
 ].map(normalizarCategoria)
 const CATEGORIAS_BEBIDAS = ['MOCKTAILS (SIN ALCOHOL)', 'VINOS & ESPUMANTES'].map(normalizarCategoria)
 
+// Descripción de un plato — respeta saltos de línea (antes se aplastaba
+// todo en un solo párrafo). Si una línea tiene forma "Entrada: ..." (como
+// el desglose del Menú del Día — ver /admin/productos, campo Descripción),
+// la etiqueta se resalta en `wineSoft`, igual que los subgrupos en rojo
+// vino de la carta real.
+function DescripcionPlato({ texto }) {
+  const lineas = texto.split('\n').map((l) => l.trim()).filter(Boolean)
+  return (
+    <div className="mt-1 ml-4">
+      {lineas.map((linea, i) => {
+        const m = linea.match(/^([^:]{1,28}):\s*(.+)$/)
+        return (
+          <p key={i} className="text-paper/35 text-[11px] leading-relaxed italic">
+            {m ? (
+              <>
+                <span className="text-wineSoft not-italic font-semibold">{m[1]}: </span>
+                {m[2]}
+              </>
+            ) : (
+              linea
+            )}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 function formatCLP(valor) {
   const n = Number(valor) || 0
   return `$${n.toLocaleString('es-CL')}`
@@ -216,11 +244,7 @@ export default function Carta2() {
                         {formatCLP(plato.price_clp)}
                       </span>
                     </div>
-                    {plato.description && (
-                      <p className="text-paper/35 text-[11px] mt-0.5 ml-4 leading-relaxed italic">
-                        {plato.description}
-                      </p>
-                    )}
+                    {plato.description && <DescripcionPlato texto={plato.description} />}
                   </div>
                 ))}
               </div>
