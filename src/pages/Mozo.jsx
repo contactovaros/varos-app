@@ -12,6 +12,7 @@ import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/
 // una sola vez por celular y queda guardado en localStorage — cada mozo usa
 // su propio teléfono, así que no hace falta volver a pedirlo cada vez.
 const KDS_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo?k=797a0ed49a8623e452b03fc0'
+const KDS_EDITAR_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-editar?k=797a0ed49a8623e452b03fc0'
 const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
 const MENU_CATALOG_URL = 'https://varos-kds.varosnocturno.workers.dev/menu-catalog?k=797a0ed49a8623e452b03fc0'
 const GARZON_STORAGE_KEY = 'varos_mozo_garzon'
@@ -212,6 +213,11 @@ export default function Mozo() {
   // (puede haber más de una si el cliente pidió por rondas) sumando
   // cantidades de un mismo plato.
   const [pedidosPorMesa, setPedidosPorMesa] = useState(() => new Map())
+  // Lista de comandas SIN fusionar por mesa (id, hora, si se puede editar) —
+  // para la pantalla de Comandas, que edita una comanda puntual, no el
+  // agregado. `pedidosPorMesa` de arriba sigue siendo el resumen fusionado
+  // que ya usa el panel "Ya pedido en esta mesa".
+  const [comandasPorMesa, setComandasPorMesa] = useState(() => new Map())
   useEffect(() => {
     let cancelado = false
     async function cargarPendientes() {
@@ -223,6 +229,7 @@ export default function Mozo() {
         const claves = new Set(comandasConItems.map((c) => `${c.mesa}|${c.sector}`))
 
         const porMesa = new Map()
+        const listaPorMesa = new Map()
         for (const c of comandasConItems) {
           const key = `${c.mesa}|${c.sector}`
           const acumulado = porMesa.get(key) || []
@@ -233,11 +240,24 @@ export default function Mozo() {
             else acumulado.push({ nombre, cant: Number(it.cant) || 1 })
           }
           porMesa.set(key, acumulado)
+
+          const lista = listaPorMesa.get(key) || []
+          lista.push({
+            id: c.id,
+            mesa: c.mesa,
+            sector: c.sector,
+            hora: c.hora,
+            garzon: c.garzon,
+            editable: c.id.startsWith('N-'),
+            cantItems: c.items.reduce((s, it) => s + (Number(it.cant) || 1), 0)
+          })
+          listaPorMesa.set(key, lista)
         }
 
         if (!cancelado) {
           setMesasPendientes(claves)
           setPedidosPorMesa(porMesa)
+          setComandasPorMesa(listaPorMesa)
         }
       } catch {
         // silencioso — es una ayuda visual, no crítica
@@ -253,6 +273,82 @@ export default function Mozo() {
 
   const [sheetMesa, setSheetMesa] = useState(false)
   const [sheetCart, setSheetCart] = useState(false)
+
+  // Pantalla de Comandas: ver y editar (agrandar/achicar) los pedidos ya
+  // enviados de cualquier mesa. Pedido explícito (2026-09-15): antes no había
+  // forma de tocar un pedido una vez mandado, solo de crear uno nuevo.
+  const [sheetComandas, setSheetComandas] = useState(false)
+  const [sectoresComandasAbiertos, setSectoresComandasAbiertos] = useState(() => new Set())
+  const [comandaEditando, setComandaEditando] = useState(null) // { id, mesa, sector, items } sin filtrar
+  const [cargandoDetalle, setCargandoDetalle] = useState(false)
+  const [errorDetalle, setErrorDetalle] = useState('')
+  const [guardandoEdicion, setGuardandoEdicion] = useState(false)
+  const [errorEdicion, setErrorEdicion] = useState('')
+
+  async function abrirComandaParaEditar(id) {
+    setErrorDetalle('')
+    setCargandoDetalle(true)
+    setComandaEditando(null)
+    try {
+      const res = await fetch(
+        `https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?id=${encodeURIComponent(id)}&k=797a0ed49a8623e452b03fc0`
+      )
+      if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo cargar el pedido'))
+      const data = await res.json()
+      setComandaEditando({
+        id: data.id,
+        mesa: data.mesa,
+        sector: data.sector,
+        // clonado para poder tocar cantidades sin mutar la respuesta original
+        items: (data.items || []).map((it) => ({ ...it }))
+      })
+    } catch (err) {
+      setErrorDetalle('No se pudo cargar el pedido: ' + err.message)
+    } finally {
+      setCargandoDetalle(false)
+    }
+  }
+
+  function cambiarCantEnEdicion(idx, delta) {
+    setComandaEditando((prev) => {
+      if (!prev) return prev
+      const items = prev.items
+        .map((it, i) => (i === idx ? { ...it, cant: it.cant + delta } : it))
+        .filter((it) => it.cant > 0)
+      return { ...prev, items }
+    })
+  }
+
+  function quitarDeEdicion(idx) {
+    setComandaEditando((prev) => (prev ? { ...prev, items: prev.items.filter((_, i) => i !== idx) } : prev))
+  }
+
+  async function guardarEdicion() {
+    if (!comandaEditando) return
+    setGuardandoEdicion(true)
+    setErrorEdicion('')
+    try {
+      const res = await fetch(KDS_EDITAR_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: comandaEditando.id, items: comandaEditando.items })
+      })
+      if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo guardar'))
+      setComandaEditando(null)
+    } catch (err) {
+      setErrorEdicion('No se pudo guardar: ' + err.message)
+    } finally {
+      setGuardandoEdicion(false)
+    }
+  }
+
+  function toggleSectorComandas(sector) {
+    setSectoresComandasAbiertos((prev) => {
+      const next = new Set(prev)
+      next.has(sector) ? next.delete(sector) : next.add(sector)
+      return next
+    })
+  }
   // Qué sectores están desplegados en el selector de mesa — colapsados por
   // defecto (con varios sectores y 13+ mesas en Carpa, mostrar todo abierto
   // de una vez obligaba a scrollear demasiado).
@@ -574,6 +670,17 @@ export default function Mozo() {
               {garzon.nombre} · cambiar
             </button>
           </div>
+          <button
+            onClick={() => setSheetComandas(true)}
+            className="w-full flex items-center justify-between bg-inkSoft border border-gold/25 rounded-xl px-3.5 py-2 mb-2"
+          >
+            <span className="text-[11.5px] text-gold font-head font-medium">🧾 Comandas — ver y editar pedidos</span>
+            {mesasPendientes.size > 0 && (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-gold text-ink text-[10px] font-bold">
+                {mesasPendientes.size}
+              </span>
+            )}
+          </button>
           {(avisoEstado === 'inactiva' || avisoEstado === 'desconocida') && (
             <button
               onClick={activarAvisos}
@@ -734,15 +841,128 @@ export default function Mozo() {
           </button>
         </div>
 
+        {/* ---- Sheet: Comandas (ver y editar pedidos ya enviados) ---- */}
+        <div className="fixed left-0 right-0 bottom-0 z-50 flex justify-center pointer-events-none">
+          <div
+            className={`w-full max-w-md bg-inkSoft border border-white/10 border-b-0 rounded-t-2xl px-4.5 pt-2 pointer-events-auto transition-transform duration-300 ease-salida max-h-[85vh] overflow-y-auto ${
+              sheetComandas ? 'translate-y-0' : 'translate-y-full'
+            }`}
+            style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', paddingLeft: '18px', paddingRight: '18px' }}
+          >
+            <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
+            {comandaEditando ? (
+              <>
+                <button onClick={() => setComandaEditando(null)} className="text-paper/40 text-xs mt-2 mb-2 underline">
+                  ← volver a Comandas
+                </button>
+                <h2 className="font-head text-lg font-semibold mb-1">
+                  Mesa {comandaEditando.mesa} · {comandaEditando.sector}
+                </h2>
+                <p className="text-[11px] text-paper/40 mb-3.5">Tocá +/− para cambiar cantidad, o la X para sacar el plato.</p>
+                {errorEdicion && <p className="text-rose-400 text-xs mb-2 leading-relaxed">{errorEdicion}</p>}
+                <div className="flex flex-col gap-2 mb-4">
+                  {comandaEditando.items.map((it, idx) => (
+                    <div key={idx} className="flex items-center gap-2 bg-ink border border-white/10 rounded-lg px-3 py-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] text-paper truncate">{it.nombre}</div>
+                        {it.comentario && <div className="text-[10.5px] text-paper/35 truncate">{it.comentario}</div>}
+                      </div>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button
+                          onClick={() => cambiarCantEnEdicion(idx, -1)}
+                          className="w-7 h-7 rounded-md border border-white/10 text-paper/70 font-bold"
+                        >
+                          −
+                        </button>
+                        <span className="w-5 text-center text-[13px] tabular-nums">{it.cant}</span>
+                        <button
+                          onClick={() => cambiarCantEnEdicion(idx, 1)}
+                          className="w-7 h-7 rounded-md border border-white/10 text-paper/70 font-bold"
+                        >
+                          +
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => quitarDeEdicion(idx)}
+                        className="shrink-0 w-7 h-7 rounded-md border border-wine/40 text-wineSoft"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                  {comandaEditando.items.length === 0 && (
+                    <p className="text-paper/30 text-xs py-2">Sin platos — al guardar, se cancela esta comanda entera.</p>
+                  )}
+                </div>
+                <button
+                  onClick={guardarEdicion}
+                  disabled={guardandoEdicion}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-br from-gold to-bronze text-ink font-head font-bold text-[15px] disabled:opacity-50"
+                >
+                  {guardandoEdicion ? 'Guardando…' : comandaEditando.items.length === 0 ? 'Cancelar comanda' : 'Guardar cambios'}
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="font-head text-lg font-semibold mt-2 mb-1">Comandas</h2>
+                <p className="text-[11px] text-paper/40 mb-3.5">Pedidos activos por mesa — tocá uno para verlo o editarlo.</p>
+                {cargandoDetalle && <p className="text-paper/35 text-xs py-2">Cargando…</p>}
+                {errorDetalle && <p className="text-rose-400 text-xs py-2 leading-relaxed">{errorDetalle}</p>}
+                {mesasPendientes.size === 0 && (
+                  <p className="text-paper/30 text-xs py-8 text-center">No hay pedidos activos ahora mismo.</p>
+                )}
+                {gruposMesas.map((g) => {
+                  const comandasSector = g.mesas.flatMap((m) => comandasPorMesa.get(`${m.numero}|${g.sector}`) || [])
+                  if (comandasSector.length === 0) return null
+                  const abierto = sectoresComandasAbiertos.has(g.sector)
+                  return (
+                    <div key={g.sector} className="mb-2 border-b border-white/5 pb-2 last:border-b-0">
+                      <button onClick={() => toggleSectorComandas(g.sector)} className="w-full flex items-center justify-between py-1.5">
+                        <span className="text-[11px] font-bold uppercase tracking-wide text-paper/60">{g.sector}</span>
+                        <span className="flex items-center gap-2">
+                          <span className="text-[10px] text-paper/35">{comandasSector.length} comanda(s)</span>
+                          <span className={`text-gold text-xs transition-transform ${abierto ? 'rotate-180' : ''}`}>▾</span>
+                        </span>
+                      </button>
+                      {abierto && (
+                        <div className="flex flex-col gap-1.5 mt-1.5">
+                          {comandasSector.map((c) => (
+                            <button
+                              key={c.id}
+                              onClick={() => c.editable && abrirComandaParaEditar(c.id)}
+                              disabled={!c.editable}
+                              className="flex items-center justify-between bg-ink border border-white/10 rounded-lg px-3 py-2.5 disabled:opacity-50 text-left"
+                            >
+                              <span className="text-[13px]">
+                                Mesa {c.mesa} · {c.hora} <span className="text-paper/35">· {c.cantItems} ítem(s)</span>
+                                {!c.editable && (
+                                  <span className="block text-[10px] text-paper/30">viene de gestion.php, no editable acá</span>
+                                )}
+                              </span>
+                              {c.editable && <span className="text-gold text-xs shrink-0">Editar ›</span>}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </div>
+        </div>
+
         {/* ---- Scrim compartido ---- */}
         <div
           onClick={() => {
             setSheetMesa(false)
             setSheetCart(false)
             setSheetMenuDia(false)
+            setSheetComandas(false)
+            setComandaEditando(null)
           }}
           className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 ${
-            sheetMesa || sheetCart || sheetMenuDia ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            sheetMesa || sheetCart || sheetMenuDia || sheetComandas ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         />
 
