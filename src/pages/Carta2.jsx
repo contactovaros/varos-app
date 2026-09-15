@@ -179,20 +179,16 @@ export default function Carta2() {
           (`bg_logo.png`) que usa `varos.cl/carta` hoy — se sacó de la copia
           estática que ya se había crawleado (`varos-cl-copia/carta/`), así
           que es pixel-idéntico al de la carta real, no una interpretación. */}
-      <header className="text-center mb-5">
+      <header className="text-center mb-7">
         <img src="/varos-wordmark-carta.png" alt="Varo's Restaurant" className="mx-auto w-64 max-w-full h-auto" />
-        <p className="text-paper/30 text-[10px] mt-2">
-          {cargando ? 'Cargando la carta…' : `${items.length} platos disponibles`}
-        </p>
       </header>
 
-      {/* Microcopy obligatorio: visible arriba, no al pie en chico — pedido
-          explícito de varos-negocio para que nadie la confunda con un
-          sistema de pedidos (ya existe /pedidos en el sitio de WordPress). */}
-      <div className="bg-inkSoft border border-gold/20 rounded-2xl px-4 py-3 mb-7 text-center">
-        <p className="text-sm text-gold font-head font-medium">Para pedir, avisale a tu mozo</p>
-        <p className="text-paper/40 text-[11px] mt-1">Esta carta es solo para mirar los platos y precios.</p>
-      </div>
+      {/* El conteo de platos y el aviso "para pedir, avisale a tu mozo" se
+          sacaron a pedido explícito del dueño (2026-09-15), pese a que
+          varos-negocio lo había sugerido para evitar confusión con /pedidos
+          — decisión consciente del dueño, no un olvido. Si en algún momento
+          se reporta confusión real de clientes pidiendo por acá, retomar
+          ese aviso. */}
 
       {error && (
         <p className="text-rose-400 text-xs text-center mb-6 leading-relaxed">
