@@ -206,6 +206,12 @@ export default function Mozo() {
   // (propio o de otro garzón). Mismo mecanismo que ya se agregó a
   // /admin/caja: se lee el mismo /state del KDS, sin duplicar nada.
   const [mesasPendientes, setMesasPendientes] = useState(() => new Set())
+  // Detalle real de lo ya pedido por mesa — antes el garzón solo sabía QUE
+  // había algo pendiente (el punto dorado), no QUÉ era. Mismo /state, una
+  // sola pasada: se agrupan los items de todas las comandas de una mesa
+  // (puede haber más de una si el cliente pidió por rondas) sumando
+  // cantidades de un mismo plato.
+  const [pedidosPorMesa, setPedidosPorMesa] = useState(() => new Map())
   useEffect(() => {
     let cancelado = false
     async function cargarPendientes() {
@@ -213,12 +219,26 @@ export default function Mozo() {
         const res = await fetch(KDS_STATE_URL)
         if (!res.ok) return
         const data = await res.json()
-        const claves = new Set(
-          (data.comandas || [])
-            .filter((c) => (c.items || []).length > 0)
-            .map((c) => `${c.mesa}|${c.sector}`)
-        )
-        if (!cancelado) setMesasPendientes(claves)
+        const comandasConItems = (data.comandas || []).filter((c) => (c.items || []).length > 0)
+        const claves = new Set(comandasConItems.map((c) => `${c.mesa}|${c.sector}`))
+
+        const porMesa = new Map()
+        for (const c of comandasConItems) {
+          const key = `${c.mesa}|${c.sector}`
+          const acumulado = porMesa.get(key) || []
+          for (const it of c.items) {
+            const nombre = it.menus?.length ? 'Menú del Día' : it.nombre
+            const existente = acumulado.find((x) => x.nombre === nombre)
+            if (existente) existente.cant += Number(it.cant) || 1
+            else acumulado.push({ nombre, cant: Number(it.cant) || 1 })
+          }
+          porMesa.set(key, acumulado)
+        }
+
+        if (!cancelado) {
+          setMesasPendientes(claves)
+          setPedidosPorMesa(porMesa)
+        }
       } catch {
         // silencioso — es una ayuda visual, no crítica
       }
@@ -576,6 +596,21 @@ export default function Mozo() {
             </span>
             <span className="text-gold text-xs">▾</span>
           </button>
+
+          {mesa && pedidosPorMesa.get(`${mesa.num}|${mesa.sector}`)?.length > 0 && (
+            <div className="mt-2 bg-gold/10 border border-gold/25 rounded-lg px-3 py-2.5">
+              <div className="text-[10px] uppercase tracking-wide text-gold/70 font-semibold mb-1.5">
+                Ya pedido en esta mesa
+              </div>
+              <div className="flex flex-col gap-0.5">
+                {pedidosPorMesa.get(`${mesa.num}|${mesa.sector}`).map((it, i) => (
+                  <div key={i} className="text-[12px] text-paper/75">
+                    <span className="text-gold font-mono">{it.cant}×</span> {it.nombre}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="mt-2.5 flex items-center gap-2 bg-inkSoft border border-white/10 rounded-lg px-3 py-2">
             <IconoBuscar />
