@@ -63,6 +63,7 @@ export default function AdminCaja() {
 
   const [resumenHoy, setResumenHoy] = useState(null)
   const [detalleAbierto, setDetalleAbierto] = useState(false)
+  const [reciboImprimir, setReciboImprimir] = useState(null) // fila de pos_cobros a imprimir
 
   useEffect(() => {
     if (!isAdmin) return
@@ -131,7 +132,7 @@ export default function AdminCaja() {
       const hoy = new Date().toISOString().slice(0, 10)
       const { data } = await supabase
         .from('pos_cobros')
-        .select('mesa, sector, garzon, total, medio_pago, cobrado_por, created_at')
+        .select('mesa, sector, garzon, items, total, medio_pago, cobrado_por, created_at')
         .gte('created_at', hoy + 'T00:00:00')
         .order('created_at', { ascending: false })
       if (!data) return
@@ -360,6 +361,13 @@ export default function AdminCaja() {
                       {MEDIOS_PAGO.find((m) => m.value === c.medio_pago)?.label || c.medio_pago}
                     </div>
                   </div>
+                  <button
+                    onClick={() => setReciboImprimir(c)}
+                    className="shrink-0 text-base leading-none px-1.5 py-1 -mr-1"
+                    title="Imprimir boleta"
+                  >
+                    🖨️
+                  </button>
                 </div>
               ))}
             </div>
@@ -492,6 +500,61 @@ export default function AdminCaja() {
               </button>
             </>
           )}
+        </div>
+      )}
+
+      {reciboImprimir && (
+        <div className="fixed inset-0 z-50 bg-ink/95 flex flex-col items-center justify-center px-4 print:static print:bg-white print:block print:px-0">
+          <style>{`
+            @media print {
+              @page { size: 80mm auto; margin: 0; }
+              body * { visibility: hidden; }
+              #recibo-boleta, #recibo-boleta * { visibility: visible; }
+              #recibo-boleta { position: absolute; top: 0; left: 0; width: 80mm; }
+            }
+          `}</style>
+
+          <div id="recibo-boleta" className="bg-white text-black w-[80mm] max-w-full p-3 font-mono text-[11px] leading-snug print:p-2">
+            <div className="text-center mb-2">
+              <div className="font-bold text-sm">CLUB VARO'S</div>
+              <div>Mesa {reciboImprimir.mesa} · {reciboImprimir.sector}</div>
+              <div>{formatHora(reciboImprimir.created_at)} · {new Date(reciboImprimir.created_at).toLocaleDateString('es-CL')}</div>
+              {reciboImprimir.garzon && <div>Garzón: {reciboImprimir.garzon}</div>}
+            </div>
+            <div className="border-t border-dashed border-black my-1.5" />
+            {(reciboImprimir.items || []).map((it, i) => (
+              <div key={i} className="flex justify-between gap-2 py-0.5">
+                <span>{it.cant}× {it.nombre}</span>
+                <span className="shrink-0 tabular-nums">
+                  {it.precioUnit != null ? formatCLP(it.precioUnit * it.cant) : '—'}
+                </span>
+              </div>
+            ))}
+            <div className="border-t border-dashed border-black my-1.5" />
+            <div className="flex justify-between font-bold text-[13px]">
+              <span>TOTAL</span>
+              <span className="tabular-nums">{formatCLP(reciboImprimir.total)}</span>
+            </div>
+            <div className="mt-1">
+              {MEDIOS_PAGO.find((m) => m.value === reciboImprimir.medio_pago)?.label || reciboImprimir.medio_pago}
+            </div>
+            <div className="text-center mt-2.5">¡Gracias por su visita!</div>
+          </div>
+
+          <div className="flex gap-3 mt-4 print:hidden">
+            <button
+              onClick={() => setReciboImprimir(null)}
+              className="px-4 py-2.5 rounded-lg border border-white/15 text-paper text-sm"
+            >
+              Cerrar
+            </button>
+            <button
+              onClick={() => window.print()}
+              className="px-5 py-2.5 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink font-semibold text-sm"
+            >
+              🖨️ Imprimir boleta
+            </button>
+          </div>
         </div>
       )}
     </div>
