@@ -6,6 +6,14 @@
   directory = "netlify/functions"
   node_bundler = "esbuild"
 
+# Link corto para escribir a mano en el control remoto de la TV de cocina —
+# el real es el Worker de varos-kds con la key en la URL, imposible de tipear.
+[[redirects]]
+  from = "/tv"
+  to = "https://varos-kds.varosnocturno.workers.dev/?k=797a0ed49a8623e452b03fc0&tv=1"
+  status = 302
+  force = true
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
