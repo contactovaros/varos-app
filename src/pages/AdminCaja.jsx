@@ -37,6 +37,21 @@ function formatCLP(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CL')
 }
 
+// Sin "$" — así sale el monto en el ticket de gestion.php, que es la
+// referencia a igualar (ver foto del usuario, 2026-09-16).
+function formatMontoTicket(n) {
+  return Math.round(n || 0).toLocaleString('es-CL')
+}
+
+function formatFechaTicket(iso) {
+  const d = new Date(iso)
+  const dd = String(d.getDate()).padStart(2, '0')
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const hh = String(d.getHours()).padStart(2, '0')
+  const min = String(d.getMinutes()).padStart(2, '0')
+  return `${dd}-${mm}-${d.getFullYear()} ${hh}:${min}`
+}
+
 function formatHora(iso) {
   return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
 }
@@ -132,7 +147,7 @@ export default function AdminCaja() {
       const hoy = new Date().toISOString().slice(0, 10)
       const { data } = await supabase
         .from('pos_cobros')
-        .select('mesa, sector, garzon, items, total, medio_pago, cobrado_por, created_at')
+        .select('id, mesa, sector, garzon, items, total, medio_pago, cobrado_por, created_at')
         .gte('created_at', hoy + 'T00:00:00')
         .order('created_at', { ascending: false })
       if (!data) return
@@ -515,30 +530,72 @@ export default function AdminCaja() {
           `}</style>
 
           <div id="recibo-boleta" className="bg-white text-black w-[80mm] max-w-full p-3 font-mono text-[11px] leading-snug print:p-2">
-            <div className="text-center mb-2">
-              <div className="font-bold text-sm">CLUB VARO'S</div>
-              <div>Mesa {reciboImprimir.mesa} · {reciboImprimir.sector}</div>
-              <div>{formatHora(reciboImprimir.created_at)} · {new Date(reciboImprimir.created_at).toLocaleDateString('es-CL')}</div>
-              {reciboImprimir.garzon && <div>Garzón: {reciboImprimir.garzon}</div>}
-            </div>
-            <div className="border-t border-dashed border-black my-1.5" />
-            {(reciboImprimir.items || []).map((it, i) => (
-              <div key={i} className="flex justify-between gap-2 py-0.5">
-                <span>{it.cant}× {it.nombre}</span>
-                <span className="shrink-0 tabular-nums">
-                  {it.precioUnit != null ? formatCLP(it.precioUnit * it.cant) : '—'}
-                </span>
-              </div>
-            ))}
-            <div className="border-t border-dashed border-black my-1.5" />
-            <div className="flex justify-between font-bold text-[13px]">
-              <span>TOTAL</span>
-              <span className="tabular-nums">{formatCLP(reciboImprimir.total)}</span>
-            </div>
-            <div className="mt-1">
-              {MEDIOS_PAGO.find((m) => m.value === reciboImprimir.medio_pago)?.label || reciboImprimir.medio_pago}
-            </div>
-            <div className="text-center mt-2.5">¡Gracias por su visita!</div>
+            {(() => {
+              const items = reciboImprimir.items || []
+              const subtotal = items.reduce(
+                (s, it) => s + (it.precioUnit != null ? it.precioUnit * it.cant : 0),
+                0
+              )
+              // No se guarda la propina como campo aparte (queda mezclada en
+              // `total` tanto si cobró un admin como un garzón desde /mozo) —
+              // se reconstruye acá como la diferencia contra la suma de los
+              // ítems. Si no hubo propina da ~0 y la línea no se muestra.
+              const propina = Math.round(reciboImprimir.total - subtotal)
+              return (
+                <>
+                  <div className="text-center mb-2">
+                    <div className="font-bold">Productora, Centro de Eventos & Restaurant</div>
+                    <div className="mt-1">Camino Azapa Km. 3.5 - Arica, Chile.</div>
+                    <div>+56 9 7813 2192</div>
+                    <div>contacto@varos.cl</div>
+                    <div>www.varos.cl</div>
+                  </div>
+                  <div className="border-t border-dashed border-black my-1.5" />
+                  <div>ID&nbsp;&nbsp;&nbsp;&nbsp;: {reciboImprimir.id?.slice(0, 8).toUpperCase()}</div>
+                  <div>Fecha : {formatFechaTicket(reciboImprimir.created_at)}</div>
+                  <div>Cliente:</div>
+                  <div>Garzón: {reciboImprimir.garzon || ''}</div>
+                  <div>Mesa&nbsp;&nbsp;: {reciboImprimir.sector} {reciboImprimir.mesa}</div>
+
+                  <div className="text-center font-bold my-2">TICKET DE CONSUMO</div>
+
+                  <div className="flex justify-between font-bold">
+                    <span>CANT PRODUCTO</span>
+                    <span>PRECIO</span>
+                  </div>
+                  <div className="border-t border-dashed border-black my-1" />
+                  {items.map((it, i) => (
+                    <div key={i} className="flex justify-between gap-2 py-0.5">
+                      <span>{it.cant} {it.nombre}</span>
+                      <span className="shrink-0 tabular-nums">
+                        {it.precioUnit != null ? formatMontoTicket(it.precioUnit * it.cant) : '—'}
+                      </span>
+                    </div>
+                  ))}
+
+                  <div className="my-2" />
+                  <div className="flex justify-between">
+                    <span>Sub Total:</span>
+                    <span className="tabular-nums">{formatMontoTicket(subtotal)}</span>
+                  </div>
+                  {propina > 0 && (
+                    <div className="flex justify-between">
+                      <span>Propina sugerida: (10%)</span>
+                      <span className="tabular-nums">{formatMontoTicket(propina)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-bold text-[13px] mt-0.5">
+                    <span>Total:</span>
+                    <span className="tabular-nums">{formatMontoTicket(reciboImprimir.total)}</span>
+                  </div>
+
+                  <div className="mt-2">
+                    {MEDIOS_PAGO.find((m) => m.value === reciboImprimir.medio_pago)?.label || reciboImprimir.medio_pago}
+                  </div>
+                  <div className="text-center mt-3">GRACIAS POR SU PREFERENCIA</div>
+                </>
+              )
+            })()}
           </div>
 
           <div className="flex gap-3 mt-4 print:hidden">
