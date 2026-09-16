@@ -3,9 +3,10 @@ import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
 
-// Pantalla del mozo — fase 2 del reemplazo incremental del POS viejo
-// (varos.cl/gestion). Ver varos-pos/DECISIONES.md, "Reemplazo de Comandas
-// (fase 1, sin Caja) · 2026-09-11".
+// Pantalla del mozo — reemplazo del POS viejo (varos.cl/gestion). Desde el
+// 2026-09-16 (decisión explícita del usuario) opera solo con este sistema,
+// sin depender del puente con gestion.php — ver varos-pos/DECISIONES.md,
+// "Reemplazo de Comandas (fase 1, sin Caja) · 2026-09-11".
 //
 // Sin login de Google a propósito (decisión del usuario, 2026-09-12): el
 // candado es un código corto por garzón, generado en /admin/garzones
@@ -1473,7 +1474,7 @@ export default function Mozo() {
 
             {usandoRespaldoMenuDia ? (
               <p className="text-[11.5px] text-diamond bg-diamond/10 border border-diamond/25 rounded-lg px-3 py-2 mb-3.5 leading-relaxed">
-                ℹ️ Sin conexión con gestion.php — usando el desglose cargado a mano en Productos.
+                ℹ️ Usando el desglose cargado a mano en Productos.
               </p>
             ) : (
               menuDiaStale && (

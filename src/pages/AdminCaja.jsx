@@ -6,9 +6,10 @@ import ReciboBoleta from '../components/ReciboBoleta.jsx'
 // Caja fase 1 — cobrar y cerrar mesa. Ver varos-pos/DECISIONES.md,
 // "Caja fase 1: cobrar y cerrar mesa".
 //
-// Modo espejo: mientras convive con gestion.php, el cobro real de la plata
-// sigue siendo el del PHP. Esto registra en paralelo para validar el flujo
-// un ciclo de servicio completo — no reemplaza nada todavía.
+// Dejó de ser espejo: decisión explícita del usuario (2026-09-16) de operar
+// solo con el sistema nuevo, sin depender del puente con gestion.php. El
+// cobro real de la plata es este, `pos_cobros` es el libro de caja
+// permanente.
 //
 // El KDS (/state) sigue siendo la única fuente de "qué está pendiente" (la
 // misma que ve cocina) — acá no se duplica esa lista, solo se lee y se
@@ -334,7 +335,7 @@ export default function AdminCaja() {
         <div className="font-mono text-[10px] tracking-[0.3em] text-gold uppercase">Varo's · Gestión</div>
         <h1 className="font-head text-2xl font-semibold">Caja</h1>
         <p className="text-paper/40 text-xs mt-1 leading-relaxed">
-          Piloto — el cobro real sigue siendo el de gestion.php. Esto registra en paralelo para validar el flujo.
+          Registro de caja — libro permanente de lo cobrado.
         </p>
       </header>
 
