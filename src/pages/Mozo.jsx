@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
+import ReciboBoleta from '../components/ReciboBoleta.jsx'
 
 // Pantalla del mozo — fase 2 del reemplazo incremental del POS viejo
 // (varos.cl/gestion). Ver varos-pos/DECISIONES.md, "Reemplazo de Comandas
@@ -248,7 +249,28 @@ export default function Mozo() {
         const res = await fetch(KDS_STATE_URL)
         if (!res.ok) return
         const data = await res.json()
-        const comandasConItems = (data.comandas || []).filter((c) => (c.items || []).length > 0)
+        const comandasBase = (data.comandas || []).filter((c) => (c.items || []).length > 0)
+
+        // /state le saca las bebidas a los items a propósito (es la vista que
+        // arma la pantalla de cocina, a la que no le importan los tragos) —
+        // "Ya pedido en esta mesa" y la pantalla de Comandas sí necesitan ver
+        // TODO lo pedido, bar incluido (pedido explícito, 2026-09-16). Mismo
+        // mecanismo que ya usa /admin/caja al cobrar: para las comandas "N-"
+        // se pide el detalle sin filtrar; las que vienen del puente con
+        // gestion.php no tienen ese endpoint todavía (limitación conocida).
+        const comandasConItems = await Promise.all(
+          comandasBase.map(async (c) => {
+            if (!c.id.startsWith('N-')) return c
+            try {
+              const r = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(c.id)}`)
+              if (!r.ok) return c
+              const detalle = await r.json()
+              return { ...c, items: detalle.items || c.items }
+            } catch {
+              return c
+            }
+          })
+        )
         const claves = new Set(comandasConItems.map((c) => `${c.mesa}|${c.sector}`))
 
         const porMesa = new Map()
@@ -389,6 +411,7 @@ export default function Mozo() {
   const [cobrando, setCobrando] = useState(false)
   const [errorCobro, setErrorCobro] = useState('')
   const [toastCobro, setToastCobro] = useState('')
+  const [reciboImprimir, setReciboImprimir] = useState(null) // boleta a mostrar/imprimir tras cobrar
 
   const precioMenuDia = useMemo(
     () => items.find((i) => i.category === 'Menú del Día')?.price_clp || 0,
@@ -472,11 +495,12 @@ export default function Mozo() {
     setCobrando(true)
     setErrorCobro('')
     try {
-      const { error } = await supabase.rpc('registrar_cobro_garzon', {
+      const itemsCobro = lineasCobro.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit }))
+      const { data: cobroId, error } = await supabase.rpc('registrar_cobro_garzon', {
         p_codigo: garzon.codigo,
         p_mesa: String(mesaCobrando.num),
         p_sector: mesaCobrando.sector,
-        p_items: lineasCobro.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit })),
+        p_items: itemsCobro,
         p_total: totalFinalCobro,
         p_medio_pago: medioPagoCobro
       })
@@ -492,6 +516,21 @@ export default function Mozo() {
       }
       setToastCobro(`Mesa ${mesaCobrando.num} cobrada — ${formatCLP(totalFinalCobro)}`)
       setTimeout(() => setToastCobro(''), 2500)
+      // Imprimir al cobrar, sin pasos extra -- pedido explícito
+      // (2026-09-16): "el botón de cobrar debiese imprimir". Si el celular
+      // del garzón no tiene impresora conectada, esta pantalla igual sirve
+      // de comprobante en el momento; donde sí hay impresora (la PC de
+      // caja) el botón "Imprimir boleta" imprime de verdad.
+      setReciboImprimir({
+        id: cobroId,
+        mesa: String(mesaCobrando.num),
+        sector: mesaCobrando.sector,
+        garzon: garzon.nombre,
+        items: itemsCobro,
+        total: totalFinalCobro,
+        medioPagoLabel: MEDIOS_PAGO.find((m) => m.value === medioPagoCobro)?.label || medioPagoCobro,
+        created_at: new Date().toISOString()
+      })
       setMesaCobrando(null)
       setComandasCobro([])
     } catch (err) {
@@ -650,7 +689,14 @@ export default function Mozo() {
   const cartCount = cartEntries.reduce((s, [, c]) => s + c.qty, 0)
   const cartTotal = cartEntries.reduce((s, [, c]) => s + (Number(c.item.price_clp) || 0) * c.qty, 0)
 
+  // Sin mesa elegida no se puede armar pedido — pedido explícito
+  // (2026-09-16): antes se podía ir agregando platos al carrito sin haber
+  // elegido mesa todavía, y recién se pedía la mesa al tocar "Enviar".
   function agregar(item) {
+    if (!mesa) {
+      setSheetMesa(true)
+      return
+    }
     setCart((prev) => ({ ...prev, [item.id]: { qty: 1, nota: '', item } }))
   }
   function incrementar(id) {
@@ -682,6 +728,10 @@ export default function Mozo() {
   // key propia (no item.id) para que dos combos distintos convivan como
   // líneas separadas, igual que en la comanda real.
   function abrirMenuDia(item) {
+    if (!mesa) {
+      setSheetMesa(true)
+      return
+    }
     setMenuDiaSel({ Entrada: '', 'Plato Principal': '', 'Postres y Tentaciones': '' })
     setMenuDiaNota('')
     setSheetMenuDia(true)
@@ -744,31 +794,52 @@ export default function Mozo() {
     }
     setEnviando(true)
     setErrorEnvio('')
-    const payload = {
-      mesa: String(mesa.num),
-      sector: mesa.sector,
-      garzon: garzon?.nombre || '',
-      items: cartEntries.map(([, c]) => ({
-        cant: c.qty,
-        nombre: c.item.name,
-        comentario: c.nota?.trim() || '',
-        // Menú del Día: un `menus` por unidad pedida, mismo formato que ya
-        // arma el bridge del PHP real (entrada/principal/postre elegidos).
-        ...(c.menuChoice ? { menus: Array.from({ length: c.qty }, () => ({ ...c.menuChoice })) } : {})
-      }))
-    }
+    const nuevosItems = cartEntries.map(([, c]) => ({
+      cant: c.qty,
+      nombre: c.item.name,
+      comentario: c.nota?.trim() || '',
+      // Menú del Día: un `menus` por unidad pedida, mismo formato que ya
+      // arma el bridge del PHP real (entrada/principal/postre elegidos).
+      ...(c.menuChoice ? { menus: Array.from({ length: c.qty }, () => ({ ...c.menuChoice })) } : {})
+    }))
     try {
-      const res = await fetch(KDS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      })
-      if (!res.ok) {
-        const texto = await res.text().catch(() => '')
-        throw new Error(texto || `Cocina respondió con error (${res.status})`)
+      // Si esta mesa ya tiene una comanda propia abierta (nacida en /mozo),
+      // el pedido nuevo se suma a esa en vez de abrir un ticket aparte —
+      // pedido explícito (2026-09-16): antes cada "Enviar" creaba una
+      // comanda nueva para la misma mesa y quedaban dos tickets sueltos
+      // donde debía haber uno solo. Las comandas que vienen del puente con
+      // gestion.php no son editables acá (mismo motivo de siempre), así que
+      // si solo hay una de esas, igual se crea una comanda nueva propia.
+      const clave = `${mesa.num}|${mesa.sector}`
+      const comandaExistente = (comandasPorMesa.get(clave) || []).find((c) => c.editable)
+
+      if (comandaExistente) {
+        const detalleRes = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(comandaExistente.id)}`)
+        if (!detalleRes.ok) throw new Error('No se pudo leer el pedido que ya tenía esta mesa.')
+        const detalle = await detalleRes.json()
+        const res = await fetch(KDS_EDITAR_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: comandaExistente.id, items: [...(detalle.items || []), ...nuevosItems] })
+        })
+        if (!res.ok) {
+          const texto = await res.text().catch(() => '')
+          throw new Error(texto || `Cocina respondió con error (${res.status})`)
+        }
+      } else {
+        const payload = { mesa: String(mesa.num), sector: mesa.sector, garzon: garzon?.nombre || '', items: nuevosItems }
+        const res = await fetch(KDS_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        })
+        if (!res.ok) {
+          const texto = await res.text().catch(() => '')
+          throw new Error(texto || `Cocina respondió con error (${res.status})`)
+        }
+        const data = await res.json().catch(() => null)
+        if (!data?.ok) throw new Error('Cocina no confirmó el pedido.')
       }
-      const data = await res.json().catch(() => null)
-      if (!data?.ok) throw new Error('Cocina no confirmó el pedido.')
 
       // Éxito: recién acá se limpia el carrito, nunca antes.
       setCart({})
@@ -1014,7 +1085,7 @@ export default function Mozo() {
                     setMesaCobrando(null)
                     setComandasCobro([])
                   }}
-                  className="text-paper/40 text-xs mt-2 mb-2 underline"
+                  className="text-paper/60 text-sm font-medium mt-2 mb-2 underline"
                 >
                   ← volver a Comandas
                 </button>
@@ -1110,7 +1181,7 @@ export default function Mozo() {
               </>
             ) : comandaEditando ? (
               <>
-                <button onClick={() => setComandaEditando(null)} className="text-paper/40 text-xs mt-2 mb-2 underline">
+                <button onClick={() => setComandaEditando(null)} className="text-paper/60 text-sm font-medium mt-2 mb-2 underline">
                   ← volver a Comandas
                 </button>
                 <h2 className="font-head text-lg font-semibold mb-1">
@@ -1297,17 +1368,19 @@ export default function Mozo() {
                       <button
                         key={m.id}
                         onClick={() => elegirMesa(m.numero, g.sector)}
-                        className={`relative aspect-square rounded-lg border font-semibold text-[15px] flex items-center justify-center ${
+                        className={`relative aspect-square rounded-lg border font-bold text-2xl flex items-center justify-center ${
                           sel
                             ? 'bg-gradient-to-br from-gold to-bronze border-transparent text-ink'
                             : pendiente
-                            ? 'bg-gold/10 border-gold/50 text-gold'
+                            ? // Rojo = mesa ocupada (pedido explícito, 2026-09-16) — antes
+                              // el dorado se confundía con el resto de los acentos de la app.
+                              'bg-rose-500/15 border-rose-500/60 text-rose-300'
                             : 'bg-ink border-white/10 text-paper'
                         }`}
                       >
                         {m.numero}
                         {pendiente && !sel && (
-                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-gold" aria-hidden="true" />
+                          <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500" aria-hidden="true" />
                         )}
                       </button>
                     )
@@ -1466,6 +1539,8 @@ export default function Mozo() {
           </div>
         </div>
       </div>
+
+      {reciboImprimir && <ReciboBoleta cobro={reciboImprimir} onCerrar={() => setReciboImprimir(null)} />}
     </div>
   )
 }

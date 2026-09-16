@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
+import ReciboBoleta from '../components/ReciboBoleta.jsx'
 
 // Caja fase 1 — cobrar y cerrar mesa. Ver varos-pos/DECISIONES.md,
 // "Caja fase 1: cobrar y cerrar mesa".
@@ -35,21 +36,6 @@ function normalizarNombre(s) {
 
 function formatCLP(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CL')
-}
-
-// Sin "$" — así sale el monto en el ticket de gestion.php, que es la
-// referencia a igualar (ver foto del usuario, 2026-09-16).
-function formatMontoTicket(n) {
-  return Math.round(n || 0).toLocaleString('es-CL')
-}
-
-function formatFechaTicket(iso) {
-  const d = new Date(iso)
-  const dd = String(d.getDate()).padStart(2, '0')
-  const mm = String(d.getMonth() + 1).padStart(2, '0')
-  const hh = String(d.getHours()).padStart(2, '0')
-  const min = String(d.getMinutes()).padStart(2, '0')
-  return `${dd}-${mm}-${d.getFullYear()} ${hh}:${min}`
 }
 
 function formatHora(iso) {
@@ -279,20 +265,38 @@ export default function AdminCaja() {
     setErrorCobro('')
     const garzon = comandas.find((c) => c.garzon)?.garzon || ''
     const cobradoPor = customer?.full_name || session?.user?.email || 'admin'
-    const { error } = await supabase.from('pos_cobros').insert({
-      mesa: String(mesaSel.numero),
-      sector: mesaSel.sector,
-      garzon,
-      items: lineas.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit })),
-      total: totalFinal,
-      medio_pago: medioPago,
-      cobrado_por: cobradoPor,
-    })
+    const itemsCobro = lineas.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit }))
+    const { data: inserted, error } = await supabase
+      .from('pos_cobros')
+      .insert({
+        mesa: String(mesaSel.numero),
+        sector: mesaSel.sector,
+        garzon,
+        items: itemsCobro,
+        total: totalFinal,
+        medio_pago: medioPago,
+        cobrado_por: cobradoPor,
+      })
+      .select('id, created_at')
+      .single()
     if (error) {
       setErrorCobro('No se pudo registrar el cobro: ' + error.message)
       setCobrando(false)
       return
     }
+    // Imprimir al cobrar, sin tener que ir a buscarlo despues a "Ver
+    // registro de caja" -- pedido explicito (2026-09-16): "el boton de
+    // cobrar debiese imprimir".
+    setReciboImprimir({
+      id: inserted?.id,
+      mesa: String(mesaSel.numero),
+      sector: mesaSel.sector,
+      garzon,
+      items: itemsCobro,
+      total: totalFinal,
+      medioPagoLabel: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label || medioPago,
+      created_at: inserted?.created_at || new Date().toISOString(),
+    })
     try {
       await fetch(KDS_CERRAR_MESA_URL, {
         method: 'POST',
@@ -420,13 +424,15 @@ export default function AdminCaja() {
                         <button
                           key={m.id}
                           onClick={() => elegirMesa(m.numero, sector)}
-                          className={`relative py-3 rounded-lg border text-sm font-medium ${
-                            pendiente ? 'bg-gold/10 border-gold/50 text-gold' : 'bg-ink border-white/10'
+                          className={`relative py-3.5 rounded-lg border text-xl font-bold ${
+                            // Rojo = mesa ocupada (pedido explícito, 2026-09-16) — antes
+                            // el dorado se confundía con el resto de los acentos de la app.
+                            pendiente ? 'bg-rose-500/15 border-rose-500/60 text-rose-300' : 'bg-ink border-white/10'
                           }`}
                         >
                           {m.numero}
                           {pendiente && (
-                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-gold" aria-hidden="true" />
+                            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-rose-500" aria-hidden="true" />
                           )}
                         </button>
                       )
@@ -519,100 +525,16 @@ export default function AdminCaja() {
       )}
 
       {reciboImprimir && (
-        <div className="fixed inset-0 z-50 bg-ink/95 flex flex-col items-center justify-center px-4 print:static print:bg-white print:block print:px-0">
-          <style>{`
-            @media print {
-              @page { size: 80mm auto; margin: 0; }
-              body * { visibility: hidden; }
-              #recibo-boleta, #recibo-boleta * { visibility: visible; }
-              #recibo-boleta { position: absolute; top: 0; left: 0; width: 80mm; }
-            }
-          `}</style>
-
-          <div id="recibo-boleta" className="bg-white text-black w-[80mm] max-w-full p-3 font-mono text-[11px] leading-snug print:p-2">
-            {(() => {
-              const items = reciboImprimir.items || []
-              const subtotal = items.reduce(
-                (s, it) => s + (it.precioUnit != null ? it.precioUnit * it.cant : 0),
-                0
-              )
-              // No se guarda la propina como campo aparte (queda mezclada en
-              // `total` tanto si cobró un admin como un garzón desde /mozo) —
-              // se reconstruye acá como la diferencia contra la suma de los
-              // ítems. Si no hubo propina da ~0 y la línea no se muestra.
-              const propina = Math.round(reciboImprimir.total - subtotal)
-              return (
-                <>
-                  <div className="text-center mb-2">
-                    <div className="font-bold">Productora, Centro de Eventos & Restaurant</div>
-                    <div className="mt-1">Camino Azapa Km. 3.5 - Arica, Chile.</div>
-                    <div>+56 9 7813 2192</div>
-                    <div>contacto@varos.cl</div>
-                    <div>www.varos.cl</div>
-                  </div>
-                  <div className="border-t border-dashed border-black my-1.5" />
-                  <div>ID&nbsp;&nbsp;&nbsp;&nbsp;: {reciboImprimir.id?.slice(0, 8).toUpperCase()}</div>
-                  <div>Fecha : {formatFechaTicket(reciboImprimir.created_at)}</div>
-                  <div>Cliente:</div>
-                  <div>Garzón: {reciboImprimir.garzon || ''}</div>
-                  <div>Mesa&nbsp;&nbsp;: {reciboImprimir.sector} {reciboImprimir.mesa}</div>
-
-                  <div className="text-center font-bold my-2">TICKET DE CONSUMO</div>
-
-                  <div className="flex justify-between font-bold">
-                    <span>CANT PRODUCTO</span>
-                    <span>PRECIO</span>
-                  </div>
-                  <div className="border-t border-dashed border-black my-1" />
-                  {items.map((it, i) => (
-                    <div key={i} className="flex justify-between gap-2 py-0.5">
-                      <span>{it.cant} {it.nombre}</span>
-                      <span className="shrink-0 tabular-nums">
-                        {it.precioUnit != null ? formatMontoTicket(it.precioUnit * it.cant) : '—'}
-                      </span>
-                    </div>
-                  ))}
-
-                  <div className="my-2" />
-                  <div className="flex justify-between">
-                    <span>Sub Total:</span>
-                    <span className="tabular-nums">{formatMontoTicket(subtotal)}</span>
-                  </div>
-                  {propina > 0 && (
-                    <div className="flex justify-between">
-                      <span>Propina sugerida: (10%)</span>
-                      <span className="tabular-nums">{formatMontoTicket(propina)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between font-bold text-[13px] mt-0.5">
-                    <span>Total:</span>
-                    <span className="tabular-nums">{formatMontoTicket(reciboImprimir.total)}</span>
-                  </div>
-
-                  <div className="mt-2">
-                    {MEDIOS_PAGO.find((m) => m.value === reciboImprimir.medio_pago)?.label || reciboImprimir.medio_pago}
-                  </div>
-                  <div className="text-center mt-3">GRACIAS POR SU PREFERENCIA</div>
-                </>
-              )
-            })()}
-          </div>
-
-          <div className="flex gap-3 mt-4 print:hidden">
-            <button
-              onClick={() => setReciboImprimir(null)}
-              className="px-4 py-2.5 rounded-lg border border-white/15 text-paper text-sm"
-            >
-              Cerrar
-            </button>
-            <button
-              onClick={() => window.print()}
-              className="px-5 py-2.5 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink font-semibold text-sm"
-            >
-              🖨️ Imprimir boleta
-            </button>
-          </div>
-        </div>
+        <ReciboBoleta
+          cobro={{
+            ...reciboImprimir,
+            medioPagoLabel:
+              reciboImprimir.medioPagoLabel ||
+              MEDIOS_PAGO.find((m) => m.value === reciboImprimir.medio_pago)?.label ||
+              reciboImprimir.medio_pago,
+          }}
+          onCerrar={() => setReciboImprimir(null)}
+        />
       )}
     </div>
   )
