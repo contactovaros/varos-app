@@ -47,6 +47,20 @@ export default function Sommelier() {
   // tocado en los chips. `null` = todavía no se preguntó nada.
   const [consulta, setConsulta] = useState(null) // { modo: 'texto', texto } | { modo: 'plato', item }
 
+  // Con las ~50 preparaciones reales, mostrar las tres categorías abiertas de
+  // entrada tapaba la pantalla entera (pedido del dueño, 2026-09-17: "que sea
+  // desplegable"). Arrancan cerradas; cada categoría se abre por separado.
+  const [categoriasAbiertas, setCategoriasAbiertas] = useState(() => new Set())
+
+  function toggleCategoria(categoria) {
+    setCategoriasAbiertas((actual) => {
+      const siguiente = new Set(actual)
+      if (siguiente.has(categoria)) siguiente.delete(categoria)
+      else siguiente.add(categoria)
+      return siguiente
+    })
+  }
+
   useEffect(() => {
     let cancelado = false
     setCargando(true)
@@ -155,31 +169,49 @@ export default function Sommelier() {
       </form>
 
       {!cargando && gruposChips.length > 0 && (
-        <div className="mb-8 flex flex-col gap-4">
-          {gruposChips.map((grupo) => (
-            <div key={grupo.categoria}>
-              <p className="text-paper/40 text-[10px] uppercase tracking-wide mb-2">{grupo.titulo}</p>
-              <div className="flex flex-wrap gap-2">
-                {grupo.platos.map((plato) => {
-                  const activo = consulta?.modo === 'plato' && consulta.item.id === plato.id
-                  return (
-                    <button
-                      key={plato.id}
-                      type="button"
-                      onClick={() => consultarPlato(plato)}
-                      className={`text-[11px] px-3 py-1.5 rounded-full border transition-colors ${
-                        activo
-                          ? 'border-gold/60 text-paper bg-gold/10'
-                          : 'border-bronze/25 text-paper/60 hover:border-gold/50 hover:text-paper'
-                      }`}
-                    >
-                      {plato.name}
-                    </button>
-                  )
-                })}
+        <div className="mb-8 flex flex-col gap-2.5">
+          {gruposChips.map((grupo) => {
+            const abierta = categoriasAbiertas.has(grupo.categoria)
+            return (
+              <div key={grupo.categoria} className="border border-bronze/20 rounded-2xl overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => toggleCategoria(grupo.categoria)}
+                  className="w-full flex items-center justify-between px-4 py-3 text-left"
+                >
+                  <span className="text-paper/70 text-xs font-head font-semibold uppercase tracking-wide">
+                    {grupo.titulo} <span className="text-paper/35 font-normal normal-case">· {grupo.platos.length}</span>
+                  </span>
+                  <span
+                    className={`text-gold/70 text-[10px] transition-transform duration-150 ease-salida ${abierta ? 'rotate-180' : ''}`}
+                  >
+                    ▾
+                  </span>
+                </button>
+                {abierta && (
+                  <div className="flex flex-wrap gap-2 px-4 pb-4">
+                    {grupo.platos.map((plato) => {
+                      const activo = consulta?.modo === 'plato' && consulta.item.id === plato.id
+                      return (
+                        <button
+                          key={plato.id}
+                          type="button"
+                          onClick={() => consultarPlato(plato)}
+                          className={`text-[11px] px-3 py-1.5 rounded-full border transition-colors ${
+                            activo
+                              ? 'border-gold/60 text-paper bg-gold/10'
+                              : 'border-bronze/25 text-paper/60 hover:border-gold/50 hover:text-paper'
+                          }`}
+                        >
+                          {plato.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
