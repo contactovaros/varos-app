@@ -65,10 +65,18 @@ const IconoReservas = (
   </Icono>
 )
 
+const IconoSommelier = (
+  <Icono>
+    <path d="M7 3.5h10l-1.2 8.4A3.8 3.8 0 0 1 12 15.5a3.8 3.8 0 0 1-3.8-3.6z" />
+    <path d="M12 15.5v4M8.6 19.5h6.8" />
+  </Icono>
+)
+
 const itemsAdmin = [
   { to: '/', label: 'Menú', icon: IconoMenu, end: true },
   { to: '/pedidos', label: 'Pedidos', icon: IconoPedidos },
   { to: '/club', label: "Club Varo's", icon: IconoClub },
+  { to: '/sommelier', label: 'Sommelier', icon: IconoSommelier },
   { to: '/admin', label: 'Admin', icon: IconoAdmin },
   { to: '/admin/mesas', label: 'Mesas', icon: IconoMesas },
   { to: '/admin/reservas', label: 'Reservas', icon: IconoReservas }

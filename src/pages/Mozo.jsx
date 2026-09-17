@@ -2,6 +2,15 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
+import { detectarPerfil, armarRecomendacion } from '../data/maridaje.js'
+
+// Mismas categorías de bebida que usa /sommelier (ver Sommelier.jsx) — se
+// duplican acá en vez de importarlas para no acoplar esta pantalla a esa
+// (la están retocando en paralelo). Sirven para no ofrecer "vino para el
+// vino": la sugerencia del sommelier solo se dispara al agregar comida.
+const CATEGORIA_VINOS_MOZO = 'VINOS & ESPUMANTES'
+const CATEGORIAS_BAR_MOZO = ['NUESTRO BAR', 'MOCKTAILS (SIN ALCOHOL)']
+const CATEGORIAS_BEBIDA_MOZO = [CATEGORIA_VINOS_MOZO, ...CATEGORIAS_BAR_MOZO]
 
 // Pantalla del mozo — reemplazo del POS viejo (varos.cl/gestion). Desde el
 // 2026-09-16 (decisión explícita del usuario) opera solo con este sistema,
@@ -690,6 +699,46 @@ export default function Mozo() {
   const cartCount = cartEntries.reduce((s, [, c]) => s + c.qty, 0)
   const cartTotal = cartEntries.reduce((s, [, c]) => s + (Number(c.item.price_clp) || 0) * c.qty, 0)
 
+  // Vinos/bar reales ya cargados en `items` (mismo fetch que la carta del
+  // mozo) — nada nuevo que traer de Supabase, solo separar por categoría
+  // para pasárselo al motor de maridaje (src/data/maridaje.js).
+  const vinosParaSommelier = useMemo(() => items.filter((i) => i.category === CATEGORIA_VINOS_MOZO), [items])
+  const bebidasBarParaSommelier = useMemo(
+    () => items.filter((i) => CATEGORIAS_BAR_MOZO.includes(i.category)),
+    [items]
+  )
+
+  // Sugerencia del sommelier al agregar un plato — no bloqueante (ver
+  // pedido del dueño, 2026-09-17): un banner chico cerca de la barra de
+  // carrito, nunca un modal. Si el motor no encuentra nada relevante para
+  // el nombre del plato, no se muestra nada (ni fallback genérico).
+  const [sugerenciaSommelier, setSugerenciaSommelier] = useState(null)
+
+  function sugerirBebidaPara(nombrePlato) {
+    if (!nombrePlato) return
+    const perfil = detectarPerfil(nombrePlato)
+    if (!perfil) return
+    const recomendacion = armarRecomendacion(perfil, vinosParaSommelier, bebidasBarParaSommelier)
+    if (!recomendacion?.vino && !recomendacion?.alternativaBar) return
+    setSugerenciaSommelier({ plato: nombrePlato, perfil, recomendacion })
+  }
+
+  function agregarBebidaSugerida(nombreBebida) {
+    const bebida = items.find((i) => i.name === nombreBebida)
+    if (!bebida) return
+    agregar(bebida)
+    setSugerenciaSommelier(null)
+  }
+
+  // Se retira sola a los 9s para no acumularse en pantalla si el mozo sigue
+  // agregando platos sin prestarle atención — no es bloqueante, así que no
+  // hace falta que la cierre a mano.
+  useEffect(() => {
+    if (!sugerenciaSommelier) return
+    const t = setTimeout(() => setSugerenciaSommelier(null), 9000)
+    return () => clearTimeout(t)
+  }, [sugerenciaSommelier])
+
   // Sin mesa elegida no se puede armar pedido — pedido explícito
   // (2026-09-16): antes se podía ir agregando platos al carrito sin haber
   // elegido mesa todavía, y recién se pedía la mesa al tocar "Enviar".
@@ -699,6 +748,11 @@ export default function Mozo() {
       return
     }
     setCart((prev) => ({ ...prev, [item.id]: { qty: 1, nota: '', item } }))
+    // Solo comida dispara la sugerencia — ofrecer vino para el vino mismo
+    // no tiene sentido (ver CATEGORIAS_BEBIDA_MOZO más arriba).
+    if (!CATEGORIAS_BEBIDA_MOZO.includes(item.category)) {
+      sugerirBebidaPara(item.name)
+    }
   }
   function incrementar(id) {
     setCart((prev) => ({ ...prev, [id]: { ...prev[id], qty: prev[id].qty + 1 } }))
@@ -770,6 +824,10 @@ export default function Mozo() {
       }
     })
     setSheetMenuDia(false)
+    // El Menú del Día también puede tener un plato principal mapeado por el
+    // motor de maridaje (ej. "Lomo Saltado" como principal del combo) — se
+    // sugiere igual que con un plato suelto.
+    sugerirBebidaPara(principal)
   }
 
   function elegirMesa(num, sector) {
@@ -1050,6 +1108,64 @@ export default function Mozo() {
               </div>
             ))}
         </main>
+
+        {/* ---- Sugerencia del sommelier (no bloqueante) ---- */}
+        {sugerenciaSommelier && (
+          <div
+            className="fixed left-0 right-0 z-40 flex justify-center px-3 transition-all duration-300 ease-salida"
+            style={{
+              bottom: cartCount > 0 ? 'calc(78px + env(safe-area-inset-bottom, 0px))' : 'calc(12px + env(safe-area-inset-bottom, 0px))'
+            }}
+          >
+            <div className="w-full max-w-[398px] bg-inkSoft border border-gold/25 rounded-2xl px-3.5 py-3 shadow-lg flex items-center gap-2.5">
+              <span className="shrink-0 text-lg leading-none">🍷</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-0.5 truncate">
+                  Para {sugerenciaSommelier.plato}
+                </p>
+                {sugerenciaSommelier.recomendacion.vino && (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-serif italic text-paper/90 text-[12.5px] truncate">
+                      {sugerenciaSommelier.recomendacion.vino.name}
+                    </span>
+                    <span className="font-mono text-[11px] text-gold whitespace-nowrap shrink-0 tabular-nums">
+                      {formatCLP(sugerenciaSommelier.recomendacion.vino.price_clp)}
+                    </span>
+                  </div>
+                )}
+                {!sugerenciaSommelier.recomendacion.vino && sugerenciaSommelier.recomendacion.alternativaBar && (
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-serif italic text-paper/90 text-[12.5px] truncate">
+                      {sugerenciaSommelier.recomendacion.alternativaBar.item.name}
+                    </span>
+                    <span className="font-mono text-[11px] text-gold whitespace-nowrap shrink-0 tabular-nums">
+                      {formatCLP(sugerenciaSommelier.recomendacion.alternativaBar.item.price_clp)}
+                    </span>
+                  </div>
+                )}
+              </div>
+              {(sugerenciaSommelier.recomendacion.vino || sugerenciaSommelier.recomendacion.alternativaBar) && (
+                <button
+                  onClick={() =>
+                    agregarBebidaSugerida(
+                      (sugerenciaSommelier.recomendacion.vino || sugerenciaSommelier.recomendacion.alternativaBar.item).name
+                    )
+                  }
+                  className="shrink-0 text-[11px] font-bold px-3 py-2 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink whitespace-nowrap"
+                >
+                  + Agregar
+                </button>
+              )}
+              <button
+                onClick={() => setSugerenciaSommelier(null)}
+                className="shrink-0 text-paper/40 text-base leading-none px-0.5"
+                aria-label="Cerrar sugerencia"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* ---- Barra de carrito ---- */}
         <div

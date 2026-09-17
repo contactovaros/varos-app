@@ -12,6 +12,7 @@ import MostrarQR from './pages/MostrarQR.jsx'
 import CompletarPerfil from './pages/CompletarPerfil.jsx'
 import Reservas from './pages/Reservas.jsx'
 import Carta2 from './pages/Carta2.jsx'
+import Sommelier from './pages/Sommelier.jsx'
 import Mozo from './pages/Mozo.jsx'
 import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
@@ -51,6 +52,13 @@ export default function App() {
   // decisión, ESTADO: decidido, sin ejecutar → en progreso).
   if (location.pathname === '/carta2') {
     return <Carta2 />
+  }
+
+  // Sommelier: consultor de bebidas. Público igual que /carta2 — cualquier
+  // cliente sentado a la mesa debe poder abrirlo sin cuenta, y lee la misma
+  // tabla (menu_items) filtrada a las categorías de bebida.
+  if (location.pathname === '/sommelier') {
+    return <Sommelier />
   }
 
   // Pantalla del mozo: sin gate de admin, a propósito — mismo modelo de
