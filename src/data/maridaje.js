@@ -70,6 +70,18 @@ export const PERFILES = [
     notaEscasez: 'La carta es mayoritariamente tinta: este es lo más liviano y fresco que tenemos hoy.',
   },
   {
+    id: 'pasta_mariscos',
+    etiqueta: 'Pasta con mariscos',
+    // Va ANTES que `pescado_salsa`: "Spaguetti en tinta de calamar con salsa
+    // de mariscos" contiene literalmente "salsa de mariscos" y con el orden
+    // viejo caía en `pescado_salsa` en vez de acá, que es lo correcto para
+    // una pasta (bug hermano del de "parrilla", mismo criterio de arreglo:
+    // el perfil más específico para el plato real va antes en la lista).
+    keywords: /spaguetti|spaghetti|fettuccine|pasta/i,
+    principio: 'Pasta con mariscos o tinta de calamar: un blanco con cuerpo o un tinto muy liviano, nunca uno tánico que se pelee con el marisco.',
+    ordenVinos: ['chardonnay', 'sauvignon_blanc', 'espumante_neutro'],
+  },
+  {
     id: 'pescado_salsa',
     etiqueta: 'Pescado en salsa / mariscos',
     keywords: /reineta.*(salsa|camarones|mariscos)|pescado.*salsa|salsa.*mariscos/i,
@@ -87,7 +99,12 @@ export const PERFILES = [
   {
     id: 'carne_roja_parrilla',
     etiqueta: 'Carne roja a la parrilla',
-    keywords: /tomahawk|bife de chorizo|entrecot|asado de tira|lomo a la orden|lomo grille|parrillada|carne roja|parrilla/i,
+    // OJO: la palabra genérica "parrilla" sola NO va acá — antes estaba, y
+    // como este perfil se evalúa antes que `pulpo_parrilla`, "Pulpo a la
+    // parrilla" caía en Cabernet Sauvignon en vez del Carmenere/Garnacha que
+    // le corresponde (bug real, encontrado en vivo el 2026-09-17). Este
+    // perfil solo matchea por los cortes de carne reales.
+    keywords: /tomahawk|bife de chorizo|entrecot|asado de tira|lomo a la orden|lomo grille|parrillada|carne roja/i,
     principio: 'La grasa de una carne roja a la parrilla necesita taninos altos que la corten — ahí un Cabernet Sauvignon o un blend potente rinde mejor.',
     ordenVinos: ['cabernet_sauvignon', 'tinto_generico', 'shiraz', 'carmenere'],
   },
@@ -137,16 +154,15 @@ export const PERFILES = [
     ordenVinos: ['chardonnay', 'sauvignon_blanc', 'carmenere'],
   },
   {
-    id: 'pasta_mariscos',
-    etiqueta: 'Pasta con mariscos',
-    keywords: /spaguetti|spaghetti|fettuccine|pasta/i,
-    principio: 'Pasta con mariscos o tinta de calamar: un blanco con cuerpo o un tinto muy liviano, nunca uno tánico que se pelee con el marisco.',
-    ordenVinos: ['chardonnay', 'sauvignon_blanc', 'espumante_neutro'],
-  },
-  {
     id: 'postre_chocolate',
-    etiqueta: 'Postre de chocolate',
-    keywords: /chocolate|postre|torta|helado|dulce/i,
+    etiqueta: 'Postre',
+    // Ampliado (2026-09-17): la carta real de POSTRES & TENTACIONES tiene
+    // varios que no contienen ninguna de las palabras originales
+    // (chocolate/postre/torta/helado/dulce) — tiramisú, panacotta, suspiro
+    // limeño, mousse de maracuyá, leche asada, fondue con nutella — y antes
+    // cayían al perfil genérico en vez de a la regla de vino dulce/espumante.
+    keywords:
+      /chocolate|postre|torta|helado|dulce|tiramis[uú]|panacotta|panna\s*cotta|suspiro|mousse|leche asada|fondue|nutella|cheesecake|volc[aá]n|tentaci[oó]n/i,
     principio: 'Regla de oro con postres: el vino tiene que ser más dulce que el plato, si no, el vino se siente amargo al lado.',
     ordenVinos: ['moscato_espumante', 'espumante_neutro'],
     altBar: { re: /baileys|havana añejo/i, motivo: 'un licor dulce (Baileys o un ron añejo) es una alternativa clásica para acompañar chocolate' },
@@ -215,17 +231,107 @@ export function armarRecomendacion(perfil, vinosDisponibles, bebidasBar = []) {
   }
 }
 
-// Chips rápidos: preparaciones reales de PLATOS PRINCIPALES / ENTRADAS de la
-// carta actual, no inventadas — cubren los perfiles de arriba.
-export const CHIPS_SUGERIDOS = [
-  'Ceviche',
-  'Carne a la parrilla',
-  'Pulpo a la parrilla',
-  'Reineta frita',
-  'Pescado en salsa de mariscos',
-  'Lomo saltado',
-  'Picante de mariscos',
-  'Costillar de cerdo',
-  'Ave en salsa',
-  'Postre de chocolate',
-]
+// --- Mapeo explícito plato real → perfil ------------------------------
+//
+// Los chips de /sommelier ya no son una lista de 10 ejemplos: salen de la
+// carta real completa (ver Sommelier.jsx), y cada plato real necesita un
+// perfil confiable, no una adivinanza de regex sobre su nombre completo
+// (que trae emojis, gramaje, mayúsculas variables, etc.). Este mapeo cubre
+// los ~52 platos de ENTRADAS FRIAS Y CALIENTES, PLATOS PRINCIPALES y
+// POSTRES & TENTACIONES confirmados contra `menu_items` el 2026-09-17
+// (visible_carta=true, available=true). NIÑOS y GUARNICIONES quedan afuera
+// a propósito (ver CATEGORIAS_SIN_MARIDAJE más abajo) — no tiene sentido
+// ofrecer vino para un menú de niños ni para un acompañamiento suelto.
+//
+// La clave es el nombre normalizado (ver `normalizarNombrePlato`): sin
+// emojis ni signos, sin dobles espacios, en mayúscula. Así "🌶️PICANTE DE
+// PULPO CON ARROZ" matchea igual que si el admin le sacara el emoji mañana.
+export function normalizarNombrePlato(nombre) {
+  return String(nombre || '')
+    .toUpperCase()
+    .normalize('NFC')
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+// Categorías reales de `menu_items` que a propósito NO participan del
+// maridaje: NIÑOS (nadie pide vino para el menú de niños) y GUARNICIONES
+// (son acompañamientos, no un plato para maridar por sí solo).
+export const CATEGORIAS_SIN_MARIDAJE = ['NIÑOS', 'GUARNICIONES']
+
+const MAPEO_PLATOS = {
+  // -- ENTRADAS FRIAS Y CALIENTES --
+  'TIRADITO DE SALMON AHUMADO': 'ceviche',
+  'CAUSA PULPO AL OLIVO': 'pescado_salsa',
+  'CAUSA LIMEÑA ACEVICHADA': 'ceviche',
+  'CAUSA LIMEÑA CON POLLO': 'ave_salsa',
+  'CAUSA LIMEÑA DE CAMARONES EN SALSA GOLF': 'pescado_salsa',
+  'CEVICHE MIXTO': 'ceviche',
+  'CEVICHE TRADICIONAL': 'ceviche',
+  'ENSALADA CESAR AL ESTILO VARO S': 'ave_salsa',
+  'PALTA REINA CORONADA CON POLLO Y MAYONESA EN MIX DE HOJAS VERDES': 'ave_salsa',
+  'PULPO A LA OLIVA': 'pescado_salsa',
+  'TIRADITO NIKKEI': 'ceviche',
+  'TRILOGIA DE CAUSA LIMEÑA': 'pescado_salsa',
+
+  // -- PLATOS PRINCIPALES --
+  'LOMO SALTADO CON RISSOTTO A LA HUANCAINA': 'lomo_saltado',
+  'PARRILLADA 1 LOMO 1 TRUTO 1 PRIETA 2 LONGANIZA 2 GUARNICION': 'carne_roja_parrilla',
+  'PULPO A LA PARRILLA EN SALSA BBQ CON PAPAS DORADAS': 'pulpo_parrilla',
+  'REINETA EN SALSA DE CAMARONES CON ACOMPAÑAMIENTO A ELECCION': 'pescado_salsa',
+  'REINETA EN SALSA DE MARISCOS ACOMPAÑAMIENTO A ELECCION': 'pescado_salsa',
+  'REINETA FRITA CON ENSALADA SURTIDA DEL VALLE': 'pescado_blanco',
+  'SPAGUETTI EN TINTA DE CALAMAR CON SALSA DE MARISCOS': 'pasta_mariscos',
+  'SUPREMA DE AVE A LA PLANCHA EN SALSA HUANCAINA ACOMPAÑADO DE ARROZ AL OLIVO': 'ave_salsa',
+  'SUPREMA DE AVE CON SALSA DE CHAMPIGNONES ARROZ A LAS FINAS HIERBAS': 'ave_salsa',
+  'LOMO GRILLE 200 GRAMOS A LA ORDEN': 'carne_roja_parrilla',
+  'LOMO A LO POBRE 200 GRMS': 'guiso_lomo_pobre',
+  'FETTUCCINE A LA HUANCAINA CON LOMO SALTADO': 'lomo_saltado',
+  'CEVICHE TRADICIONAL CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': 'ceviche',
+  'CEVICHE MIXTO DEL PACIFICO CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': 'ceviche',
+  'BIFE DE CHORIZO 350 GMOS 2 GUARNICIONES A ELECCIÓN': 'carne_roja_parrilla',
+  'ARROZ A LA MARINERA': 'mariscos_arroz',
+  'FLAT IRON STEAK 350 GMS GUARNICION A ELECCIÓN': 'carne_roja_parrilla',
+  'ENTRECOT DE VACUNO GRILLE CON CHIMICHURRI 500 GRAMOS GUARNICION A ELECCION': 'carne_roja_parrilla',
+  'ASADO DE TIRA AL VINO TINTO CON GUARNICION A LA ORDEN 500GM': 'carne_roja_parrilla',
+  'TOMAHAWK 800 GRMS CON CHIMICHURRI Y 2 ACOMPAÑAMIENTOS A ELECCION': 'carne_roja_parrilla',
+  'TRIO MARINO': 'mariscos_arroz',
+  'SOPA MARINERA': 'mariscos_arroz',
+  'COSTILLAR DE CERDO ASADO GUARNICION A ELECCION': 'cerdo',
+  'PICANTE DE PULPO CON ARROZ': 'picante',
+  'PICANTE DE MARISCOS CON ARROZ': 'picante',
+  'PICANTE DE GUATA Y PATA CON ARROZ BLANCO': 'picante',
+  'FIESTA DEL MAR': 'mariscos_arroz',
+  'LOMO SALTADO CLASICO': 'lomo_saltado',
+
+  // -- POSTRES & TENTACIONES --
+  'PANACOTTA CON SALSA DE FRUTILLA': 'postre_chocolate',
+  'SUSPIRO LIMEÑO': 'postre_chocolate',
+  'TENTACION X 4 UNIDADES': 'postre_chocolate',
+  TIRAMISÚ: 'postre_chocolate',
+  'VOLCÁN DE CHOCOLATE CON HELADO': 'postre_chocolate',
+  'BROWNIE CON HELADO': 'postre_chocolate',
+  'CHEESECAKE CON SALSA DE FRUTILLA MANGO O MARACUYA': 'postre_chocolate',
+  'COPA DE HELADO': 'postre_chocolate',
+  'COPA DE HELADO 1 SABOR ACAI': 'postre_chocolate',
+  'FONDUE DE FRUTILLAS CON NUTELLA': 'postre_chocolate',
+  'LECHE ASADA': 'postre_chocolate',
+  'MOUSSE DE MARACUYA EN SALSA DE MARACUYA': 'postre_chocolate',
+}
+
+// Resuelve el perfil de un plato REAL de la carta (objeto de `menu_items`,
+// con `name` y `category`). Prioridad: 1) categorías excluidas → null,
+// 2) mapeo explícito por nombre normalizado, 3) fallback a `detectarPerfil`
+// por regex sobre el nombre (cubre productos nuevos que todavía no se
+// agregaron al mapeo de arriba, sin dejarlos sin recomendación).
+export function perfilDePlato(item) {
+  if (!item?.name) return null
+  if (CATEGORIAS_SIN_MARIDAJE.includes(item.category)) return null
+  const clave = normalizarNombrePlato(item.name)
+  const idMapeado = MAPEO_PLATOS[clave]
+  if (idMapeado) {
+    return PERFILES.find((p) => p.id === idMapeado) || null
+  }
+  return detectarPerfil(item.name)
+}

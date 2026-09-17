@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import { detectarPerfil, armarRecomendacion, PERFIL_GENERICO, CHIPS_SUGERIDOS } from '../data/maridaje.js'
+import { detectarPerfil, armarRecomendacion, perfilDePlato, PERFIL_GENERICO } from '../data/maridaje.js'
 
 // Sommelier — consultor de bebidas de cara al cliente (y de paso, del
 // garzón). Pública igual que /carta2: no exige cuenta, se abre por link
@@ -19,6 +19,19 @@ import { detectarPerfil, armarRecomendacion, PERFIL_GENERICO, CHIPS_SUGERIDOS } 
 const CATEGORIA_VINOS = 'VINOS & ESPUMANTES'
 const CATEGORIAS_BAR = ['NUESTRO BAR', 'MOCKTAILS (SIN ALCOHOL)']
 
+// Categorías de comida reales cuyos platos alimentan los chips rápidos —
+// pedido explícito del dueño (2026-09-17): "todas las preparaciones reales",
+// no una lista fija de 10. NIÑOS y GUARNICIONES quedan afuera a propósito
+// (ver CATEGORIAS_SIN_MARIDAJE en maridaje.js).
+const CATEGORIAS_COMIDA = ['ENTRADAS FRIAS Y CALIENTES', 'PLATOS PRINCIPALES', 'POSTRES & TENTACIONES']
+// Encabezados cortos para las secciones de chips (los nombres reales de
+// categoría son largos y en mayúscula sostenida).
+const TITULO_CATEGORIA = {
+  'ENTRADAS FRIAS Y CALIENTES': 'Entradas',
+  'PLATOS PRINCIPALES': 'Platos principales',
+  'POSTRES & TENTACIONES': 'Postres',
+}
+
 function formatCLP(valor) {
   const n = Number(valor) || 0
   return `$${n.toLocaleString('es-CL')}`
@@ -29,7 +42,10 @@ export default function Sommelier() {
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
   const [texto, setTexto] = useState('')
-  const [consultado, setConsultado] = useState(false)
+
+  // Una sola consulta activa a la vez: o texto libre, o un plato real
+  // tocado en los chips. `null` = todavía no se preguntó nada.
+  const [consulta, setConsulta] = useState(null) // { modo: 'texto', texto } | { modo: 'plato', item }
 
   useEffect(() => {
     let cancelado = false
@@ -39,7 +55,7 @@ export default function Sommelier() {
       .select('*')
       .eq('visible_carta', true)
       .eq('available', true)
-      .in('category', [CATEGORIA_VINOS, ...CATEGORIAS_BAR])
+      .in('category', [CATEGORIA_VINOS, ...CATEGORIAS_BAR, ...CATEGORIAS_COMIDA])
       .then(({ data, error: err }) => {
         if (cancelado) return
         if (err) {
@@ -58,22 +74,39 @@ export default function Sommelier() {
   const vinos = useMemo(() => items.filter((i) => i.category === CATEGORIA_VINOS), [items])
   const bebidasBar = useMemo(() => items.filter((i) => CATEGORIAS_BAR.includes(i.category)), [items])
 
-  const perfilDetectado = consultado ? detectarPerfil(texto) : null
-  const perfilUsado = consultado ? perfilDetectado || PERFIL_GENERICO : null
+  // Chips agrupados por categoría real — cada plato usa su perfil mapeado
+  // directo (perfilDePlato), no el detector de texto libre: acá el nombre es
+  // exacto, no hay nada que adivinar.
+  const gruposChips = useMemo(() => {
+    return CATEGORIAS_COMIDA.map((categoria) => ({
+      categoria,
+      titulo: TITULO_CATEGORIA[categoria] || categoria,
+      platos: items
+        .filter((i) => i.category === categoria)
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'es')),
+    })).filter((g) => g.platos.length > 0)
+  }, [items])
+
+  const perfilDetectado = useMemo(() => {
+    if (!consulta) return null
+    if (consulta.modo === 'plato') return perfilDePlato(consulta.item)
+    return detectarPerfil(consulta.texto)
+  }, [consulta])
+  const perfilUsado = consulta ? perfilDetectado || PERFIL_GENERICO : null
+  const tituloConsulta = consulta ? (consulta.modo === 'plato' ? consulta.item.name : consulta.texto) : ''
   const recomendacion = useMemo(() => {
     if (!perfilUsado) return null
     return armarRecomendacion(perfilUsado, vinos, bebidasBar)
   }, [perfilUsado, vinos, bebidasBar])
 
-  function consultar(valor) {
-    setTexto(valor)
-    setConsultado(true)
+  function consultarPlato(item) {
+    setConsulta({ modo: 'plato', item })
   }
 
   function onSubmit(e) {
     e.preventDefault()
     if (!texto.trim()) return
-    setConsultado(true)
+    setConsulta({ modo: 'texto', texto })
   }
 
   return (
@@ -107,7 +140,7 @@ export default function Sommelier() {
             value={texto}
             onChange={(e) => {
               setTexto(e.target.value)
-              setConsultado(false)
+              setConsulta(null)
             }}
             placeholder="¿Qué vas a comer hoy?"
             className="flex-1 bg-inkSoft border border-bronze/25 rounded-2xl px-4 py-3 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-gold/50"
@@ -121,26 +154,42 @@ export default function Sommelier() {
         </div>
       </form>
 
-      <div className="flex flex-wrap gap-2 mb-8">
-        {CHIPS_SUGERIDOS.map((chip) => (
-          <button
-            key={chip}
-            type="button"
-            onClick={() => consultar(chip)}
-            className="text-[11px] px-3 py-1.5 rounded-full border border-bronze/25 text-paper/60 hover:border-gold/50 hover:text-paper transition-colors"
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
+      {!cargando && gruposChips.length > 0 && (
+        <div className="mb-8 flex flex-col gap-4">
+          {gruposChips.map((grupo) => (
+            <div key={grupo.categoria}>
+              <p className="text-paper/40 text-[10px] uppercase tracking-wide mb-2">{grupo.titulo}</p>
+              <div className="flex flex-wrap gap-2">
+                {grupo.platos.map((plato) => {
+                  const activo = consulta?.modo === 'plato' && consulta.item.id === plato.id
+                  return (
+                    <button
+                      key={plato.id}
+                      type="button"
+                      onClick={() => consultarPlato(plato)}
+                      className={`text-[11px] px-3 py-1.5 rounded-full border transition-colors ${
+                        activo
+                          ? 'border-gold/60 text-paper bg-gold/10'
+                          : 'border-bronze/25 text-paper/60 hover:border-gold/50 hover:text-paper'
+                      }`}
+                    >
+                      {plato.name}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {cargando && <p className="text-paper/35 text-sm text-center py-6">Revisando la carta…</p>}
 
-      {!cargando && consultado && recomendacion && (
-        <RecomendacionCard texto={texto} recomendacion={recomendacion} sinCoincidencia={!perfilDetectado} />
+      {!cargando && consulta && recomendacion && (
+        <RecomendacionCard texto={tituloConsulta} recomendacion={recomendacion} sinCoincidencia={!perfilDetectado} />
       )}
 
-      {!cargando && !consultado && (
+      {!cargando && !consulta && (
         <p className="text-paper/35 text-[11px] text-center leading-relaxed px-4">
           Escribí tu plato o elegí uno de los botones.
         </p>

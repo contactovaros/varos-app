@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
-import { detectarPerfil, armarRecomendacion } from '../data/maridaje.js'
+import { perfilDePlato, detectarPerfil, armarRecomendacion } from '../data/maridaje.js'
 
 // Mismas categorías de bebida que usa /sommelier (ver Sommelier.jsx) — se
 // duplican acá en vez de importarlas para no acoplar esta pantalla a esa
@@ -714,12 +714,20 @@ export default function Mozo() {
   // el nombre del plato, no se muestra nada (ni fallback genérico).
   const [sugerenciaSommelier, setSugerenciaSommelier] = useState(null)
 
-  function sugerirBebidaPara(nombrePlato) {
-    if (!nombrePlato) return
-    const perfil = detectarPerfil(nombrePlato)
+  // Acepta un plato real de `items` (name + category, para usar el mapeo
+  // exacto de maridaje.js vía perfilDePlato) o directamente un nombre suelto
+  // (ej. el curso elegido del Menú del Día, que no tiene category propia —
+  // ver confirmarMenuDia más abajo). NIÑOS y GUARNICIONES quedan afuera del
+  // maridaje (perfilDePlato ya las excluye cuando llega un objeto con
+  // category; un string suelto no puede pertenecer a esas categorías).
+  function sugerirBebidaPara(platoOrNombre) {
+    if (!platoOrNombre) return
+    const perfil =
+      typeof platoOrNombre === 'string' ? detectarPerfil(platoOrNombre) : perfilDePlato(platoOrNombre)
     if (!perfil) return
     const recomendacion = armarRecomendacion(perfil, vinosParaSommelier, bebidasBarParaSommelier)
     if (!recomendacion?.vino && !recomendacion?.alternativaBar) return
+    const nombrePlato = typeof platoOrNombre === 'string' ? platoOrNombre : platoOrNombre.name
     setSugerenciaSommelier({ plato: nombrePlato, perfil, recomendacion })
   }
 
@@ -749,9 +757,11 @@ export default function Mozo() {
     }
     setCart((prev) => ({ ...prev, [item.id]: { qty: 1, nota: '', item } }))
     // Solo comida dispara la sugerencia — ofrecer vino para el vino mismo
-    // no tiene sentido (ver CATEGORIAS_BEBIDA_MOZO más arriba).
+    // no tiene sentido (ver CATEGORIAS_BEBIDA_MOZO más arriba). NIÑOS y
+    // GUARNICIONES tampoco disparan nada: perfilDePlato() las excluye
+    // adentro (ver CATEGORIAS_SIN_MARIDAJE en maridaje.js).
     if (!CATEGORIAS_BEBIDA_MOZO.includes(item.category)) {
-      sugerirBebidaPara(item.name)
+      sugerirBebidaPara(item)
     }
   }
   function incrementar(id) {
