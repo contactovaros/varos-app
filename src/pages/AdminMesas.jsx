@@ -198,13 +198,27 @@ export function ZonaLineas({ zonas, color = PC.bronze, opacity = 0.4 }) {
 // pasarla (cae en los valores por defecto de hoy).
 export function ComedorBackground({ zonas, sala }) {
   const g = sala || getSalaGeometria('comedor', null)
-  const { ancho, largo, hueco, path, colorPiso } = g
+  const { ancho, largo, hueco } = g
   return (
     <>
-      <PlanoDefs pisoDeck={colorPiso} />
-      <Recinto d={path} piso="slDeck" />
+      {/* Foto del ambiente vacío (sin mesas ni sillas pintadas): paredes con
+          calado dorado, piso de baldosa, cortinaje, candelabros, macetas,
+          arco floral y rampa. Las mesas reales (tabla `mesas`) se dibujan
+          encima como shapes editables — por eso acá va la versión vacía y
+          no la que usa /reservas (comedor-exterior.jpg, CON mesas pintadas,
+          ver Reservas.jsx), que ahí sí sirve porque esas mesas no se mueven. */}
+      <image
+        href="/planos/comedor-exterior-vacio.jpg"
+        x={0}
+        y={0}
+        width={ancho}
+        height={largo}
+        preserveAspectRatio="none"
+      />
 
-      {/* cotas: el recorte en L se lee con la medida corta arriba */}
+      {/* cotas: el recorte en L se lee con la medida corta arriba — se
+          mantienen sobre la foto porque le sirven al admin para ubicar
+          mesas por medida real */}
       {hueco ? (
         <>
           <Cota x1={0} y1={-70} x2={hueco.x0} y2={-70} />
@@ -222,7 +236,7 @@ export function ComedorBackground({ zonas, sala }) {
 
       <ZonaLabels zonas={zonas} opacity={0.75} />
       <ZonaLineas zonas={zonas} />
-      <NotaPlano x={0} y={-110} texto="COMEDOR EXTERIOR · deck de madera" />
+      <NotaPlano x={0} y={-110} texto="COMEDOR EXTERIOR · foto de referencia" />
     </>
   )
 }
@@ -995,7 +1009,18 @@ export default function AdminMesas() {
               <g
                 key={mesa.id}
                 transform={`translate(${mesa.x},${mesa.y}) rotate(${mesa.angulo})`}
-                opacity={mesa.activa === false ? 0.45 : 1}
+                opacity={
+                  mesa.activa === false
+                    ? 0.45
+                    : // El comedor ahora tiene la foto del ambiente vacío de
+                      // fondo, que ya trae macetas/rampa/arco pintados —
+                      // atenuamos los shapes decorativos (no las mesas) para
+                      // no verse doble. Siguen ahí, arrastrables y
+                      // seleccionables, solo bajan de opacidad.
+                      room === 'comedor' && mesa.tipo === 'decor' && mesa.id !== selectedId
+                      ? 0.18
+                      : 1
+                }
               >
                 {chairs.map((c, i) => (
                   <rect
