@@ -27,6 +27,29 @@ const TERRAZA_ROOM_H = 2000
 // a replicar al agregar una sala nueva (ver CLAUDE.md).
 const ROOM_LABELS = { comedor: 'Comedor Exterior', salon: 'Comedor Principal', terraza: 'Terraza' }
 
+// Posiciones fijas (en % del rectángulo de la sala) de cada mesa sobre la
+// foto fotorrealista del Comedor Exterior (public/planos/comedor-exterior.jpg).
+// Solo se usan en /reservas (vista del cliente) para ese salón — el editor de
+// /admin/mesas sigue con las coordenadas reales de la tabla `mesas`. Verificadas
+// a mano por muestreo de píxeles sobre la imagen real.
+const HOTSPOTS_COMEDOR_FOTO = {
+  t1: { left: 40.0, top: 39.5 },
+  t2: { left: 56.6, top: 40.5 },
+  t3: { left: 77.0, top: 40.5 },
+  t4: { left: 40.0, top: 52.5 },
+  t5: { left: 51.9, top: 58.0 },
+  t6: { left: 67.0, top: 58.0 },
+  t7: { left: 77.7, top: 57.0 },
+  t8: { left: 40.0, top: 65.0 },
+  t9: { left: 51.9, top: 71.0 },
+  t10: { left: 67.0, top: 71.0 },
+  t11: { left: 81.4, top: 70.0 },
+  t12: { left: 40.0, top: 81.0 },
+  t13: { left: 77.7, top: 81.0 },
+  r1: { left: 12.0, top: 33.0 },
+  r2: { left: 12.5, top: 62.0 },
+}
+
 // El valor interno de la zona sigue en español (lo usan salaDeZona() y la
 // columna `sala` de la reserva); esto es solo para mostrar la etiqueta en el
 // idioma activo. Mapea tanto el id de sala ('comedor') como el texto de la
@@ -840,7 +863,27 @@ export default function Reservas() {
                 </filter>
               </defs>
 
-              {salaMostrada === 'comedor' && <ComedorBackground zonas={zonasVisibles} sala={getSalaGeometria('comedor', salas.comedor)} />}
+              {salaMostrada === 'comedor' &&
+                (() => {
+                  const geoComedor = getSalaGeometria('comedor', salas.comedor)
+                  const vb = geoComedor?.viewBox
+                  // Comedor Exterior: para el cliente reemplazamos el plano
+                  // abstracto por la foto fotorrealista aprobada. El editor de
+                  // /admin/mesas (AdminMesas.jsx) sigue usando ComedorBackground
+                  // sin cambios — esto es solo cosmético para esta pantalla.
+                  return vb ? (
+                    <image
+                      href="/planos/comedor-exterior.jpg"
+                      x={vb.x}
+                      y={vb.y}
+                      width={vb.w}
+                      height={vb.h}
+                      preserveAspectRatio="none"
+                    />
+                  ) : (
+                    <ComedorBackground zonas={zonasVisibles} sala={geoComedor} />
+                  )
+                })()}
               {salaMostrada === 'salon' && <SalonBackground zonas={zonasVisibles} sala={getSalaGeometria('salon', salas.salon)} />}
               {salaMostrada === 'terraza' && <TerrazaBackground zonas={zonasVisibles} sala={getSalaGeometria('terraza', salas.terraza)} />}
 
@@ -904,6 +947,19 @@ export default function Reservas() {
                 const chairs = chairPositions(m)
                 const esSombrilla = m.tipo === 'round' && m.estilo === 'sombrilla'
 
+                // Comedor Exterior con foto de fondo: la mesa se ubica sobre el
+                // hotspot fijo de la foto (no sobre m.x/m.y reales, que no
+                // corresponden a esa disposición) y se muestra como una
+                // pastilla numerada en vez del círculo de sillas abstracto —
+                // la foto ya muestra las sillas reales. Si algún id no tiene
+                // hotspot mapeado, cae a m.x/m.y como antes.
+                const esFotoComedor = salaMostrada === 'comedor'
+                const hotspot = esFotoComedor ? HOTSPOTS_COMEDOR_FOTO[m.id] : null
+                const geoComedor = esFotoComedor ? getSalaGeometria('comedor', salas.comedor) : null
+                const vbComedor = geoComedor?.viewBox
+                const posX = hotspot && vbComedor ? vbComedor.x + (hotspot.left / 100) * vbComedor.w : m.x
+                const posY = hotspot && vbComedor ? vbComedor.y + (hotspot.top / 100) * vbComedor.h : m.y
+
                 // Disponible: negro + contorno dorado. Reservada: bronce apagado
                 // (sin depender solo del color — ver aria-label/aria-disabled abajo).
                 // Seleccionada: naranja luminoso con glow.
@@ -924,29 +980,32 @@ export default function Reservas() {
                 return (
                   <g
                     key={m.id}
-                    transform={`translate(${m.x},${m.y}) rotate(${m.tipo === 'rect' ? m.angulo : 0})`}
+                    transform={`translate(${posX},${posY}) rotate(${esFotoComedor ? 0 : m.tipo === 'rect' ? m.angulo : 0})`}
                     opacity={opacity}
                     filter={seleccionada ? 'url(#glowSeleccionada)' : undefined}
                     role="button"
                     aria-disabled={!clickable}
                     aria-label={`${m.etiqueta}, ${reservada ? t('estado_reservada') : seleccionada ? t('estado_seleccionada') : t('estado_disponible')}`}
                   >
-                    {chairs.map((c, i) => (
-                      <rect
-                        key={i}
-                        x={c.x - 10}
-                        y={c.y - 10}
-                        width="20"
-                        height="20"
-                        rx="4"
-                        transform={`rotate(${c.rot} ${c.x} ${c.y})`}
-                        fill="#221A16"
-                        stroke={stroke}
-                        strokeWidth="1.5"
-                      />
-                    ))}
+                    {!esFotoComedor &&
+                      chairs.map((c, i) => (
+                        <rect
+                          key={i}
+                          x={c.x - 10}
+                          y={c.y - 10}
+                          width="20"
+                          height="20"
+                          rx="4"
+                          transform={`rotate(${c.rot} ${c.x} ${c.y})`}
+                          fill="#221A16"
+                          stroke={stroke}
+                          strokeWidth="1.5"
+                        />
+                      ))}
                     <g onClick={() => clickable && seleccionarMesa(m)} className={clickable ? 'cursor-pointer' : ''}>
-                      {esSombrilla ? (
+                      {esFotoComedor ? (
+                        <circle r={34} fill={fill} stroke={stroke} strokeWidth={seleccionada ? 6 : 3} />
+                      ) : esSombrilla ? (
                         <SombrillaShape radio={m.ancho / 2} seleccionada={seleccionada} reservada={reservada} />
                       ) : m.tipo === 'round' ? (
                         <circle r={m.ancho / 2} fill={fill} stroke={stroke} strokeWidth={seleccionada ? 6 : 3} />
@@ -962,7 +1021,7 @@ export default function Reservas() {
                           strokeWidth={seleccionada ? 6 : 3}
                         />
                       )}
-                      <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${-m.angulo})`} fontSize={m.tipo === 'round' ? 34 : 30} fontWeight="700" fill={seleccionada ? '#15100D' : '#FFF8F1'}>
+                      <text textAnchor="middle" dominantBaseline="central" transform={`rotate(${esFotoComedor ? 0 : -m.angulo})`} fontSize={esFotoComedor ? 30 : m.tipo === 'round' ? 34 : 30} fontWeight="700" fill={seleccionada ? '#15100D' : '#FFF8F1'}>
                         {m.etiqueta.replace('Mesa ', '')}
                       </text>
                     </g>
