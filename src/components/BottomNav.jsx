@@ -72,10 +72,18 @@ const IconoSommelier = (
   </Icono>
 )
 
+const IconoCarta = (
+  <Icono>
+    <rect x="5" y="3.4" width="14" height="17.2" rx="1.6" />
+    <path d="M8.4 8h7.2M8.4 11.5h7.2M8.4 15h4" />
+  </Icono>
+)
+
 const itemsAdmin = [
   { to: '/', label: 'Menú', icon: IconoMenu, end: true },
   { to: '/pedidos', label: 'Pedidos', icon: IconoPedidos },
   { to: '/club', label: "Club Varo's", icon: IconoClub },
+  { to: '/carta2', label: 'Carta', icon: IconoCarta },
   { to: '/sommelier', label: 'Sommelier', icon: IconoSommelier },
   { to: '/admin', label: 'Admin', icon: IconoAdmin },
   { to: '/admin/mesas', label: 'Mesas', icon: IconoMesas },
