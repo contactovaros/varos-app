@@ -35,6 +35,14 @@ export const NAV_ITEMS = [
     accent: 'gold'
   },
   {
+    to: '/carta2',
+    mobileHeading: 'Carta 2.0',
+    icon: 'i-menu-card',
+    label: 'Carta 2.0',
+    desc: 'Vista pública de la carta, para compartir el link directo con un cliente',
+    accent: 'gold'
+  },
+  {
     to: '/admin/garzones',
     mobileHeading: '🧑‍🍳 Garzones',
     icon: 'i-tray',
@@ -132,6 +140,7 @@ export function IconSprite() {
       <symbol id="i-plan" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5" /><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="8" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="16" r="0.9" fill="currentColor" stroke="none" /></symbol>
       <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-4 4V5Z" /><path d="m12 8.5.9 1.9 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3Z" fill="currentColor" stroke="none" /></symbol>
       <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.5c2-1 5-1 8 0 3-1 6-1 8 0v14c-2-1-5-1-8 0-3-1-6-1-8 0V4.5Z" /><path d="M12 4.5v14" /></symbol>
+      <symbol id="i-menu-card" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.6" /><path d="M8.3 8h7.4M8.3 11.8h7.4M8.3 15.6h4.2" /></symbol>
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3.5 20c0-3.6 2.5-6.5 5.5-6.5s5.5 2.9 5.5 6.5" /><circle cx="17" cy="7.5" r="2.2" /><path d="M15 13.6c2.5.5 4.5 3 4.5 6.4" /></symbol>
       <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" /><path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" /></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6" /></symbol>
