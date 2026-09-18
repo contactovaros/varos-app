@@ -955,7 +955,16 @@ export default function Reservas() {
                       {esSombrilla ? (
                         <SombrillaShape radio={m.ancho / 2} seleccionada={seleccionada} reservada={reservada} />
                       ) : m.tipo === 'round' ? (
-                        <circle r={m.ancho / 2} fill={fill} stroke={stroke} strokeWidth={seleccionada ? 6 : 3} />
+                        // Mesa con forma real (tapa + aro interior + remache
+                        // central), no un círculo liso — mismo tratamiento
+                        // que MesaEleganteShape en /admin/mesas. El anillo
+                        // extra al seleccionar la hace notarse de un vistazo.
+                        <g>
+                          <circle r={m.ancho / 2} fill={fill} stroke={stroke} strokeWidth={seleccionada ? 6 : 3} />
+                          <circle r={m.ancho / 2 * 0.82} fill="none" stroke={stroke} strokeWidth="1.5" opacity="0.5" />
+                          <circle r={m.ancho / 2 * 0.14} fill={stroke} />
+                          {seleccionada && <circle r={m.ancho / 2 + 6} fill="none" stroke="#FFD9B3" strokeWidth="2.5" opacity="0.85" />}
+                        </g>
                       ) : (
                         <rect
                           x={-m.ancho / 2}
