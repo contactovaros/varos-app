@@ -213,10 +213,20 @@ export default function Carta2() {
             </div>
           </nav>
           {categoriasBebida.length > 0 && (
-            <nav className="flex flex-wrap justify-center gap-x-4 gap-y-2 mb-6 pb-4 border-b border-white/5">
+            <nav className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mb-6 pb-4 border-b border-white/5">
               {categoriasBebida.map(({ nombre }) => (
                 <Pestana key={nombre} nombre={nombre} color="diamond" />
               ))}
+              {/* Sommelier: no es una categoría de menu_items, es otra
+                  pantalla (/sommelier). Va en la fila de bebidas, con borde
+                  dorado para distinguirlo de las pestañas que cambian la
+                  lista de acá abajo. */}
+              <a
+                href="/sommelier"
+                className="text-[11px] sm:text-xs font-head font-semibold uppercase tracking-wide whitespace-nowrap text-gold border border-gold/50 rounded-full px-3 py-1 hover:bg-gold/10 transition-colors"
+              >
+                Sommelier
+              </a>
             </nav>
           )}
           {categoriasBebida.length === 0 && <div className="mb-6" />}

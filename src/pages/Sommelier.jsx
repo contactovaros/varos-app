@@ -125,6 +125,13 @@ export default function Sommelier() {
 
   return (
     <div className="min-h-screen bg-ink px-5 pt-10 pb-20">
+      {/* Solo si se llegó desde la pestaña de /carta2 (el Sommelier también se
+          abre desde el nav del personal, ahí no tiene sentido "volver"). */}
+      {typeof document !== 'undefined' && /\/carta2\/?$/.test(document.referrer) && (
+        <a href="/carta2" className="inline-block text-paper/55 hover:text-gold text-xs mb-5 transition-colors">
+          ← Volver a la carta
+        </a>
+      )}
       <header className="text-center mb-8">
         <h1 className="font-serif text-3xl text-gold tracking-wide">Sommelier</h1>
         <p className="text-paper/50 text-xs mt-2 leading-relaxed max-w-xs mx-auto">
