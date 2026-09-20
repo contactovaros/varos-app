@@ -231,6 +231,95 @@ export function armarRecomendacion(perfil, vinosDisponibles, bebidasBar = []) {
   }
 }
 
+// --- Recomendación para la mesa entera --------------------------------
+//
+// El cliente no compra una botella por plato: compra una para la mesa. Acá se
+// puntúa cada vino real contra TODOS los platos de la comanda a la vez, con la
+// misma lista de preferencia (ordenVinos) que ya usa la recomendación por
+// plato — así un plato solo da el mismo vino que armarRecomendacion().
+//
+// afinidad: 1 = primera opción del perfil, baja con cada puesto, 0 = no está.
+// ajuste "bien" >= 0.6, "justo" >= 0.3, si no "mal".
+
+const VARIETALES_LIVIANOS = new Set(['sauvignon_blanc', 'chardonnay', 'moscato_espumante', 'espumante_neutro'])
+
+function afinidad(perfil, tag) {
+  const i = perfil.ordenVinos.indexOf(tag)
+  return i < 0 ? 0 : 1 - i / perfil.ordenVinos.length
+}
+
+function ajusteDe(perfil, vino) {
+  const a = afinidad(perfil, vino._varietal)
+  return a >= 0.6 ? 'bien' : a >= 0.3 ? 'justo' : 'mal'
+}
+
+// "liviano" = blancos y espumantes; "tinto" = el resto. Se decide por la
+// primera opción del perfil del plato.
+function estiloDelPlato(perfil) {
+  return VARIETALES_LIVIANOS.has(perfil.ordenVinos[0]) ? 'liviano' : 'tinto'
+}
+
+// Empate → gana el primero de la lista (mismo criterio que armarRecomendacion,
+// que usa find()), para que un plato solo dé siempre el mismo vino.
+function mejorVinoPara(platos, vinosConVarietal) {
+  let mejor = null
+  let mejorPuntaje = 0
+  for (const v of vinosConVarietal) {
+    const puntaje = platos.reduce((s, p) => s + p.qty * afinidad(p.perfil, v._varietal), 0)
+    if (puntaje > mejorPuntaje) {
+      mejor = v
+      mejorPuntaje = puntaje
+    }
+  }
+  return mejor
+}
+
+// platos: [{ nombre, perfil, qty }] (solo comida con perfil de maridaje).
+// Devuelve:
+//   modo 'una'             → una botella acompaña bien a todos los platos
+//   modo 'una_con_reparos' → una botella sirve, pero con algún plato queda justo
+//   modo 'dos'             → hay platos livianos y de cuerpo a la vez: conviene
+//                            una botella de cada estilo (`unaSola` es la opción
+//                            si la mesa quiere una sola, con sus reparos)
+// o null si no hay platos o no hay ningún vino aplicable.
+export function armarRecomendacionGrupal(platos, vinosDisponibles) {
+  if (!platos?.length) return null
+  const vinos = vinosDisponibles
+    .map((v) => ({ ...v, _varietal: detectarVarietal(v.name) }))
+    .filter((v) => v._varietal)
+
+  const global = mejorVinoPara(platos, vinos)
+  if (!global) return null
+
+  const detalle = (vino, lista) => lista.map((p) => ({ nombre: p.nombre, ajuste: ajusteDe(p.perfil, vino) }))
+  const detalleGlobal = detalle(global, platos)
+  const todosBien = detalleGlobal.every((d) => d.ajuste === 'bien')
+
+  const livianos = platos.filter((p) => estiloDelPlato(p.perfil) === 'liviano')
+  const tintos = platos.filter((p) => estiloDelPlato(p.perfil) === 'tinto')
+
+  if (livianos.length && tintos.length && !todosBien) {
+    const vLiviano = mejorVinoPara(livianos, vinos)
+    const vTinto = mejorVinoPara(tintos, vinos)
+    if (vLiviano && vTinto && vLiviano.id !== vTinto.id) {
+      return {
+        modo: 'dos',
+        botellas: [
+          { vino: vLiviano, estilo: 'liviano', detalle: detalle(vLiviano, livianos) },
+          { vino: vTinto, estilo: 'tinto', detalle: detalle(vTinto, tintos) },
+        ],
+        unaSola: { vino: global, detalle: detalleGlobal },
+      }
+    }
+  }
+
+  return {
+    modo: todosBien ? 'una' : 'una_con_reparos',
+    botellas: [{ vino: global, estilo: null, detalle: detalleGlobal }],
+    unaSola: null,
+  }
+}
+
 // --- Mapeo explícito plato real → perfil ------------------------------
 //
 // Los chips de /sommelier ya no son una lista de 10 ejemplos: salen de la

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
-import { perfilDePlato, detectarPerfil, armarRecomendacion } from '../data/maridaje.js'
+import { perfilDePlato, detectarPerfil, armarRecomendacion, armarRecomendacionGrupal } from '../data/maridaje.js'
 
 // Mismas categorías de bebida que usa /sommelier (ver Sommelier.jsx) — se
 // duplican acá en vez de importarlas para no acoplar esta pantalla a esa
@@ -708,45 +708,70 @@ export default function Mozo() {
     [items]
   )
 
-  // Sugerencia del sommelier al agregar un plato — no bloqueante (ver
-  // pedido del dueño, 2026-09-17): un banner chico cerca de la barra de
-  // carrito, nunca un modal. Si el motor no encuentra nada relevante para
-  // el nombre del plato, no se muestra nada (ni fallback genérico).
-  const [sugerenciaSommelier, setSugerenciaSommelier] = useState(null)
+  // Sommelier a demanda (pedido del dueño, 2026-09-19): ya no salta solo al
+  // agregar cada plato. El mozo lo abre con el botón "Sommelier" y ahí ve dos
+  // vistas: "Para la mesa" (la botella se compra por mesa, no por plato, así
+  // que se puntúa contra TODA la comanda) y "Por plato".
+  const [sheetSommelier, setSheetSommelier] = useState(false)
+  const [vistaSommelier, setVistaSommelier] = useState('mesa') // 'mesa' | 'plato'
 
-  // Acepta un plato real de `items` (name + category, para usar el mapeo
-  // exacto de maridaje.js vía perfilDePlato) o directamente un nombre suelto
-  // (ej. el curso elegido del Menú del Día, que no tiene category propia —
-  // ver confirmarMenuDia más abajo). NIÑOS y GUARNICIONES quedan afuera del
-  // maridaje (perfilDePlato ya las excluye cuando llega un objeto con
-  // category; un string suelto no puede pertenecer a esas categorías).
-  function sugerirBebidaPara(platoOrNombre) {
-    if (!platoOrNombre) return
-    const perfil =
-      typeof platoOrNombre === 'string' ? detectarPerfil(platoOrNombre) : perfilDePlato(platoOrNombre)
-    if (!perfil) return
-    const recomendacion = armarRecomendacion(perfil, vinosParaSommelier, bebidasBarParaSommelier)
-    if (!recomendacion?.vino && !recomendacion?.alternativaBar) return
-    const nombrePlato = typeof platoOrNombre === 'string' ? platoOrNombre : platoOrNombre.name
-    setSugerenciaSommelier({ plato: nombrePlato, perfil, recomendacion })
+  // Comida de la comanda con perfil de maridaje, sin repetir (el mismo plato
+  // pedido dos veces suma cantidad). El Menú del Día no es un plato: se usa el
+  // principal elegido del combo. Bebidas, NIÑOS y GUARNICIONES quedan afuera
+  // (perfilDePlato ya las excluye cuando llega un objeto con category).
+  const platosSommelier = useMemo(() => {
+    const porNombre = new Map()
+    for (const [, c] of Object.entries(cart)) {
+      let nombre
+      let perfil
+      if (c.menuChoice) {
+        nombre = c.menuChoice.principal
+        perfil = detectarPerfil(nombre)
+      } else if (!CATEGORIAS_BEBIDA_MOZO.includes(c.item.category)) {
+        nombre = c.item.name
+        perfil = perfilDePlato(c.item)
+      }
+      if (!nombre || !perfil) continue
+      const previo = porNombre.get(nombre)
+      porNombre.set(nombre, { nombre, perfil, qty: (previo?.qty ?? 0) + c.qty })
+    }
+    return [...porNombre.values()]
+  }, [cart])
+
+  const recomendacionGrupal = useMemo(
+    () => armarRecomendacionGrupal(platosSommelier, vinosParaSommelier),
+    [platosSommelier, vinosParaSommelier]
+  )
+  const recomendacionesPorPlato = useMemo(
+    () =>
+      platosSommelier.map((p) => ({
+        ...p,
+        rec: armarRecomendacion(p.perfil, vinosParaSommelier, bebidasBarParaSommelier)
+      })),
+    [platosSommelier, vinosParaSommelier, bebidasBarParaSommelier]
+  )
+
+  function abrirSommelier() {
+    setVistaSommelier(platosSommelier.length > 1 ? 'mesa' : 'plato')
+    setSheetSommelier(true)
   }
 
-  function agregarBebidaSugerida(nombreBebida) {
-    const bebida = items.find((i) => i.name === nombreBebida)
-    if (!bebida) return
-    agregar(bebida)
-    setSugerenciaSommelier(null)
+  // Suma la bebida a la comanda sin cerrar el sommelier (la mesa puede querer
+  // dos botellas). Si ya está en el pedido, suma una más.
+  function agregarBebidaSugerida(bebida) {
+    if (cart[bebida.id]) incrementar(bebida.id)
+    else agregar(bebida)
   }
 
-  // Se retira sola a los 40s para no acumularse en pantalla si el mozo sigue
-  // agregando platos sin prestarle atención. Antes eran 9s, pero ahora la
-  // tarjeta incluye la explicación del maridaje y el mozo necesita tiempo
-  // para leérsela al cliente; una sugerencia nueva reemplaza a la anterior.
-  useEffect(() => {
-    if (!sugerenciaSommelier) return
-    const t = setTimeout(() => setSugerenciaSommelier(null), 40000)
-    return () => clearTimeout(t)
-  }, [sugerenciaSommelier])
+  // Nombre legible para leerlo en voz alta: sin emoji ni el "con guarnición…".
+  function nombreCorto(nombre) {
+    const limpio = String(nombre)
+      .replace(/^[^\p{L}\p{N}]+/u, '')
+      .split(/\s+(?:CON|GUARNICI|ACOMPA|\d)|\(/i)[0]
+      .trim()
+      .toLowerCase()
+    return limpio.charAt(0).toUpperCase() + limpio.slice(1)
+  }
 
   // Sin mesa elegida no se puede armar pedido — pedido explícito
   // (2026-09-16): antes se podía ir agregando platos al carrito sin haber
@@ -757,13 +782,6 @@ export default function Mozo() {
       return
     }
     setCart((prev) => ({ ...prev, [item.id]: { qty: 1, nota: '', item } }))
-    // Solo comida dispara la sugerencia — ofrecer vino para el vino mismo
-    // no tiene sentido (ver CATEGORIAS_BEBIDA_MOZO más arriba). NIÑOS y
-    // GUARNICIONES tampoco disparan nada: perfilDePlato() las excluye
-    // adentro (ver CATEGORIAS_SIN_MARIDAJE en maridaje.js).
-    if (!CATEGORIAS_BEBIDA_MOZO.includes(item.category)) {
-      sugerirBebidaPara(item)
-    }
   }
   function incrementar(id) {
     setCart((prev) => ({ ...prev, [id]: { ...prev[id], qty: prev[id].qty + 1 } }))
@@ -835,10 +853,6 @@ export default function Mozo() {
       }
     })
     setSheetMenuDia(false)
-    // El Menú del Día también puede tener un plato principal mapeado por el
-    // motor de maridaje (ej. "Lomo Saltado" como principal del combo) — se
-    // sugiere igual que con un plato suelto.
-    sugerirBebidaPara(principal)
   }
 
   function elegirMesa(num, sector) {
@@ -1120,72 +1134,20 @@ export default function Mozo() {
             ))}
         </main>
 
-        {/* ---- Sugerencia del sommelier (no bloqueante) ---- */}
-        {sugerenciaSommelier && (
+        {/* ---- Botón del sommelier: a demanda, no salta solo ---- */}
+        {platosSommelier.length > 0 && !sheetSommelier && (
           <div
-            className="fixed left-0 right-0 z-40 flex justify-center px-3 transition-all duration-300 ease-salida"
-            style={{
-              bottom: cartCount > 0 ? 'calc(78px + env(safe-area-inset-bottom, 0px))' : 'calc(12px + env(safe-area-inset-bottom, 0px))'
-            }}
+            className="fixed left-0 right-0 z-30 flex justify-center px-3 pointer-events-none"
+            style={{ bottom: 'calc(84px + env(safe-area-inset-bottom, 0px))' }}
           >
-            {/* Tarjeta completa, pensada para LEERSE en voz alta al cliente:
-                nombre sin cortar, precio, y el porqué del maridaje
-                (perfil.principio). Pedido del dueño 2026-09-19: antes el
-                nombre se truncaba y no se veía la explicación. */}
-            <div
-              className="w-full max-w-[398px] bg-inkSoft border border-gold/30 rounded-2xl px-4 py-3.5 shadow-lg overflow-y-auto"
-              style={{ maxHeight: 'calc(100vh - 230px)' }}
-            >
-              <div className="flex items-start justify-between gap-3 mb-2">
-                <p className="text-[11px] uppercase tracking-wide text-diamond/80 leading-snug">
-                  Sommelier · para {sugerenciaSommelier.plato}
-                </p>
-                <button
-                  onClick={() => setSugerenciaSommelier(null)}
-                  className="shrink-0 text-paper/50 text-xl leading-none -mt-0.5 px-1"
-                  aria-label="Cerrar sugerencia"
-                >
-                  ×
-                </button>
-              </div>
-
-              {sugerenciaSommelier.perfil?.principio && (
-                <p className="text-paper/80 text-[13.5px] leading-relaxed mb-3">
-                  {sugerenciaSommelier.perfil.principio}
-                </p>
-              )}
-
-              {[
-                sugerenciaSommelier.recomendacion.vino && {
-                  etiqueta: 'Te recomendamos',
-                  item: sugerenciaSommelier.recomendacion.vino,
-                  nota: sugerenciaSommelier.recomendacion.notaEscasez
-                },
-                sugerenciaSommelier.recomendacion.alternativaBar && {
-                  etiqueta: sugerenciaSommelier.recomendacion.vino ? 'O, si prefiere algo distinto' : 'Te recomendamos',
-                  item: sugerenciaSommelier.recomendacion.alternativaBar.item,
-                  nota: sugerenciaSommelier.recomendacion.alternativaBar.motivo
-                }
-              ]
-                .filter(Boolean)
-                .map((op) => (
-                  <div key={op.item.id ?? op.item.name} className="border-t border-gold/15 pt-3 mt-3 first:mt-0">
-                    <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-1">{op.etiqueta}</p>
-                    <div className="flex items-start justify-between gap-3">
-                      <span className="font-serif italic text-paper text-[16px] leading-snug">{op.item.name}</span>
-                      <span className="font-mono text-[13px] text-gold whitespace-nowrap shrink-0 tabular-nums pt-0.5">
-                        {formatCLP(op.item.price_clp)}
-                      </span>
-                    </div>
-                    {op.nota && <p className="text-paper/55 text-[12px] italic leading-relaxed mt-1.5">{op.nota}</p>}
-                    <button
-                      onClick={() => agregarBebidaSugerida(op.item.name)}
-                      className="mt-2.5 w-full text-[13px] font-bold py-2.5 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink"
-                    >
-                      + Agregar al pedido
-                    </button>
-                  </div>
-                ))}
+            <div className="w-full max-w-[398px] flex justify-end">
+              <button
+                onClick={abrirSommelier}
+                className="pointer-events-auto flex items-center gap-2 rounded-full bg-inkSoft border border-gold/50 text-gold font-head font-semibold text-[13px] px-4 py-2.5 shadow-lg"
+              >
+                <span aria-hidden="true">🍷</span>
+                Sommelier
+              </button>
             </div>
           </div>
         )}
@@ -1446,13 +1408,178 @@ export default function Mozo() {
             setSheetCart(false)
             setSheetMenuDia(false)
             setSheetComandas(false)
+            setSheetSommelier(false)
             setComandaEditando(null)
             setMesaCobrando(null)
           }}
           className={`fixed inset-0 bg-black/60 z-40 transition-opacity duration-200 ${
-            sheetMesa || sheetCart || sheetMenuDia || sheetComandas ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            sheetMesa || sheetCart || sheetMenuDia || sheetComandas || sheetSommelier ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
           }`}
         />
+
+        {/* ---- Sheet: sommelier (para la mesa / por plato) ---- */}
+        <div className="fixed left-0 right-0 bottom-0 z-50 flex justify-center pointer-events-none">
+          <div
+            className={`w-full max-w-md bg-inkSoft border border-white/10 border-b-0 rounded-t-2xl pt-2 pointer-events-auto transition-transform duration-300 ease-salida max-h-[88vh] overflow-y-auto ${
+              sheetSommelier ? 'translate-y-0' : 'translate-y-full'
+            }`}
+            style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom, 0px))', paddingLeft: '18px', paddingRight: '18px' }}
+          >
+            <div className="w-9 h-1 rounded-full bg-white/15 mx-auto my-1.5" />
+            <div className="flex items-center justify-between mt-2 mb-3">
+              <h2 className="font-head text-lg font-semibold">Sommelier</h2>
+              <button
+                onClick={() => setSheetSommelier(false)}
+                className="text-paper/50 text-2xl leading-none px-1"
+                aria-label="Cerrar sommelier"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex gap-2 mb-4">
+              {[
+                ['mesa', 'Para la mesa'],
+                ['plato', 'Por plato']
+              ].map(([id, etiqueta]) => (
+                <button
+                  key={id}
+                  onClick={() => setVistaSommelier(id)}
+                  className={`flex-1 text-[13px] font-semibold py-2 rounded-lg border transition-colors ${
+                    vistaSommelier === id
+                      ? 'border-gold/60 bg-gold/10 text-gold'
+                      : 'border-white/10 text-paper/60'
+                  }`}
+                >
+                  {etiqueta}
+                </button>
+              ))}
+            </div>
+
+            {sheetSommelier && vistaSommelier === 'mesa' && (
+              <>
+                {!recomendacionGrupal && (
+                  <p className="text-paper/50 text-[13px] leading-relaxed py-4">
+                    Ahora mismo no hay un vino disponible para estos platos. Consultá con cocina o probá la vista por plato.
+                  </p>
+                )}
+                {recomendacionGrupal && (
+                  <>
+                    <p className="text-paper/85 text-[14px] leading-relaxed mb-1">
+                      {recomendacionGrupal.modo === 'una' &&
+                        `Para ${platosSommelier.length === 1 ? 'este plato' : `estos ${platosSommelier.length} platos`} alcanza con una sola botella: acompaña bien a toda la mesa.`}
+                      {recomendacionGrupal.modo === 'una_con_reparos' &&
+                        'Una sola botella funciona para la mesa, aunque con algún plato queda más justa.'}
+                      {recomendacionGrupal.modo === 'dos' &&
+                        'Pidieron platos de estilos distintos: los livianos piden un vino fresco y los de cuerpo, un tinto. Conviene una botella de cada estilo.'}
+                    </p>
+
+                    {recomendacionGrupal.botellas.map((b) => {
+                      const enPedido = cart[b.vino.id]?.qty
+                      return (
+                        <div key={b.vino.id} className="border-t border-gold/15 pt-3 mt-3">
+                          <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-1">
+                            {b.estilo === 'liviano' ? 'Para los platos livianos' : b.estilo === 'tinto' ? 'Para los platos de cuerpo' : 'Te recomendamos'}
+                          </p>
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="font-serif italic text-paper text-[16px] leading-snug">{b.vino.name}</span>
+                            <span className="font-mono text-[13px] text-gold whitespace-nowrap shrink-0 tabular-nums pt-0.5">
+                              {formatCLP(b.vino.price_clp)}
+                            </span>
+                          </div>
+                          <p className="text-paper/55 text-[12px] leading-relaxed mt-1.5">
+                            Va con: {b.detalle.map((d) => nombreCorto(d.nombre)).join(', ')}
+                          </p>
+                          {b.detalle.some((d) => d.ajuste !== 'bien') && (
+                            <p className="text-paper/45 text-[12px] italic leading-relaxed mt-1">
+                              {b.detalle
+                                .filter((d) => d.ajuste !== 'bien')
+                                .map((d) => `Con ${nombreCorto(d.nombre)} queda ${d.ajuste === 'justo' ? 'algo más justo' : 'flojo'}.`)
+                                .join(' ')}
+                            </p>
+                          )}
+                          <button
+                            onClick={() => agregarBebidaSugerida(b.vino)}
+                            className="mt-2.5 w-full text-[13px] font-bold py-2.5 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink"
+                          >
+                            {enPedido ? `En el pedido ×${enPedido} · sumar otra` : '+ Agregar al pedido'}
+                          </button>
+                        </div>
+                      )
+                    })}
+
+                    {recomendacionGrupal.unaSola && (
+                      <div className="border-t border-white/10 pt-3 mt-4">
+                        <p className="text-[10px] uppercase tracking-wide text-paper/40 mb-1">Si la mesa prefiere una sola botella</p>
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="font-serif italic text-paper/90 text-[15px] leading-snug">{recomendacionGrupal.unaSola.vino.name}</span>
+                          <span className="font-mono text-[12px] text-gold whitespace-nowrap shrink-0 tabular-nums pt-0.5">
+                            {formatCLP(recomendacionGrupal.unaSola.vino.price_clp)}
+                          </span>
+                        </div>
+                        <p className="text-paper/50 text-[12px] italic leading-relaxed mt-1.5">
+                          {recomendacionGrupal.unaSola.detalle
+                            .filter((d) => d.ajuste !== 'bien')
+                            .map((d) => `Con ${nombreCorto(d.nombre)} queda ${d.ajuste === 'justo' ? 'algo más justo' : 'flojo'}.`)
+                            .join(' ') || 'Acompaña bien a todos los platos.'}
+                        </p>
+                        <button
+                          onClick={() => agregarBebidaSugerida(recomendacionGrupal.unaSola.vino)}
+                          className="mt-2.5 w-full text-[12px] font-semibold py-2 rounded-lg border border-gold/40 text-gold"
+                        >
+                          {cart[recomendacionGrupal.unaSola.vino.id]?.qty
+                            ? `En el pedido ×${cart[recomendacionGrupal.unaSola.vino.id].qty} · sumar otra`
+                            : '+ Agregar esta'}
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
+            {sheetSommelier && vistaSommelier === 'plato' && (
+              <div className="flex flex-col gap-4">
+                {recomendacionesPorPlato.map(({ nombre, perfil, rec }) => (
+                  <div key={nombre} className="rounded-xl border border-white/10 p-3.5">
+                    <p className="text-[11px] uppercase tracking-wide text-diamond/80 leading-snug mb-1.5">{nombreCorto(nombre)}</p>
+                    <p className="text-paper/75 text-[13px] leading-relaxed mb-2">{perfil.principio}</p>
+                    {[
+                      rec.vino && { etiqueta: 'Te recomendamos', item: rec.vino, nota: rec.notaEscasez },
+                      rec.alternativaBar && {
+                        etiqueta: rec.vino ? 'O, si prefiere algo distinto' : 'Te recomendamos',
+                        item: rec.alternativaBar.item,
+                        nota: rec.alternativaBar.motivo
+                      }
+                    ]
+                      .filter(Boolean)
+                      .map((op) => {
+                        const enPedido = cart[op.item.id]?.qty
+                        return (
+                          <div key={op.item.id ?? op.item.name} className="border-t border-gold/15 pt-2.5 mt-2.5">
+                            <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-1">{op.etiqueta}</p>
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="font-serif italic text-paper text-[15px] leading-snug">{op.item.name}</span>
+                              <span className="font-mono text-[12.5px] text-gold whitespace-nowrap shrink-0 tabular-nums pt-0.5">
+                                {formatCLP(op.item.price_clp)}
+                              </span>
+                            </div>
+                            {op.nota && <p className="text-paper/55 text-[12px] italic leading-relaxed mt-1">{op.nota}</p>}
+                            <button
+                              onClick={() => agregarBebidaSugerida(op.item)}
+                              className="mt-2 w-full text-[12.5px] font-bold py-2 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink"
+                            >
+                              {enPedido ? `En el pedido ×${enPedido} · sumar otra` : '+ Agregar al pedido'}
+                            </button>
+                          </div>
+                        )
+                      })}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* ---- Sheet: elegir mesa ---- */}
         <div className={`fixed left-0 right-0 bottom-0 z-50 flex justify-center pointer-events-none`}>
