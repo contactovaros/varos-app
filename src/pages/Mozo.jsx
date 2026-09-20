@@ -738,12 +738,13 @@ export default function Mozo() {
     setSugerenciaSommelier(null)
   }
 
-  // Se retira sola a los 9s para no acumularse en pantalla si el mozo sigue
-  // agregando platos sin prestarle atención — no es bloqueante, así que no
-  // hace falta que la cierre a mano.
+  // Se retira sola a los 40s para no acumularse en pantalla si el mozo sigue
+  // agregando platos sin prestarle atención. Antes eran 9s, pero ahora la
+  // tarjeta incluye la explicación del maridaje y el mozo necesita tiempo
+  // para leérsela al cliente; una sugerencia nueva reemplaza a la anterior.
   useEffect(() => {
     if (!sugerenciaSommelier) return
-    const t = setTimeout(() => setSugerenciaSommelier(null), 9000)
+    const t = setTimeout(() => setSugerenciaSommelier(null), 40000)
     return () => clearTimeout(t)
   }, [sugerenciaSommelier])
 
@@ -1127,52 +1128,64 @@ export default function Mozo() {
               bottom: cartCount > 0 ? 'calc(78px + env(safe-area-inset-bottom, 0px))' : 'calc(12px + env(safe-area-inset-bottom, 0px))'
             }}
           >
-            <div className="w-full max-w-[398px] bg-inkSoft border border-gold/25 rounded-2xl px-3.5 py-3 shadow-lg flex items-center gap-2.5">
-              <span className="shrink-0 text-lg leading-none">🍷</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-0.5 truncate">
-                  Para {sugerenciaSommelier.plato}
+            {/* Tarjeta completa, pensada para LEERSE en voz alta al cliente:
+                nombre sin cortar, precio, y el porqué del maridaje
+                (perfil.principio). Pedido del dueño 2026-09-19: antes el
+                nombre se truncaba y no se veía la explicación. */}
+            <div
+              className="w-full max-w-[398px] bg-inkSoft border border-gold/30 rounded-2xl px-4 py-3.5 shadow-lg overflow-y-auto"
+              style={{ maxHeight: 'calc(100vh - 230px)' }}
+            >
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <p className="text-[11px] uppercase tracking-wide text-diamond/80 leading-snug">
+                  Sommelier · para {sugerenciaSommelier.plato}
                 </p>
-                {sugerenciaSommelier.recomendacion.vino && (
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-serif italic text-paper/90 text-[12.5px] truncate">
-                      {sugerenciaSommelier.recomendacion.vino.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-gold whitespace-nowrap shrink-0 tabular-nums">
-                      {formatCLP(sugerenciaSommelier.recomendacion.vino.price_clp)}
-                    </span>
-                  </div>
-                )}
-                {!sugerenciaSommelier.recomendacion.vino && sugerenciaSommelier.recomendacion.alternativaBar && (
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-serif italic text-paper/90 text-[12.5px] truncate">
-                      {sugerenciaSommelier.recomendacion.alternativaBar.item.name}
-                    </span>
-                    <span className="font-mono text-[11px] text-gold whitespace-nowrap shrink-0 tabular-nums">
-                      {formatCLP(sugerenciaSommelier.recomendacion.alternativaBar.item.price_clp)}
-                    </span>
-                  </div>
-                )}
-              </div>
-              {(sugerenciaSommelier.recomendacion.vino || sugerenciaSommelier.recomendacion.alternativaBar) && (
                 <button
-                  onClick={() =>
-                    agregarBebidaSugerida(
-                      (sugerenciaSommelier.recomendacion.vino || sugerenciaSommelier.recomendacion.alternativaBar.item).name
-                    )
-                  }
-                  className="shrink-0 text-[11px] font-bold px-3 py-2 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink whitespace-nowrap"
+                  onClick={() => setSugerenciaSommelier(null)}
+                  className="shrink-0 text-paper/50 text-xl leading-none -mt-0.5 px-1"
+                  aria-label="Cerrar sugerencia"
                 >
-                  + Agregar
+                  ×
                 </button>
+              </div>
+
+              {sugerenciaSommelier.perfil?.principio && (
+                <p className="text-paper/80 text-[13.5px] leading-relaxed mb-3">
+                  {sugerenciaSommelier.perfil.principio}
+                </p>
               )}
-              <button
-                onClick={() => setSugerenciaSommelier(null)}
-                className="shrink-0 text-paper/40 text-base leading-none px-0.5"
-                aria-label="Cerrar sugerencia"
-              >
-                ×
-              </button>
+
+              {[
+                sugerenciaSommelier.recomendacion.vino && {
+                  etiqueta: 'Te recomendamos',
+                  item: sugerenciaSommelier.recomendacion.vino,
+                  nota: sugerenciaSommelier.recomendacion.notaEscasez
+                },
+                sugerenciaSommelier.recomendacion.alternativaBar && {
+                  etiqueta: sugerenciaSommelier.recomendacion.vino ? 'O, si prefiere algo distinto' : 'Te recomendamos',
+                  item: sugerenciaSommelier.recomendacion.alternativaBar.item,
+                  nota: sugerenciaSommelier.recomendacion.alternativaBar.motivo
+                }
+              ]
+                .filter(Boolean)
+                .map((op) => (
+                  <div key={op.item.id ?? op.item.name} className="border-t border-gold/15 pt-3 mt-3 first:mt-0">
+                    <p className="text-[10px] uppercase tracking-wide text-diamond/70 mb-1">{op.etiqueta}</p>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="font-serif italic text-paper text-[16px] leading-snug">{op.item.name}</span>
+                      <span className="font-mono text-[13px] text-gold whitespace-nowrap shrink-0 tabular-nums pt-0.5">
+                        {formatCLP(op.item.price_clp)}
+                      </span>
+                    </div>
+                    {op.nota && <p className="text-paper/55 text-[12px] italic leading-relaxed mt-1.5">{op.nota}</p>}
+                    <button
+                      onClick={() => agregarBebidaSugerida(op.item.name)}
+                      className="mt-2.5 w-full text-[13px] font-bold py-2.5 rounded-lg bg-gradient-to-br from-gold to-bronze text-ink"
+                    >
+                      + Agregar al pedido
+                    </button>
+                  </div>
+                ))}
             </div>
           </div>
         )}
