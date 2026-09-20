@@ -213,7 +213,7 @@ export default function Carta2() {
             </div>
           </nav>
           {categoriasBebida.length > 0 && (
-            <nav className="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 mb-6 pb-4 border-b border-white/5">
+            <nav className="flex flex-wrap justify-center items-center gap-x-4 gap-y-4 mb-6 pb-4 border-b border-white/5">
               {categoriasBebida.map(({ nombre }) => (
                 <Pestana key={nombre} nombre={nombre} color="diamond" />
               ))}
@@ -223,9 +223,13 @@ export default function Carta2() {
                   lista de acá abajo. */}
               <a
                 href="/sommelier"
-                className="text-[11px] sm:text-xs font-head font-semibold uppercase tracking-wide whitespace-nowrap text-gold border border-gold/50 rounded-full px-3 py-1 hover:bg-gold/10 transition-colors"
+                className="relative text-[11px] sm:text-xs font-head font-semibold uppercase tracking-wide whitespace-nowrap text-gold border border-gold/50 rounded-full px-3 py-1 hover:bg-gold/10 transition-colors"
               >
                 Sommelier
+                {/* Viñeta de lanzamiento: sacar cuando ya no sea novedad. */}
+                <span className="absolute -top-2.5 -right-3 rounded-full bg-ember text-ink text-[8px] font-bold tracking-wide px-1.5 py-0.5 leading-none">
+                  NUEVO
+                </span>
               </a>
             </nav>
           )}
