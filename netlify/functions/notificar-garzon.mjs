@@ -1,24 +1,36 @@
+import { timingSafeEqual } from 'node:crypto'
 import webpush from 'web-push'
 import { createClient } from '@supabase/supabase-js'
 
 // Avisa por push a un garzón cuando cocina marca un plato "Listo".
 //
-// La llama el Worker de varos-kds (server a server), no un admin logueado
-// desde el navegador — por eso la autorización acá NO es un JWT de Supabase
-// Auth como en send-push.mjs, es una clave compartida fija. Ver
-// varos-kds/worker.js (handleMark / handleMarkPedidoNuevo) para quién la
-// llama, y NOTIFICAR_GARZON_KEY tanto acá (Netlify) como en el Worker
-// (wrangler secret) tienen que ser el mismo valor.
+// Dos formas de autorizar la llamada (no es un JWT de Supabase Auth como en
+// send-push.mjs, porque quien llama no es un admin logueado):
+//  1. Sistema anterior — la llama el Worker de varos-kds, server a server, con
+//     una clave compartida fija en `Authorization: Bearer`. NOTIFICAR_GARZON_KEY
+//     tanto acá (Netlify) como en el Worker (wrangler secret) tienen que ser el
+//     mismo valor. Se mantiene mientras el Worker siga vivo.
+//  2. Sistema nuevo (comandas en Supabase) — la llama la pantalla /cocina desde
+//     el navegador, con el código de cocina en el cuerpo (`codigo_cocina`), que
+//     se compara acá contra pos_config.codigo_cocina con la clave de servicio.
+//     El navegador nunca conoce NOTIFICAR_GARZON_KEY.
+// Cuando se retire el Worker, NOTIFICAR_GARZON_KEY deja de ser necesaria.
 const REQUERIDAS = [
   'VITE_VAPID_PUBLIC_KEY',
   'VAPID_PRIVATE_KEY',
   'VITE_SUPABASE_URL',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'NOTIFICAR_GARZON_KEY'
+  'SUPABASE_SERVICE_ROLE_KEY'
 ]
 
 function jsonResponse(body, status) {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
+}
+
+// Comparación en tiempo constante (las longitudes distintas ya delatan, pero no el contenido).
+function iguales(a, b) {
+  const x = Buffer.from(String(a ?? ''))
+  const y = Buffer.from(String(b ?? ''))
+  return x.length === y.length && timingSafeEqual(x, y)
 }
 
 export default async (req) => {
@@ -34,12 +46,24 @@ export default async (req) => {
     )
   }
 
+  const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  const { garzon, mesa, sector, codigo_cocina: codigoCocina } = await req.json().catch(() => ({}))
+
   const clave = (req.headers.get('authorization') || '').replace('Bearer ', '')
-  if (clave !== process.env.NOTIFICAR_GARZON_KEY) {
+  let autorizado = !!process.env.NOTIFICAR_GARZON_KEY && iguales(clave, process.env.NOTIFICAR_GARZON_KEY)
+  if (!autorizado && codigoCocina) {
+    const { data: cfg } = await supabaseAdmin
+      .from('pos_config')
+      .select('valor')
+      .eq('clave', 'codigo_cocina')
+      .maybeSingle()
+    autorizado = !!cfg?.valor && iguales(codigoCocina, cfg.valor)
+  }
+  if (!autorizado) {
     return jsonResponse({ error: 'No autorizado' }, 401)
   }
 
-  const { garzon, mesa, sector } = await req.json().catch(() => ({}))
   if (!garzon || !mesa) return jsonResponse({ error: 'Falta garzon o mesa' }, 400)
 
   webpush.setVapidDetails(
@@ -47,8 +71,6 @@ export default async (req) => {
     process.env.VITE_VAPID_PUBLIC_KEY,
     process.env.VAPID_PRIVATE_KEY
   )
-
-  const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
   // El nombre del garzón viaja como texto libre desde el KDS (así vienen las
   // comandas, tanto del bridge del PHP como del piloto de /mozo) — hay que

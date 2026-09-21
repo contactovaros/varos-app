@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { estadoNotificacionesGarzon, activarNotificacionesGarzon } from '../lib/pushNotifications'
+import { comandasAbiertas, crearOAgregarComanda, editarItemsComanda, cerrarMesaYCobrar } from '../lib/comandasApi.js'
+import { useSistemaComandas, InsigniaSistema, AvisoRecargar } from '../components/SistemaComandas.jsx'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
 import { perfilDePlato, detectarPerfil, armarRecomendacion, armarRecomendacionGrupal } from '../data/maridaje.js'
 
@@ -27,6 +29,18 @@ const KDS_EDITAR_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo
 const KDS_DETALLE_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?k=797a0ed49a8623e452b03fc0'
 const KDS_CERRAR_MESA_URL = 'https://varos-kds.varosnocturno.workers.dev/cerrar-mesa?k=797a0ed49a8623e452b03fc0'
 const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
+
+// Comandas en dos sistemas, según el interruptor `pos_config.comandas_backend`
+// (ver lib/comandasApi.js y SistemaComandas.jsx):
+//  * 'worker'   -> sistema anterior: todo lo de arriba (KDS_*_URL), tal cual.
+//  * 'supabase' -> sistema nuevo: RPC de comandas. Una llamada para leer todo
+//    (comandas_abiertas), una para enviar (crear_o_agregar_comanda: agrega
+//    FILAS, ya no reemplaza la lista entera), una para editar y una para
+//    cobrar y cerrar la mesa en la misma transacción.
+// Si la migración no está pegada, el interruptor cae en 'worker' y esta
+// pantalla se comporta exactamente como antes.
+const MSG_SESION_VIEJA =
+  'Tu sesión es de antes de este cambio — tocá "cambiar" arriba y volvé a entrar con tu código.'
 
 const MEDIOS_PAGO = [
   { value: 'efectivo', label: 'Efectivo' },
@@ -217,6 +231,8 @@ function GateGarzon({ onEntrar }) {
 
 export default function Mozo() {
   const [garzon, setGarzon] = useState(() => leerGarzonGuardado())
+  // Con qué sistema de comandas cargó esta pantalla (null = consultando).
+  const { backend, cambio: interruptorCambio } = useSistemaComandas()
   const [avisoEstado, setAvisoEstado] = useState('desconocida')
   const [avisoError, setAvisoError] = useState('')
   const [items, setItems] = useState([])
@@ -252,7 +268,48 @@ export default function Mozo() {
   // agregado. `pedidosPorMesa` de arriba sigue siendo el resumen fusionado
   // que ya usa el panel "Ya pedido en esta mesa".
   const [comandasPorMesa, setComandasPorMesa] = useState(() => new Map())
+  // Arma los tres índices por mesa a partir de comandas con TODOS sus ítems
+  // (bar incluido). Compartido por los dos sistemas. `esEditable(c)` dice si
+  // esa comanda se puede tocar desde acá.
+  function aplicarComandas(comandasConItems, esEditable) {
+    const claves = new Set(comandasConItems.map((c) => `${c.mesa}|${c.sector}`))
+
+    const porMesa = new Map()
+    const listaPorMesa = new Map()
+    for (const c of comandasConItems) {
+      const key = `${c.mesa}|${c.sector}`
+      const acumulado = porMesa.get(key) || []
+      for (const it of c.items) {
+        const nombre = it.menus?.length ? 'Menú del Día' : it.nombre
+        const existente = acumulado.find((x) => x.nombre === nombre)
+        if (existente) existente.cant += Number(it.cant) || 1
+        else acumulado.push({ nombre, cant: Number(it.cant) || 1 })
+      }
+      porMesa.set(key, acumulado)
+
+      const lista = listaPorMesa.get(key) || []
+      lista.push({
+        id: c.id,
+        mesa: c.mesa,
+        sector: c.sector,
+        hora: c.hora,
+        garzon: c.garzon,
+        editable: esEditable(c),
+        cantItems: c.items.reduce((s, it) => s + (Number(it.cant) || 1), 0),
+        // Con el sistema nuevo los ítems traen su id (para editar_items_comanda).
+        items: c.items
+      })
+      listaPorMesa.set(key, lista)
+    }
+
+    setMesasPendientes(claves)
+    setPedidosPorMesa(porMesa)
+    setComandasPorMesa(listaPorMesa)
+  }
+
+  // Sistema anterior (Worker). Igual que siempre.
   useEffect(() => {
+    if (backend !== 'worker') return
     let cancelado = false
     async function cargarPendientes() {
       try {
@@ -281,39 +338,8 @@ export default function Mozo() {
             }
           })
         )
-        const claves = new Set(comandasConItems.map((c) => `${c.mesa}|${c.sector}`))
 
-        const porMesa = new Map()
-        const listaPorMesa = new Map()
-        for (const c of comandasConItems) {
-          const key = `${c.mesa}|${c.sector}`
-          const acumulado = porMesa.get(key) || []
-          for (const it of c.items) {
-            const nombre = it.menus?.length ? 'Menú del Día' : it.nombre
-            const existente = acumulado.find((x) => x.nombre === nombre)
-            if (existente) existente.cant += Number(it.cant) || 1
-            else acumulado.push({ nombre, cant: Number(it.cant) || 1 })
-          }
-          porMesa.set(key, acumulado)
-
-          const lista = listaPorMesa.get(key) || []
-          lista.push({
-            id: c.id,
-            mesa: c.mesa,
-            sector: c.sector,
-            hora: c.hora,
-            garzon: c.garzon,
-            editable: c.id.startsWith('N-'),
-            cantItems: c.items.reduce((s, it) => s + (Number(it.cant) || 1), 0)
-          })
-          listaPorMesa.set(key, lista)
-        }
-
-        if (!cancelado) {
-          setMesasPendientes(claves)
-          setPedidosPorMesa(porMesa)
-          setComandasPorMesa(listaPorMesa)
-        }
+        if (!cancelado) aplicarComandas(comandasConItems, (c) => c.id.startsWith('N-'))
       } catch {
         // silencioso — es una ayuda visual, no crítica
       }
@@ -324,7 +350,42 @@ export default function Mozo() {
       cancelado = true
       clearInterval(id)
     }
-  }, [])
+  }, [backend])
+
+  // Sistema nuevo (Supabase): UNA llamada trae todas las comandas con todos los
+  // ítems (no hay "1 + N consultas"). Se manda la última `version` vista: si no
+  // cambió nada, la respuesta es mínima y no se toca el estado.
+  const versionComandasRef = useRef(null)
+  const recargarPendientesRef = useRef(null)
+  useEffect(() => {
+    if (backend !== 'supabase' || !garzon?.codigo) return
+    let cancelado = false
+    async function cargarPendientes(forzar) {
+      try {
+        const data = await comandasAbiertas({
+          codigo: garzon.codigo,
+          version: forzar ? null : versionComandasRef.current
+        })
+        if (cancelado) return
+        versionComandasRef.current = data.version
+        if (data.sin_cambios) return
+        aplicarComandas(
+          (data.comandas || []).filter((c) => (c.items || []).length > 0),
+          () => true
+        )
+      } catch {
+        // silencioso — es una ayuda visual; la próxima vuelta reintenta
+      }
+    }
+    recargarPendientesRef.current = () => cargarPendientes(true)
+    cargarPendientes(true)
+    const id = setInterval(() => cargarPendientes(false), 10000)
+    return () => {
+      cancelado = true
+      recargarPendientesRef.current = null
+      clearInterval(id)
+    }
+  }, [backend, garzon?.codigo])
 
   const [sheetMesa, setSheetMesa] = useState(false)
   const [sheetCart, setSheetCart] = useState(false)
@@ -344,6 +405,31 @@ export default function Mozo() {
     setErrorDetalle('')
     setCargandoDetalle(true)
     setComandaEditando(null)
+    if (backend === 'supabase') {
+      // Sistema nuevo: la comanda ya vino completa (con el id de cada ítem) en
+      // la lectura de comandas_abiertas; no hay que pedir el detalle aparte.
+      let encontrada = null
+      for (const lista of comandasPorMesa.values()) {
+        encontrada = lista.find((c) => c.id === id) || encontrada
+      }
+      if (encontrada) {
+        setComandaEditando({
+          id: encontrada.id,
+          mesa: encontrada.mesa,
+          sector: encontrada.sector,
+          items: (encontrada.items || []).map((it) => ({ ...it })),
+          // Cantidades con las que se abrió: al guardar solo se mandan los
+          // ítems que cambiaron, así lo que otro garzón agregue mientras tanto
+          // no se toca.
+          itemsOriginales: (encontrada.items || []).map((it) => ({ id: it.id, cant: it.cant }))
+        })
+      } else {
+        setErrorDetalle('Esa comanda ya no está abierta. Se actualizó la lista.')
+        recargarPendientesRef.current?.()
+      }
+      setCargandoDetalle(false)
+      return
+    }
     try {
       const res = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(id)}`)
       if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo cargar el pedido'))
@@ -381,15 +467,30 @@ export default function Mozo() {
     setGuardandoEdicion(true)
     setErrorEdicion('')
     try {
-      const res = await fetch(KDS_EDITAR_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: comandaEditando.id, items: comandaEditando.items })
-      })
-      if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo guardar'))
+      if (backend === 'supabase') {
+        if (!garzon.codigo) throw new Error(MSG_SESION_VIEJA)
+        const restantes = new Map(comandaEditando.items.map((it) => [it.id, it.cant]))
+        // cant = 0 quita el ítem; si quedan todos en cero, se cancela la comanda.
+        const cambios = comandaEditando.itemsOriginales
+          .map((o) => ({ id: o.id, cant: restantes.get(o.id) ?? 0, antes: o.cant }))
+          .filter((x) => x.cant !== x.antes)
+          .map(({ id, cant }) => ({ id, cant }))
+        if (cambios.length > 0) {
+          await editarItemsComanda({ codigo: garzon.codigo, comandaId: comandaEditando.id, items: cambios })
+          recargarPendientesRef.current?.()
+        }
+      } else {
+        const res = await fetch(KDS_EDITAR_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: comandaEditando.id, items: comandaEditando.items })
+        })
+        if (!res.ok) throw new Error(await res.text().catch(() => 'No se pudo guardar'))
+      }
       setComandaEditando(null)
     } catch (err) {
       setErrorEdicion('No se pudo guardar: ' + err.message)
+      if (backend === 'supabase') recargarPendientesRef.current?.()
     } finally {
       setGuardandoEdicion(false)
     }
@@ -442,6 +543,28 @@ export default function Mozo() {
     setCargandoCobro(true)
     setComandasCobro([])
     try {
+      if (backend === 'supabase') {
+        if (!garzon.codigo) throw new Error(MSG_SESION_VIEJA)
+        // Lectura fresca (no la de hace 10 s): el cobro cierra TODAS las
+        // comandas de la mesa, así que la cuenta tiene que incluir lo último.
+        const data = await comandasAbiertas({ codigo: garzon.codigo })
+        const propias = (data.comandas || []).filter(
+          (c) => String(c.mesa) === String(num) && c.sector === sector
+        )
+        setComandasCobro(
+          propias.map((c) => ({
+            id: c.id,
+            mesa: c.mesa,
+            sector: c.sector,
+            hora: c.hora,
+            garzon: c.garzon,
+            editable: true,
+            items: c.items || [],
+            sinFiltrar: true
+          }))
+        )
+        return
+      }
       const lista = comandasPorMesa.get(`${num}|${sector}`) || []
       const completas = await Promise.all(
         lista.map(async (c) => {
@@ -506,23 +629,39 @@ export default function Mozo() {
     setErrorCobro('')
     try {
       const itemsCobro = lineasCobro.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit }))
-      const { data: cobroId, error } = await supabase.rpc('registrar_cobro_garzon', {
-        p_codigo: garzon.codigo,
-        p_mesa: String(mesaCobrando.num),
-        p_sector: mesaCobrando.sector,
-        p_items: itemsCobro,
-        p_total: totalFinalCobro,
-        p_medio_pago: medioPagoCobro
-      })
-      if (error) throw error
-      try {
-        await fetch(KDS_CERRAR_MESA_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ mesa: String(mesaCobrando.num), sector: mesaCobrando.sector })
+      let cobroId
+      if (backend === 'supabase') {
+        // Una sola operación de base: registra el cobro y cierra las comandas
+        // de la mesa en la misma transacción (ya no hay cobro sin cierre).
+        cobroId = await cerrarMesaYCobrar({
+          codigo: garzon.codigo,
+          mesa: String(mesaCobrando.num),
+          sector: mesaCobrando.sector,
+          items: itemsCobro,
+          total: totalFinalCobro,
+          medioPago: medioPagoCobro
         })
-      } catch {
-        // el cobro ya quedó registrado aunque falle el cierre en el KDS
+        recargarPendientesRef.current?.()
+      } else {
+        const { data, error } = await supabase.rpc('registrar_cobro_garzon', {
+          p_codigo: garzon.codigo,
+          p_mesa: String(mesaCobrando.num),
+          p_sector: mesaCobrando.sector,
+          p_items: itemsCobro,
+          p_total: totalFinalCobro,
+          p_medio_pago: medioPagoCobro
+        })
+        if (error) throw error
+        cobroId = data
+        try {
+          await fetch(KDS_CERRAR_MESA_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mesa: String(mesaCobrando.num), sector: mesaCobrando.sector })
+          })
+        } catch {
+          // el cobro ya quedó registrado aunque falle el cierre en el KDS
+        }
       }
       setToastCobro(`Mesa ${mesaCobrando.num} cobrada — ${formatCLP(totalFinalCobro)}`)
       setTimeout(() => setToastCobro(''), 2500)
@@ -871,6 +1010,10 @@ export default function Mozo() {
 
   async function enviarPedido() {
     if (!cartEntries.length) return
+    if (!backend) {
+      setErrorEnvio('Un momento, estoy comprobando el sistema de pedidos. Probá de nuevo en unos segundos.')
+      return
+    }
     if (!mesa) {
       setSheetCart(false)
       setSheetMesa(true)
@@ -884,45 +1027,68 @@ export default function Mozo() {
       comentario: c.nota?.trim() || '',
       // Menú del Día: un `menus` por unidad pedida, mismo formato que ya
       // arma el bridge del PHP real (entrada/principal/postre elegidos).
-      ...(c.menuChoice ? { menus: Array.from({ length: c.qty }, () => ({ ...c.menuChoice })) } : {})
+      ...(c.menuChoice ? { menus: Array.from({ length: c.qty }, () => ({ ...c.menuChoice })) } : {}),
+      // Sistema nuevo: las categorías de bebida van a la barra. Ojo: en la carta
+      // real hay tragos fuera de esas categorías (APERITIVOS trae cocktails,
+      // negroni, caipirinha…), así que para el resto NO se fuerza 'cocina': se
+      // manda la categoría y la base decide con la misma lista de palabras
+      // clave del Worker (es_barra), que es lo que hace hoy el sistema anterior.
+      ...(backend === 'supabase'
+        ? CATEGORIAS_BEBIDA_MOZO.includes(c.item.category)
+          ? { estacion: 'barra' }
+          : { categoria: c.item.category || '' }
+        : {})
     }))
     try {
-      // Si esta mesa ya tiene una comanda propia abierta (nacida en /mozo),
-      // el pedido nuevo se suma a esa en vez de abrir un ticket aparte —
-      // pedido explícito (2026-09-16): antes cada "Enviar" creaba una
-      // comanda nueva para la misma mesa y quedaban dos tickets sueltos
-      // donde debía haber uno solo. Las comandas que vienen del puente con
-      // gestion.php no son editables acá (mismo motivo de siempre), así que
-      // si solo hay una de esas, igual se crea una comanda nueva propia.
-      const clave = `${mesa.num}|${mesa.sector}`
-      const comandaExistente = (comandasPorMesa.get(clave) || []).find((c) => c.editable)
-
-      if (comandaExistente) {
-        const detalleRes = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(comandaExistente.id)}`)
-        if (!detalleRes.ok) throw new Error('No se pudo leer el pedido que ya tenía esta mesa.')
-        const detalle = await detalleRes.json()
-        const res = await fetch(KDS_EDITAR_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: comandaExistente.id, items: [...(detalle.items || []), ...nuevosItems] })
+      if (backend === 'supabase') {
+        if (!garzon.codigo) throw new Error(MSG_SESION_VIEJA)
+        // Una sola llamada: crea la comanda de la mesa o AGREGA filas a la que
+        // ya está abierta (nunca reemplaza la lista, no se pisa con otro garzón).
+        await crearOAgregarComanda({
+          codigo: garzon.codigo,
+          mesa: String(mesa.num),
+          sector: mesa.sector,
+          items: nuevosItems
         })
-        if (!res.ok) {
-          const texto = await res.text().catch(() => '')
-          throw new Error(texto || `Cocina respondió con error (${res.status})`)
-        }
+        recargarPendientesRef.current?.()
       } else {
-        const payload = { mesa: String(mesa.num), sector: mesa.sector, garzon: garzon?.nombre || '', items: nuevosItems }
-        const res = await fetch(KDS_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        if (!res.ok) {
-          const texto = await res.text().catch(() => '')
-          throw new Error(texto || `Cocina respondió con error (${res.status})`)
+        // Si esta mesa ya tiene una comanda propia abierta (nacida en /mozo),
+        // el pedido nuevo se suma a esa en vez de abrir un ticket aparte —
+        // pedido explícito (2026-09-16): antes cada "Enviar" creaba una
+        // comanda nueva para la misma mesa y quedaban dos tickets sueltos
+        // donde debía haber uno solo. Las comandas que vienen del puente con
+        // gestion.php no son editables acá (mismo motivo de siempre), así que
+        // si solo hay una de esas, igual se crea una comanda nueva propia.
+        const clave = `${mesa.num}|${mesa.sector}`
+        const comandaExistente = (comandasPorMesa.get(clave) || []).find((c) => c.editable)
+
+        if (comandaExistente) {
+          const detalleRes = await fetch(`${KDS_DETALLE_URL}&id=${encodeURIComponent(comandaExistente.id)}`)
+          if (!detalleRes.ok) throw new Error('No se pudo leer el pedido que ya tenía esta mesa.')
+          const detalle = await detalleRes.json()
+          const res = await fetch(KDS_EDITAR_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: comandaExistente.id, items: [...(detalle.items || []), ...nuevosItems] })
+          })
+          if (!res.ok) {
+            const texto = await res.text().catch(() => '')
+            throw new Error(texto || `Cocina respondió con error (${res.status})`)
+          }
+        } else {
+          const payload = { mesa: String(mesa.num), sector: mesa.sector, garzon: garzon?.nombre || '', items: nuevosItems }
+          const res = await fetch(KDS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          })
+          if (!res.ok) {
+            const texto = await res.text().catch(() => '')
+            throw new Error(texto || `Cocina respondió con error (${res.status})`)
+          }
+          const data = await res.json().catch(() => null)
+          if (!data?.ok) throw new Error('Cocina no confirmó el pedido.')
         }
-        const data = await res.json().catch(() => null)
-        if (!data?.ok) throw new Error('Cocina no confirmó el pedido.')
       }
 
       // Éxito: recién acá se limpia el carrito, nunca antes.
@@ -967,15 +1133,24 @@ export default function Mozo() {
 
   return (
     <div className="min-h-screen bg-ink text-paper">
+      <AvisoRecargar cambio={interruptorCambio} />
       <div className="max-w-md mx-auto min-h-screen relative flex flex-col">
         {/* ---- Header ---- */}
         <header className="sticky top-0 z-20 bg-ink px-4 pt-4 pb-2.5 border-b border-white/5">
           <div className="flex items-center justify-between mb-2">
-            <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase">Varo's · Mozo</div>
+            <div className="flex flex-col gap-0.5">
+              <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase">Varo's · Mozo</div>
+              <InsigniaSistema backend={backend} />
+            </div>
             <button onClick={cambiarDeMozo} className="text-[10px] text-paper/35 underline">
               {garzon.nombre} · cambiar
             </button>
           </div>
+          {backend === 'supabase' && !garzon.codigo && (
+            <p className="text-amber-400 text-[11px] bg-amber-400/10 border border-amber-400/25 rounded-lg px-3 py-2 mb-2 leading-relaxed">
+              {MSG_SESION_VIEJA}
+            </p>
+          )}
           {(avisoEstado === 'inactiva' || avisoEstado === 'desconocida') && (
             <button
               onClick={activarAvisos}

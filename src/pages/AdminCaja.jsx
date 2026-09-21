@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
+import { comandasAbiertas, cerrarMesaYCobrar } from '../lib/comandasApi.js'
+import { useSistemaComandas, InsigniaSistema, AvisoRecargar } from '../components/SistemaComandas.jsx'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
 
 // Caja fase 1 — cobrar y cerrar mesa. Ver varos-pos/DECISIONES.md,
@@ -16,6 +18,14 @@ import ReciboBoleta from '../components/ReciboBoleta.jsx'
 // resume por mesa. `pos_cobros` es la única tabla nueva: el libro de caja
 // permanente que hoy no existe en ningún lado.
 
+// Comandas en dos sistemas, según el interruptor `pos_config.comandas_backend`
+// (ver lib/comandasApi.js y SistemaComandas.jsx):
+//  * 'worker'   -> sistema anterior: KDS (/state + detalle + /cerrar-mesa) y el
+//    insert en pos_cobros, tal cual estaba.
+//  * 'supabase' -> sistema nuevo: comandas_abiertas (una llamada, todos los
+//    ítems) y cerrar_mesa_y_cobrar (cobro + cierre en la misma transacción,
+//    con la sesión de admin: código null). Si la migración no está pegada, el
+//    interruptor cae en 'worker' y esta pantalla queda exactamente como antes.
 const KDS_STATE_URL = 'https://varos-kds.varosnocturno.workers.dev/state?k=797a0ed49a8623e452b03fc0'
 const KDS_DETALLE_URL = 'https://varos-kds.varosnocturno.workers.dev/pedido-nuevo-detalle?k=797a0ed49a8623e452b03fc0'
 const KDS_CERRAR_MESA_URL = 'https://varos-kds.varosnocturno.workers.dev/cerrar-mesa?k=797a0ed49a8623e452b03fc0'
@@ -45,6 +55,8 @@ function formatHora(iso) {
 
 export default function AdminCaja() {
   const { isAdmin, loading: authLoading, session, customer } = useAuth()
+  // Con qué sistema de comandas cargó esta pantalla (null = consultando).
+  const { backend, cambio: interruptorCambio } = useSistemaComandas()
 
   const [mesas, setMesas] = useState([])
   const [sectoresAbiertos, setSectoresAbiertos] = useState(() => new Set())
@@ -90,7 +102,7 @@ export default function AdminCaja() {
   const [mesasPendientes, setMesasPendientes] = useState(() => new Set())
 
   useEffect(() => {
-    if (!isAdmin) return
+    if (!isAdmin || backend !== 'worker') return
     let cancelado = false
     async function cargarPendientes() {
       try {
@@ -114,7 +126,41 @@ export default function AdminCaja() {
       cancelado = true
       clearInterval(id)
     }
-  }, [isAdmin])
+  }, [isAdmin, backend])
+
+  // Sistema nuevo: una llamada con la última `version` vista; si no cambió, la
+  // respuesta es mínima y no se toca el estado.
+  const versionComandasRef = useRef(null)
+  const recargarPendientesRef = useRef(null)
+  useEffect(() => {
+    if (!isAdmin || backend !== 'supabase') return
+    let cancelado = false
+    async function cargarPendientes(forzar) {
+      try {
+        const data = await comandasAbiertas({ codigo: null, version: forzar ? null : versionComandasRef.current })
+        if (cancelado) return
+        versionComandasRef.current = data.version
+        if (data.sin_cambios) return
+        setMesasPendientes(
+          new Set(
+            (data.comandas || [])
+              .filter((c) => (c.items || []).length > 0)
+              .map((c) => `${c.mesa}|${c.sector}`)
+          )
+        )
+      } catch {
+        // silencioso — es una ayuda visual; la próxima vuelta reintenta
+      }
+    }
+    recargarPendientesRef.current = () => cargarPendientes(true)
+    cargarPendientes(true)
+    const id = setInterval(() => cargarPendientes(false), 10000)
+    return () => {
+      cancelado = true
+      recargarPendientesRef.current = null
+      clearInterval(id)
+    }
+  }, [isAdmin, backend])
 
   useEffect(() => {
     if (!isAdmin) return
@@ -192,6 +238,16 @@ export default function AdminCaja() {
     setCargandoComandas(true)
     setErrorComandas('')
     try {
+      if (backend === 'supabase') {
+        // Lectura fresca: el cobro cierra TODAS las comandas de la mesa, así
+        // que la cuenta tiene que incluir lo último. Ya trae todos los ítems.
+        const data = await comandasAbiertas({ codigo: null })
+        setComandas(
+          (data.comandas || []).filter((c) => String(c.mesa) === String(numero) && c.sector === sector)
+        )
+        setTotalManual('')
+        return
+      }
       const res = await fetch(KDS_STATE_URL)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
@@ -261,53 +317,85 @@ export default function AdminCaja() {
   const totalFinal = totalManual !== '' ? Number(totalManual) : totalCalculado
 
   async function cobrar() {
-    if (!mesaSel || !lineas.length || !totalFinal) return
+    if (!mesaSel || !lineas.length || !totalFinal || !backend) return
     setCobrando(true)
     setErrorCobro('')
     const garzon = comandas.find((c) => c.garzon)?.garzon || ''
     const cobradoPor = customer?.full_name || session?.user?.email || 'admin'
     const itemsCobro = lineas.map(({ nombre, cant, precioUnit }) => ({ nombre, cant, precioUnit }))
-    const { data: inserted, error } = await supabase
-      .from('pos_cobros')
-      .insert({
+    if (backend === 'supabase') {
+      // Una sola operación de base: registra el cobro (pos_cobros) y cierra las
+      // comandas de la mesa en la misma transacción. Con código null la RPC
+      // autoriza por la sesión de admin y arma `cobrado_por` sola.
+      let cobroId
+      try {
+        cobroId = await cerrarMesaYCobrar({
+          codigo: null,
+          mesa: String(mesaSel.numero),
+          sector: mesaSel.sector,
+          items: itemsCobro,
+          total: totalFinal,
+          medioPago,
+        })
+      } catch (err) {
+        setErrorCobro('No se pudo registrar el cobro: ' + err.message)
+        setCobrando(false)
+        return
+      }
+      setReciboImprimir({
+        id: cobroId,
         mesa: String(mesaSel.numero),
         sector: mesaSel.sector,
         garzon,
         items: itemsCobro,
         total: totalFinal,
-        medio_pago: medioPago,
-        cobrado_por: cobradoPor,
+        medioPagoLabel: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label || medioPago,
+        created_at: new Date().toISOString(),
       })
-      .select('id, created_at')
-      .single()
-    if (error) {
-      setErrorCobro('No se pudo registrar el cobro: ' + error.message)
-      setCobrando(false)
-      return
-    }
-    // Imprimir al cobrar, sin tener que ir a buscarlo despues a "Ver
-    // registro de caja" -- pedido explicito (2026-09-16): "el boton de
-    // cobrar debiese imprimir".
-    setReciboImprimir({
-      id: inserted?.id,
-      mesa: String(mesaSel.numero),
-      sector: mesaSel.sector,
-      garzon,
-      items: itemsCobro,
-      total: totalFinal,
-      medioPagoLabel: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label || medioPago,
-      created_at: inserted?.created_at || new Date().toISOString(),
-    })
-    try {
-      await fetch(KDS_CERRAR_MESA_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mesa: String(mesaSel.numero), sector: mesaSel.sector }),
+      recargarPendientesRef.current?.()
+    } else {
+      const { data: inserted, error } = await supabase
+        .from('pos_cobros')
+        .insert({
+          mesa: String(mesaSel.numero),
+          sector: mesaSel.sector,
+          garzon,
+          items: itemsCobro,
+          total: totalFinal,
+          medio_pago: medioPago,
+          cobrado_por: cobradoPor,
+        })
+        .select('id, created_at')
+        .single()
+      if (error) {
+        setErrorCobro('No se pudo registrar el cobro: ' + error.message)
+        setCobrando(false)
+        return
+      }
+      // Imprimir al cobrar, sin tener que ir a buscarlo despues a "Ver
+      // registro de caja" -- pedido explicito (2026-09-16): "el boton de
+      // cobrar debiese imprimir".
+      setReciboImprimir({
+        id: inserted?.id,
+        mesa: String(mesaSel.numero),
+        sector: mesaSel.sector,
+        garzon,
+        items: itemsCobro,
+        total: totalFinal,
+        medioPagoLabel: MEDIOS_PAGO.find((m) => m.value === medioPago)?.label || medioPago,
+        created_at: inserted?.created_at || new Date().toISOString(),
       })
-    } catch {
-      // El cobro ya quedó registrado en pos_cobros aunque falle el cierre en
-      // el KDS — no se pierde la plata, en el peor caso la mesa sigue
-      // apareciendo en cocina hasta que se cierre a mano después.
+      try {
+        await fetch(KDS_CERRAR_MESA_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mesa: String(mesaSel.numero), sector: mesaSel.sector }),
+        })
+      } catch {
+        // El cobro ya quedó registrado en pos_cobros aunque falle el cierre en
+        // el KDS — no se pierde la plata, en el peor caso la mesa sigue
+        // apareciendo en cocina hasta que se cierre a mano después.
+      }
     }
     setCobrando(false)
     setToast(`Mesa ${mesaSel.numero} cobrada — ${formatCLP(totalFinal)}`)
@@ -331,8 +419,12 @@ export default function AdminCaja() {
 
   return (
     <div className="px-4 pt-8 pb-10">
+      <AvisoRecargar cambio={interruptorCambio} />
       <header className="mb-5">
-        <div className="font-mono text-[10px] tracking-[0.3em] text-gold uppercase">Varo's · Gestión</div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="font-mono text-[10px] tracking-[0.3em] text-gold uppercase">Varo's · Gestión</div>
+          <InsigniaSistema backend={backend} />
+        </div>
         <h1 className="font-head text-2xl font-semibold">Caja</h1>
         <p className="text-paper/40 text-xs mt-1 leading-relaxed">
           Registro de caja — libro permanente de lo cobrado.

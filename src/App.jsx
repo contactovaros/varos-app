@@ -14,6 +14,7 @@ import Reservas from './pages/Reservas.jsx'
 import Carta2 from './pages/Carta2.jsx'
 import Sommelier from './pages/Sommelier.jsx'
 import Mozo from './pages/Mozo.jsx'
+import Cocina from './pages/Cocina.jsx'
 import AdminMesas from './pages/AdminMesas.jsx'
 import AdminReservas from './pages/AdminReservas.jsx'
 import AdminMesaTrabajo from './pages/AdminMesaTrabajo.jsx'
@@ -34,6 +35,14 @@ import { useAuth } from './context/AuthContext.jsx'
 export default function App() {
   const { session, customer, isAdmin, loading } = useAuth()
   const location = useLocation()
+
+  // Pantalla de cocina (tablet / TV con ?tv=1): sin sesión de Google ni gate de
+  // admin — entra con un código de cocina propio validado por las funciones de
+  // base, guardado en el localStorage del aparato. Va ANTES del "Cargando" para
+  // no depender de que el login de Supabase responda (la TV nadie la toca).
+  if (location.pathname === '/cocina') {
+    return <Cocina />
+  }
 
   if (loading) {
     return <div className="h-screen flex items-center justify-center text-paper/50 text-sm">Cargando Varo's…</div>
