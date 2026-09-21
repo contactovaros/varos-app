@@ -44,6 +44,13 @@ export default function App() {
     return <Cocina />
   }
 
+  // Pantalla de la barra: la misma pantalla de cocina pero con las bebidas y
+  // estado propio. Mismo código de acceso, mismo `?tv=1`, mismo trato (fuera del
+  // gate de admin y del "Cargando").
+  if (location.pathname === '/barra') {
+    return <Cocina estacion="barra" />
+  }
+
   if (loading) {
     return <div className="h-screen flex items-center justify-center text-paper/50 text-sm">Cargando Varo's…</div>
   }

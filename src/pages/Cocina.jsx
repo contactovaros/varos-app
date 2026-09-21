@@ -1,8 +1,20 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { cocinaEstado, cocinaMarcar, notificarGarzon, esModoDemo } from '../lib/comandasApi.js'
+import {
+  cocinaEstado,
+  cocinaMarcar,
+  barraEstado,
+  barraMarcar,
+  notificarGarzon,
+  esModoDemo
+} from '../lib/comandasApi.js'
 import { useSistemaComandas, nombreSistema } from '../components/SistemaComandas.jsx'
 
 // Pantalla de cocina (/cocina, con ?tv=1 para la TV: solo mirar).
+//
+// La MISMA pantalla sirve a la barra (/barra): la prop `estacion` ('cocina' por
+// defecto | 'barra') elige el par de RPC, el título y los textos. La barra tiene
+// estado propio en la base (add_barra.sql), así que marcar "Listo" acá no toca lo
+// de cocina. Ver varos-pos/DECISIONES.md, "Pantalla de barra (/barra)".
 //
 // PORTA el comportamiento ya probado de la pantalla del Worker varos-kds
 // (PAGE_KDS en varos-kds/worker.js); no es un rediseño. La usa el cocinero bajo
@@ -18,10 +30,39 @@ import { useSistemaComandas, nombreSistema } from '../components/SistemaComandas
 // Consumo: consulta cada ~8 s mandando la `version` que ya vio; si nada cambió
 // la respuesta es mínima y no se vuelve a pintar el tablero.
 
+// El código de acceso es UNO solo (cocina y barra comparten clave). Lo demás va
+// por estación para que las comandas ocultas, la pestaña y el sonido de una
+// pantalla no se mezclen con los de la otra en el mismo aparato.
 const CODIGO_KEY = 'varos_cocina_codigo'
-const OCULTAS_KEY = 'varos_cocina_ocultas'
-const TAB_KEY = 'varos_cocina_tab'
-const SONIDO_KEY = 'varos_cocina_sonido'
+
+const ESTACIONES = {
+  cocina: {
+    titulo: 'COCINA',
+    lugar: 'la cocina', // "NO SE PUDO LEER LA COCINA"
+    ruta: '/cocina',
+    unidad: 'platos',
+    voz: 'Entrando comanda',
+    estado: cocinaEstado,
+    marcar: cocinaMarcar,
+    ocultasKey: 'varos_cocina_ocultas',
+    tabKey: 'varos_cocina_tab',
+    sonidoKey: 'varos_cocina_sonido',
+    avisoAnterior: 'usá la pantalla de cocina de siempre.'
+  },
+  barra: {
+    titulo: 'BARRA',
+    lugar: 'la barra',
+    ruta: '/barra',
+    unidad: 'bebidas',
+    voz: 'Entrando comanda de barra',
+    estado: barraEstado,
+    marcar: barraMarcar,
+    ocultasKey: 'varos_barra_ocultas',
+    tabKey: 'varos_barra_tab',
+    sonidoKey: 'varos_barra_sonido',
+    avisoAnterior: 'por ahora las bebidas se siguen viendo en el sistema anterior.'
+  }
+}
 
 // Cuánto rato se queda una comanda "Listo" visible antes de ocultarse sola
 // (tiempo para que el garzón la vea sin que el cocinero toque nada). El botón
@@ -187,11 +228,11 @@ const Tablero = memo(function Tablero({ visibles, tab, marcando, onMarcar, onOcu
 // "Entrando comanda" hablado (Web Speech API, sin archivo de audio): más claro
 // entre el ruido de cocina que un bip. cancel() antes de hablar para que, si
 // entran varias juntas, se escuche la última y no una cola atrasada.
-function decirNuevaComanda() {
+function decirNuevaComanda(frase = 'Entrando comanda') {
   try {
     if (!window.speechSynthesis) return
     window.speechSynthesis.cancel()
-    const u = new SpeechSynthesisUtterance('Entrando comanda')
+    const u = new SpeechSynthesisUtterance(frase)
     u.lang = 'es-CL'
     window.speechSynthesis.speak(u)
   } catch {
@@ -199,7 +240,9 @@ function decirNuevaComanda() {
   }
 }
 
-function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
+function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
+  const est = ESTACIONES[estacion]
+  const { ocultasKey, tabKey, sonidoKey } = est
   const { backend, cambio } = useSistemaComandas()
   const [comandas, setComandas] = useState([])
   const [cargoAlgo, setCargoAlgo] = useState(false)
@@ -208,15 +251,15 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
   const [conexion, setConexion] = useState({ estado: 'espera', ultimo: 0, detalle: '' })
   const [ocultas, setOcultas] = useState(() => {
     try {
-      return new Set(JSON.parse(leer(OCULTAS_KEY, '[]')))
+      return new Set(JSON.parse(leer(ocultasKey, '[]')))
     } catch {
       return new Set()
     }
   })
   const [marcando, setMarcando] = useState(() => new Set())
   const [mensaje, setMensaje] = useState('')
-  const [sonidoOn, setSonidoOn] = useState(() => leer(SONIDO_KEY) !== '0')
-  const [tab, setTab] = useState(() => (COLUMNAS.includes(leer(TAB_KEY)) ? leer(TAB_KEY) : 'nuevo'))
+  const [sonidoOn, setSonidoOn] = useState(() => leer(sonidoKey) !== '0')
+  const [tab, setTab] = useState(() => (COLUMNAS.includes(leer(tabKey)) ? leer(tabKey) : 'nuevo'))
 
   const versionRef = useRef(null)
   const enVueloRef = useRef(false)
@@ -232,7 +275,7 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
       if (enVueloRef.current) return
       enVueloRef.current = true
       try {
-        const d = await cocinaEstado({ codigoCocina: codigo, version: forzar ? null : versionRef.current })
+        const d = await est.estado({ codigoCocina: codigo, version: forzar ? null : versionRef.current })
         setConexion({ estado: 'ok', ultimo: Date.now(), detalle: '' })
         versionRef.current = d.version
         // Nada cambió: no hay nada que volver a pintar.
@@ -248,7 +291,7 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
         const conservadas = [...ocultasRef.current].filter((id) => idsFeed.has(id))
         if (conservadas.length !== ocultasRef.current.size) {
           const nuevas = new Set(conservadas)
-          guardar(OCULTAS_KEY, JSON.stringify(conservadas))
+          guardar(ocultasKey, JSON.stringify(conservadas))
           ocultasRef.current = nuevas
           setOcultas(nuevas)
         }
@@ -263,7 +306,7 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
           )
           .map((c) => String(c.id))
         if (!primeraCargaRef.current && sonidoRef.current && visiblesIds.some((id) => !vistasRef.current.has(id))) {
-          decirNuevaComanda()
+          decirNuevaComanda(est.voz)
         }
         vistasRef.current = new Set(visiblesIds)
         primeraCargaRef.current = false
@@ -287,7 +330,7 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
         enVueloRef.current = false
       }
     },
-    [codigo, onCodigoInvalido]
+    [codigo, onCodigoInvalido, est, ocultasKey]
   )
 
   useEffect(() => {
@@ -318,9 +361,9 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
       setMensaje('')
       setMarcando((prev) => new Set(prev).add(c.id))
       try {
-        const r = await cocinaMarcar({ codigoCocina: codigo, comandaId: c.id, estado })
+        const r = await est.marcar({ codigoCocina: codigo, comandaId: c.id, estado })
         // Aviso al garzón: best-effort, sin esperar. Un fallo no impide el marcado.
-        if (r?.avisar) notificarGarzon({ codigoCocina: codigo, garzon: r.garzon, mesa: r.mesa, sector: r.sector })
+        if (r?.avisar) notificarGarzon({ codigoCocina: codigo, garzon: r.garzon, mesa: r.mesa, sector: r.sector, estacion })
       } catch (e) {
         if (String(e?.message || '').includes('Código de cocina inválido')) {
           onCodigoInvalido()
@@ -336,17 +379,17 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
         cargar(true)
       }
     },
-    [codigo, cargar, onCodigoInvalido]
+    [codigo, cargar, onCodigoInvalido, est, estacion]
   )
 
   const ocultar = useCallback(
     (id) => {
       const nuevas = new Set(ocultasRef.current).add(String(id))
       ocultasRef.current = nuevas
-      guardar(OCULTAS_KEY, JSON.stringify([...nuevas]))
+      guardar(ocultasKey, JSON.stringify([...nuevas]))
       setOcultas(nuevas)
     },
-    []
+    [ocultasKey]
   )
 
   // Comandas visibles con su edad. Más viejas arriba (las que más esperan), sin
@@ -367,13 +410,13 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
 
   const elegirTab = (t) => {
     setTab(t)
-    guardar(TAB_KEY, t)
+    guardar(tabKey, t)
   }
   const alternarSonido = () => {
     const sig = !sonidoOn
     setSonidoOn(sig)
-    guardar(SONIDO_KEY, sig ? '1' : '0')
-    if (sig) decirNuevaComanda()
+    guardar(sonidoKey, sig ? '1' : '0')
+    if (sig) decirNuevaComanda(est.voz)
   }
 
   const claseConx = conexion.estado === 'ok' ? 'verde' : conexion.estado === 'espera' ? 'amarillo' : 'rojo'
@@ -390,13 +433,13 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
     <div className={`kds${tv ? ' modo-tv' : ''}`}>
       <style>{CSS}</style>
       <header>
-        <h1>COCINA</h1>
+        <h1>{est.titulo}</h1>
         <span className={`conx ${claseConx}`}>
           <span className="d" />
           <span>{textoConx}</span>
         </span>
         <span className="kpi">
-          <b>{visibles.length}</b> comandas · <b>{platosPendientes}</b> platos
+          <b>{visibles.length}</b> comandas · <b>{platosPendientes}</b> {est.unidad}
         </span>
         {backend && (
           <span className={`sis ${backend === 'supabase' ? 'nuevo' : 'anterior'}`}>{nombreSistema(backend)}</span>
@@ -405,17 +448,17 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
         <button className="sp" onClick={alternarSonido}>
           Sonido: {sonidoOn ? 'sí' : 'no'}
         </button>
-        <button className="hide-tv" onClick={decirNuevaComanda}>
+        <button className="hide-tv" onClick={() => decirNuevaComanda(est.voz)}>
           Probar
         </button>
-        <a className="hbtn hide-tv" href="/cocina?tv=1" target="_blank" rel="noopener noreferrer">
+        <a className="hbtn hide-tv" href={`${est.ruta}?tv=1`} target="_blank" rel="noopener noreferrer">
           Modo TV
         </a>
       </header>
 
       {conexion.estado === 'red' && <div id="alerta">ESTA PANTALLA NO TIENE INTERNET</div>}
       {conexion.estado === 'error' && (
-        <div id="alerta">NO SE PUDO LEER LA COCINA{conexion.detalle ? `: ${conexion.detalle}` : ''}</div>
+        <div id="alerta">NO SE PUDO LEER {est.lugar.toUpperCase()}{conexion.detalle ? `: ${conexion.detalle}` : ''}</div>
       )}
       {cambio && !tv && (
         <div id="alerta" className="recargar">
@@ -426,7 +469,7 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
       {backend === 'worker' && (
         <div id="banner">
           <b>Ojo:</b> hoy los pedidos siguen entrando por el <b>sistema anterior</b>. Esta pantalla lee el sistema nuevo y no va
-          a mostrarlos: usá la pantalla de cocina de siempre.
+          a mostrarlos: {est.avisoAnterior}
         </div>
       )}
       {mensaje && (
@@ -454,7 +497,8 @@ function PantallaCocina({ codigo, tv, onCodigoInvalido }) {
 
 // Pantalla de candado: pide el código una sola vez por dispositivo. La TV lo
 // escribe una vez y queda guardado.
-function GateCocina({ aviso, onEntrar }) {
+function GateCocina({ estacion, aviso, onEntrar }) {
+  const est = ESTACIONES[estacion]
   const [codigo, setCodigo] = useState('')
   const [validando, setValidando] = useState(false)
   const [error, setError] = useState(aviso || '')
@@ -465,14 +509,14 @@ function GateCocina({ aviso, onEntrar }) {
     setValidando(true)
     setError('')
     try {
-      await cocinaEstado({ codigoCocina: limpio, version: null })
+      await est.estado({ codigoCocina: limpio, version: null })
       guardar(CODIGO_KEY, limpio)
       onEntrar(limpio)
     } catch (e) {
       const msg = String(e?.message || '')
       if (msg.includes('Código de cocina inválido')) setError('Código incorrecto.')
       else if (e?.red && !e?.pg) setError('No se pudo conectar. Revisá el internet e intentá de nuevo.')
-      else if (e?.pg === 'PGRST202') setError('El sistema de cocina todavía no está disponible. Avisá a quien administra el sistema.')
+      else if (e?.pg === 'PGRST202') setError(`El sistema de ${estacion} todavía no está disponible. Avisá a quien administra el sistema.`)
       else setError(`No se pudo validar el código: ${msg}`)
     } finally {
       setValidando(false)
@@ -482,7 +526,7 @@ function GateCocina({ aviso, onEntrar }) {
   return (
     <div className="min-h-screen bg-ink text-paper flex items-center justify-center px-6">
       <div className="w-full max-w-xs">
-        <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase mb-1 text-center">Varo's · Cocina</div>
+        <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase mb-1 text-center">Varo's · {estacion === 'barra' ? 'Barra' : 'Cocina'}</div>
         <h1 className="font-head text-xl font-semibold text-center mb-5">Código de cocina</h1>
         <input
           value={codigo}
@@ -501,14 +545,18 @@ function GateCocina({ aviso, onEntrar }) {
           {validando ? 'Comprobando…' : 'Entrar'}
         </button>
         <p className="text-center text-paper/30 text-[11px] mt-4 leading-relaxed">
-          Pedile el código a quien administra el sistema.
+          {estacion === 'barra'
+            ? 'Es el mismo código de la cocina. Pedilo a quien administra el sistema.'
+            : 'Pedile el código a quien administra el sistema.'}
         </p>
       </div>
     </div>
   )
 }
 
-export default function Cocina() {
+// `estacion`: 'cocina' (por defecto) o 'barra'. Cualquier otro valor cae en cocina.
+export default function Cocina({ estacion: estacionProp = 'cocina' }) {
+  const estacion = ESTACIONES[estacionProp] ? estacionProp : 'cocina'
   const tv = new URLSearchParams(window.location.search).get('tv') === '1'
   // En modo demo (solo desarrollo) se entra sin código.
   const [codigo, setCodigo] = useState(() => leer(CODIGO_KEY) || (esModoDemo() ? 'demo' : null))
@@ -520,8 +568,9 @@ export default function Cocina() {
     setCodigo(null)
   }, [])
 
-  if (!codigo) return <GateCocina aviso={aviso} onEntrar={setCodigo} />
-  return <PantallaCocina codigo={codigo} tv={tv} onCodigoInvalido={codigoInvalido} />
+  if (!codigo) return <GateCocina estacion={estacion} aviso={aviso} onEntrar={setCodigo} />
+  // key: si se navega /cocina <-> /barra sin recargar, el estado no se arrastra.
+  return <PantallaCocina key={estacion} estacion={estacion} codigo={codigo} tv={tv} onCodigoInvalido={codigoInvalido} />
 }
 
 // Estilos de la pantalla del Worker, portados tal cual y acotados a `.kds` para

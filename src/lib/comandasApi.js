@@ -193,6 +193,25 @@ export async function cocinaMarcar({ codigoCocina, comandaId, estado }) {
   return rpc('cocina_marcar', { p_codigo_cocina: codigoCocina, p_comanda_id: comandaId, p_estado: estado })
 }
 
+// ---------------------------------------------------------------------------
+// Barra — mismo código de acceso que cocina, pero con estado PROPIO por comanda
+// (add_barra.sql): marcar "listo" en la barra no toca lo de cocina ni al revés.
+// ---------------------------------------------------------------------------
+
+// Solo comandas con ítems de barra, ítems filtrados a barra y `estado` = el de
+// la barra. Misma forma que cocinaEstado (la pantalla se reutiliza).
+export async function barraEstado({ codigoCocina, version } = {}) {
+  if (demoActivo()) return (await demo()).barraEstado({ codigoCocina, version })
+  return rpc('barra_estado', { p_codigo_cocina: codigoCocina, p_version: version ?? null }, { timeoutMs: TIMEOUT_LECTURA_MS })
+}
+
+// estado: 'nuevo' | 'preparando' | 'listo'.
+// -> { ok, id, estado, cambio, avisar, garzon, mesa, sector, estacion: 'barra' }
+export async function barraMarcar({ codigoCocina, comandaId, estado }) {
+  if (demoActivo()) return (await demo()).barraMarcar({ codigoCocina, comandaId, estado })
+  return rpc('barra_marcar', { p_codigo_cocina: codigoCocina, p_comanda_id: comandaId, p_estado: estado })
+}
+
 // Ranking de preparaciones. desde/hasta: 'YYYY-MM-DD' (null = hoy, hora de Chile).
 // -> { desde, hasta, ranking: [{ nombre, unidades }] }
 export async function estadisticasCocina({ codigoCocina, desde, hasta } = {}) {
@@ -206,14 +225,16 @@ export async function estadisticasCocina({ codigoCocina, desde, hasta } = {}) {
 
 // Aviso push al garzón cuando cocina marca "listo". Best-effort: NUNCA lanza
 // (un aviso que falla no debe impedir el marcado). El código de cocina viaja en
-// el cuerpo; la función de Netlify lo valida contra la base.
-export async function notificarGarzon({ codigoCocina, garzon, mesa, sector }) {
+// el cuerpo; la función de Netlify lo valida contra la base. `estacion` ('cocina'
+// | 'barra') elige el texto del aviso ("Pedido listo" / "Bebidas listas"); sin
+// ella el cuerpo es el de siempre.
+export async function notificarGarzon({ codigoCocina, garzon, mesa, sector, estacion }) {
   if (demoActivo()) return false
   try {
     const res = await fetch('/.netlify/functions/notificar-garzon', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ codigo_cocina: codigoCocina, garzon, mesa, sector })
+      body: JSON.stringify({ codigo_cocina: codigoCocina, garzon, mesa, sector, ...(estacion ? { estacion } : {}) })
     })
     return res.ok
   } catch {

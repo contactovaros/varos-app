@@ -48,7 +48,7 @@ export default async (req) => {
 
   const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-  const { garzon, mesa, sector, codigo_cocina: codigoCocina } = await req.json().catch(() => ({}))
+  const { garzon, mesa, sector, estacion, codigo_cocina: codigoCocina } = await req.json().catch(() => ({}))
 
   const clave = (req.headers.get('authorization') || '').replace('Bearer ', '')
   let autorizado = !!process.env.NOTIFICAR_GARZON_KEY && iguales(clave, process.env.NOTIFICAR_GARZON_KEY)
@@ -88,9 +88,15 @@ export default async (req) => {
     .eq('garzon_id', garzonRow.id)
   if (subsError) return jsonResponse({ error: subsError.message }, 500)
 
+  // Con comandas por estación (2026-09-21) la barra avisa aparte de la cocina:
+  // "Bebidas listas" vs "Pedido listo". Sin `estacion` (el Worker anterior no la
+  // manda) el texto es el de siempre.
+  const esBarra = estacion === 'barra'
   const payload = JSON.stringify({
-    title: 'Pedido listo',
-    body: `Mesa ${mesa}${sector ? ' · ' + sector : ''} está lista para retirar`,
+    title: esBarra ? 'Bebidas listas' : 'Pedido listo',
+    body: esBarra
+      ? `Las bebidas de la mesa ${mesa}${sector ? ' · ' + sector : ''} están listas para retirar`
+      : `Mesa ${mesa}${sector ? ' · ' + sector : ''} está lista para retirar`,
     url: '/mozo'
   })
 

@@ -62,6 +62,15 @@ export const NAV_ITEMS = [
     nuevo: true
   },
   {
+    to: '/barra',
+    mobileHeading: 'Barra',
+    icon: 'i-bar',
+    label: 'Barra',
+    desc: 'Pantalla de la barra: las bebidas de cada comanda. Se entra con el mismo código de cocina',
+    accent: 'gold',
+    nuevo: true
+  },
+  {
     to: '/cocina?tv=1',
     mobileHeading: 'Cocina en TV',
     icon: 'i-tv',
@@ -203,6 +212,7 @@ export function IconSprite() {
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3.5 20c0-3.6 2.5-6.5 5.5-6.5s5.5 2.9 5.5 6.5" /><circle cx="17" cy="7.5" r="2.2" /><path d="M15 13.6c2.5.5 4.5 3 4.5 6.4" /></symbol>
       <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" /><path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" /></symbol>
       <symbol id="i-cook" viewBox="0 0 24 24"><path d="M5.5 11h13v6a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-6Z" /><path d="M3.5 11h17" /><path d="M9 7.5c0-1.6 1.2-1.6 1.2-3.2M14 7.5c0-1.6 1.2-1.6 1.2-3.2" /></symbol>
+      <symbol id="i-bar" viewBox="0 0 24 24"><path d="M4 5h16l-8 9-8-9Z" /><path d="M12 14v6M8 20h8" /></symbol>
       <symbol id="i-tv" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2" /><path d="M8 21h8M12 17v4" /></symbol>
       <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2" /><path d="M11 18h2" /></symbol>
       <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="15" rx="2" /><path d="M4 10h16M8 3v4M16 3v4" /></symbol>
@@ -240,7 +250,7 @@ export function NavIcon({ id, className = 'w-4 h-4' }) {
 // El orden es el de uso: lo que se toca todos los días primero, Club y negocio
 // (lo que menos se abre) al final.
 const NAV_GROUPS = [
-  { id: 'dia', label: 'Día a día', rutas: ['/mozo', '/cocina', '/cocina?tv=1', '/admin/caja', '/admin/garzones', '/admin/mesas-pos'] },
+  { id: 'dia', label: 'Día a día', rutas: ['/mozo', '/cocina', '/barra', '/cocina?tv=1', '/admin/caja', '/admin/garzones', '/admin/mesas-pos'] },
   { id: 'carta', label: 'Carta', rutas: ['/admin/productos', '/admin/menu', '/carta2'] },
   { id: 'salon', label: 'Salón', rutas: ['/admin/reservas', '/admin/mesa-trabajo', '/admin/mesas', '/admin/plano'] },
   { id: 'club', label: 'Club y negocio', rutas: ['/admin/clientes', '/admin/canjes', '/admin/resenas', '/admin/ajustes'] },
