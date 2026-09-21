@@ -46,10 +46,18 @@ export default {
         haz: {
           '0%': { transform: 'translateX(-220%) skewX(-18deg)' },
           '34%, 100%': { transform: 'translateX(420%) skewX(-18deg)' }
+        },
+        // Panel del menú del admin: entra desde apenas arriba y con opacidad,
+        // 160 ms. Más lento se siente pesado en algo que se abre decenas de
+        // veces al día; sin movimiento, brusco.
+        panelIn: {
+          '0%': { opacity: '0', transform: 'translateY(-6px) scale(0.985)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' }
         }
       },
       animation: {
-        haz: 'haz 5s cubic-bezier(0.4, 0, 0.2, 1) infinite'
+        haz: 'haz 5s cubic-bezier(0.4, 0, 0.2, 1) infinite',
+        'panel-in': 'panelIn 160ms cubic-bezier(0.23, 1, 0.32, 1)'
       }
     }
   },

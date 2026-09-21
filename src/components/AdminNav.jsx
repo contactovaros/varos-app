@@ -2,21 +2,15 @@ import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 
 // Navegación compartida de todo /admin: el sprite de íconos, el array de
-// destinos y las dos formas de mostrarlos (grilla/tira compacta en mobile,
-// sidebar sticky en desktop). Vive acá — y no en Admin.jsx — porque
-// AdminLayout.jsx la usa para darle navegación persistente a las 9 páginas
-// hijas (Caja, Garzones, Mesas del POS, etc.), no solo al panel principal.
+// destinos y el menú desplegable que los muestra agrupados (AdminMenu, más
+// abajo). Vive acá — y no en Admin.jsx — porque AdminLayout.jsx la usa para
+// darle navegación persistente a las páginas hijas (Caja, Garzones, Mesas del
+// POS, etc.), no solo al panel principal.
 
-// Las 12 tarjetas de navegación a pantallas completas (Link, no contenido
-// in-page). Un solo array alimenta las distintas formas de mostrarlas:
-// tarjetas grandes apiladas en el flujo o tira compacta (mobile) y una barra
-// fija a la izquierda (desktop) — mismo destino y mismo texto, solo cambia
-// la densidad.
-// Orden por prioridad (pedido explícito del usuario, 2026-09-14 y ampliado
-// el mismo día): el sistema de POS/comandas va primero — es lo que se usa a
-// diario —, Clientes entra junto a ese grupo porque se consulta seguido,
-// Menú queda al lado de Productos porque son la misma familia de datos, y
-// Canjes/Ajustes cierran la lista: son los que menos se tocan.
+// Los destinos de navegación a pantallas completas (Link, no contenido
+// in-page). Este array guarda los datos de cada uno (texto, ícono,
+// descripción); NAV_GROUPS, más abajo, decide en qué grupo del menú aparece.
+// El orden del array ya no manda: manda el de los grupos.
 export const NAV_ITEMS = [
   {
     to: '/admin/productos',
@@ -57,6 +51,15 @@ export const NAV_ITEMS = [
     label: 'Caja',
     desc: 'Cobrar una mesa y cerrar turno — piloto, en paralelo con gestion.php',
     accent: 'gold'
+  },
+  {
+    to: '/cocina',
+    mobileHeading: 'Cocina',
+    icon: 'i-cook',
+    label: 'Cocina',
+    desc: 'Pantalla de cocina: las comandas para preparar. Se entra con el código de cocina',
+    accent: 'gold',
+    nuevo: true
   },
   {
     to: '/admin/mesas-pos',
@@ -143,6 +146,7 @@ export function IconSprite() {
       <symbol id="i-menu-card" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="1.6" /><path d="M8.3 8h7.4M8.3 11.8h7.4M8.3 15.6h4.2" /></symbol>
       <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3" /><path d="M3.5 20c0-3.6 2.5-6.5 5.5-6.5s5.5 2.9 5.5 6.5" /><circle cx="17" cy="7.5" r="2.2" /><path d="M15 13.6c2.5.5 4.5 3 4.5 6.4" /></symbol>
       <symbol id="i-swap" viewBox="0 0 24 24"><path d="M4 8h13M17 8l-3.5-3.5M17 8l-3.5 3.5" /><path d="M20 16H7M7 16l3.5-3.5M7 16l3.5 3.5" /></symbol>
+      <symbol id="i-cook" viewBox="0 0 24 24"><path d="M5.5 11h13v6a3 3 0 0 1-3 3h-7a3 3 0 0 1-3-3v-6Z" /><path d="M3.5 11h17" /><path d="M9 7.5c0-1.6 1.2-1.6 1.2-3.2M14 7.5c0-1.6 1.2-1.6 1.2-3.2" /></symbol>
       <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" /><path d="M12 3v2.4M12 18.6V21M21 12h-2.4M5.4 12H3M18.4 5.6l-1.7 1.7M7.3 16.7l-1.7 1.7M18.4 18.4l-1.7-1.7M7.3 7.3 5.6 5.6" /></symbol>
     </svg>
   )
@@ -167,112 +171,130 @@ export function NavIcon({ id, className = 'w-4 h-4' }) {
   )
 }
 
-const NAV_ACCENTS = {
-  ember: {
-    border: 'border-ember/20',
-    hover: 'hover:bg-ember/5 hover:border-ember/40',
-    active: 'active:bg-ember/5 active:border-ember/40',
-    text: 'text-ember'
-  },
-  gold: {
-    border: 'border-gold/25',
-    hover: 'hover:bg-gold/5 hover:border-gold/45',
-    active: 'active:bg-gold/5 active:border-gold/45',
-    text: 'text-gold'
-  }
-}
+// Grupos del menú. Cada grupo lista las rutas que contiene; los datos de cada
+// enlace (label, icono, descripción) siguen viviendo en NAV_ITEMS, así que un
+// enlace nuevo se agrega ahí y se nombra acá en el grupo que le corresponda.
+// El orden es el de uso: lo que se toca todos los días primero, Club y negocio
+// (lo que menos se abre) al final.
+const NAV_GROUPS = [
+  { id: 'dia', label: 'Día a día', rutas: ['/admin/caja', '/cocina', '/admin/garzones', '/admin/mesas-pos'] },
+  { id: 'carta', label: 'Carta', rutas: ['/admin/productos', '/admin/menu', '/carta2'] },
+  { id: 'salon', label: 'Salón', rutas: ['/admin/mesa-trabajo', '/admin/mesas', '/admin/plano'] },
+  { id: 'club', label: 'Club y negocio', rutas: ['/admin/clientes', '/admin/canjes', '/admin/resenas', '/admin/ajustes'] }
+].map((g) => ({ ...g, items: g.rutas.map((to) => NAV_ITEMS.find((i) => i.to === to)).filter(Boolean) }))
 
-// Grilla/tira de escaneo — ícono + label corto, sin descripción a la vista
-// (la descripción larga queda de tooltip). Gana velocidad de lectura sobre
-// personalidad: es lo que el dueño mira parado en el local muchas veces al
-// día, no algo para detenerse a leer.
-// `compact` la achica para vivir arriba de CUALQUIER página de admin (vía
-// AdminLayout) sin pesar tanto como la grilla grande original de /admin —
-// ahí se muestra en tira horizontal con scroll en vez de grid 4×2.
-export function NavGridMobile({ item, compact = false }) {
+// Un solo botón que abre todos los destinos de /admin, agrupados. Reemplaza a
+// la barra lateral fija y a la tira que había que deslizar (pedido del
+// usuario, 2026-09-21): la pantalla de trabajo queda con todo el ancho y en el
+// celular se ven los 14 destinos de una vez. Cerrado por defecto — se abre
+// cuando hace falta y se cierra solo al elegir un destino, al tocar fuera o con
+// Escape.
+export function AdminMenu({ className = '' }) {
   const location = useLocation()
-  const active = location.pathname === item.to
-  return (
-    <Link
-      to={item.to}
-      title={item.desc}
-      data-nav-active={active ? 'true' : undefined}
-      className={
-        compact
-          ? `flex flex-col items-center justify-center gap-1 rounded-lg py-2 w-16 shrink-0 border transition-colors duration-150 ease-salida ${active ? 'bg-ember/10 border-ember/50 text-ember' : 'bg-inkSoft border-transparent hover:bg-white/5 active:bg-white/5'}`
-          : `flex flex-col items-center justify-center gap-1.5 rounded-lg py-3.5 border transition-colors duration-150 ease-salida ${active ? 'bg-ember/10 border-ember/50 text-ember' : 'bg-inkSoft border-transparent hover:bg-white/5 active:bg-white/5'}`
-      }
-    >
-      <NavIcon id={item.icon} className={compact ? 'w-4 h-4' : 'w-5 h-5'} />
-      <span className={`font-head text-center leading-tight ${compact ? 'text-[9px]' : 'text-[10px]'}`}>{item.label}</span>
-    </Link>
-  )
-}
-
-// Envoltorio de la tira horizontal: la hace autodesplazarse hasta la página
-// activa al entrar o cambiar de ruta (si no, entrar directo a Canjes o
-// Ajustes — los últimos del array — los deja fuera de vista, obligando a
-// swipear a ciegas) y agrega degradés en los bordes cuando hay más ítems
-// fuera de pantalla, para que se note que la tira scrollea.
-export function NavStrip({ className = '' }) {
-  const containerRef = useRef(null)
-  const location = useLocation()
-  const [showLeft, setShowLeft] = useState(false)
-  const [showRight, setShowRight] = useState(false)
-
-  const updateFades = () => {
-    const el = containerRef.current
-    if (!el) return
-    setShowLeft(el.scrollLeft > 0)
-    setShowRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
-  }
+  const [abierto, setAbierto] = useState(false)
+  const contenedor = useRef(null)
+  const boton = useRef(null)
+  const actual = NAV_ITEMS.find((i) => i.to === location.pathname)
 
   useEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const activeEl = el.querySelector('[data-nav-active="true"]')
-    if (activeEl) {
-      const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-      activeEl.scrollIntoView({ inline: 'center', block: 'nearest', behavior: reduceMotion ? 'auto' : 'instant' })
-    }
-    updateFades()
+    setAbierto(false)
   }, [location.pathname])
 
+  useEffect(() => {
+    if (!abierto) return undefined
+    const fuera = (e) => {
+      if (contenedor.current && !contenedor.current.contains(e.target)) setAbierto(false)
+    }
+    const tecla = (e) => {
+      if (e.key === 'Escape') {
+        setAbierto(false)
+        boton.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', fuera)
+    document.addEventListener('keydown', tecla)
+    return () => {
+      document.removeEventListener('pointerdown', fuera)
+      document.removeEventListener('keydown', tecla)
+    }
+  }, [abierto])
+
   return (
-    <div className={`relative ${className}`}>
-      <div ref={containerRef} onScroll={updateFades} className="flex gap-2 overflow-x-auto px-4 pt-4 pb-2">
-        {NAV_ITEMS.map((item) => (
-          <NavGridMobile key={item.to} item={item} compact />
-        ))}
+    <div ref={contenedor} className={`relative px-4 pt-4 pb-2 ${className}`}>
+      <div className="flex items-center gap-3">
+        <button
+          ref={boton}
+          type="button"
+          aria-expanded={abierto}
+          aria-controls="admin-menu"
+          onClick={() => setAbierto((v) => !v)}
+          className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 font-head text-sm transition-colors duration-150 ease-salida ${
+            abierto
+              ? 'bg-ember/10 border-ember/50 text-ember'
+              : 'bg-inkSoft border-paper/20 text-paper hover:border-ember/50 active:border-ember/50'
+          }`}
+        >
+          <NavIcon id="i-grid" className="w-4 h-4" />
+          Navegación
+          <svg
+            className={`w-3.5 h-3.5 transition-transform duration-150 ease-salida ${abierto ? 'rotate-180' : ''}`}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+        {actual && (
+          <span className="text-xs text-paper/55 truncate">
+            Estás en <span className="text-paper">{actual.label}</span>
+          </span>
+        )}
       </div>
-      {showLeft && (
-        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-ink to-transparent" />
-      )}
-      {showRight && (
-        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-ink to-transparent" />
+
+      {abierto && (
+        <nav
+          id="admin-menu"
+          aria-label="Todo el admin"
+          className="absolute z-40 left-4 right-4 mt-2 rounded-2xl border border-paper/15 bg-inkSoft p-4 shadow-2xl shadow-black/50 origin-top motion-safe:animate-panel-in lg:left-0 lg:right-auto lg:w-[46rem] max-h-[calc(100dvh-6.5rem)] overflow-y-auto"
+        >
+          <div className="grid gap-4 lg:grid-cols-4">
+            {NAV_GROUPS.map((g) => (
+              <div key={g.id}>
+                <div className="font-mono text-[10px] tracking-[0.2em] text-paper/40 uppercase px-2 mb-1.5">{g.label}</div>
+                <div className="grid grid-cols-2 gap-1 lg:grid-cols-1">
+                  {g.items.map((item) => {
+                    const activo = location.pathname === item.to
+                    return (
+                      <Link
+                        key={item.to}
+                        to={item.to}
+                        title={item.desc}
+                        aria-current={activo ? 'page' : undefined}
+                        className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors duration-150 ease-salida ${
+                          activo
+                            ? 'bg-ember/10 border-ember/50 text-ember'
+                            : 'border-transparent text-paper hover:bg-paper/5 active:bg-paper/5'
+                        }`}
+                      >
+                        <NavIcon id={item.icon} className={`w-4 h-4 shrink-0 ${activo ? '' : 'text-gold'}`} />
+                        <span className="font-head text-xs font-medium leading-tight">{item.label}</span>
+                        {item.nuevo && (
+                          <span className="ml-auto rounded bg-ember px-1.5 py-px font-mono text-[9px] font-medium text-ink">nuevo</span>
+                        )}
+                      </Link>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </nav>
       )}
     </div>
-  )
-}
-
-// Versión compacta para la barra fija de escritorio: ícono + label, la
-// descripción larga queda como tooltip (title) en vez de ocupar dos líneas.
-export function NavCardCompact({ item }) {
-  const a = NAV_ACCENTS[item.accent]
-  const location = useLocation()
-  const active = location.pathname === item.to
-  return (
-    <Link
-      to={item.to}
-      title={item.desc}
-      className={
-        active
-          ? 'flex items-center gap-2.5 bg-ember/10 border border-ember/50 text-ember rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida'
-          : `flex items-center gap-2.5 bg-inkSoft border ${a.border} rounded-xl px-3 py-2.5 transition-colors duration-150 ease-salida ${a.hover} ${a.active}`
-      }
-    >
-      <NavIcon id={item.icon} className="w-4 h-4 shrink-0" />
-      <span className="font-head text-xs font-medium truncate">{item.label}</span>
-    </Link>
   )
 }
