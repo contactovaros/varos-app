@@ -13,7 +13,7 @@
 //       /cocina?demo=1&denso=1    además, una columna con 6+ comandas (modo denso)
 //       /cocina?demo=1&reset=1    vuelve a sembrar los datos (usalo si la base guardada es anterior a la barra)
 //       /cocina?demo=1&offline_after=15   a los 15 s las consultas fallan como sin internet
-//       código de cocina: cualquiera, salvo "mal" (simula código inválido)
+//       código de cocina / de barra: cualquiera, salvo "mal" (simula código inválido)
 // Para probar Mozo con la misma base falsa:  /mozo?demo=1  (con un garzón guardado
 // en localStorage; ningún pedido llega a la base real).
 
@@ -195,16 +195,16 @@ const demo = {
     return { ok: true, id: c.id, estado: c.estado, cambio, avisar: cambio && nuevo === 'listo', garzon: c.garzon, mesa: c.mesa, sector: c.sector }
   },
 
-  async barraEstado({ codigoCocina, version }) {
+  async barraEstado({ codigoBarra, version }) {
     await espera()
-    if (!codigoCocina || codigoCocina === 'mal') throw err('Código de cocina inválido')
+    if (!codigoBarra || codigoBarra === 'mal') throw err('Código de barra inválido')
     return estado(leer(), 'barra', version)
   },
 
   // Igual que cocinaMarcar pero sobre el estado PROPIO de la barra.
-  async barraMarcar({ codigoCocina, comandaId, estado: nuevo }) {
+  async barraMarcar({ codigoBarra, comandaId, estado: nuevo }) {
     await espera()
-    if (!codigoCocina || codigoCocina === 'mal') throw err('Código de cocina inválido')
+    if (!codigoBarra || codigoBarra === 'mal') throw err('Código de barra inválido')
     const db = leer()
     const c = abiertas(db).find((x) => x.id === comandaId)
     if (!c) throw err('Comanda no encontrada o ya cerrada')

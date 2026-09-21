@@ -66,7 +66,7 @@ export const NAV_ITEMS = [
     mobileHeading: 'Barra',
     icon: 'i-bar',
     label: 'Barra',
-    desc: 'Pantalla de la barra: las bebidas de cada comanda. Se entra con el mismo código de cocina',
+    desc: 'Pantalla de la barra: las bebidas de cada comanda. Se entra con el código de la barra',
     accent: 'gold',
     nuevo: true
   },

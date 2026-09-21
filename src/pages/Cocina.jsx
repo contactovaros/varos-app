@@ -30,14 +30,19 @@ import { useSistemaComandas, nombreSistema } from '../components/SistemaComandas
 // Consumo: consulta cada ~8 s mandando la `version` que ya vio; si nada cambió
 // la respuesta es mínima y no se vuelve a pintar el tablero.
 
-// El código de acceso es UNO solo (cocina y barra comparten clave). Lo demás va
-// por estación para que las comandas ocultas, la pestaña y el sonido de una
-// pantalla no se mezclen con los de la otra en el mismo aparato.
-const CODIGO_KEY = 'varos_cocina_codigo'
+// Cada estación tiene su PROPIO código de acceso (cocina: pos_config.codigo_cocina;
+// barra: pos_config.codigo_barra) y todo su estado local va aparte, para que
+// código, comandas ocultas, pestaña y sonido de una pantalla no se mezclen con los
+// de la otra en el mismo aparato.
 
 const ESTACIONES = {
   cocina: {
     titulo: 'COCINA',
+    nombreCodigo: 'Código de cocina',
+    errorCodigo: 'Código de cocina inválido', // mensaje de la base
+    avisoCodigo: 'El código de cocina cambió o ya no es válido. Escribilo de nuevo.',
+    ayudaCodigo: 'Pedile el código a quien administra el sistema.',
+    codigoKey: 'varos_cocina_codigo',
     lugar: 'la cocina', // "NO SE PUDO LEER LA COCINA"
     ruta: '/cocina',
     unidad: 'platos',
@@ -51,6 +56,11 @@ const ESTACIONES = {
   },
   barra: {
     titulo: 'BARRA',
+    nombreCodigo: 'Código de la barra',
+    errorCodigo: 'Código de barra inválido', // mensaje de la base
+    avisoCodigo: 'El código de la barra cambió o ya no es válido. Escribilo de nuevo.',
+    ayudaCodigo: 'Pedile el código de la barra a quien administra el sistema.',
+    codigoKey: 'varos_barra_codigo',
     lugar: 'la barra',
     ruta: '/barra',
     unidad: 'bebidas',
@@ -243,6 +253,7 @@ function decirNuevaComanda(frase = 'Entrando comanda') {
 function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
   const est = ESTACIONES[estacion]
   const { ocultasKey, tabKey, sonidoKey } = est
+  const codigoParam = estacion === 'barra' ? 'codigoBarra' : 'codigoCocina'
   const { backend, cambio } = useSistemaComandas()
   const [comandas, setComandas] = useState([])
   const [cargoAlgo, setCargoAlgo] = useState(false)
@@ -275,7 +286,7 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
       if (enVueloRef.current) return
       enVueloRef.current = true
       try {
-        const d = await est.estado({ codigoCocina: codigo, version: forzar ? null : versionRef.current })
+        const d = await est.estado({ [codigoParam]: codigo, version: forzar ? null : versionRef.current })
         setConexion({ estado: 'ok', ultimo: Date.now(), detalle: '' })
         versionRef.current = d.version
         // Nada cambió: no hay nada que volver a pintar.
@@ -315,7 +326,7 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
         setComandas(lista)
         setCargoAlgo(true)
       } catch (e) {
-        if (String(e?.message || '').includes('Código de cocina inválido')) {
+        if (String(e?.message || '').includes(est.errorCodigo)) {
           onCodigoInvalido()
           return
         }
@@ -330,7 +341,7 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
         enVueloRef.current = false
       }
     },
-    [codigo, onCodigoInvalido, est, ocultasKey]
+    [codigo, onCodigoInvalido, est, ocultasKey, codigoParam]
   )
 
   useEffect(() => {
@@ -361,11 +372,11 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
       setMensaje('')
       setMarcando((prev) => new Set(prev).add(c.id))
       try {
-        const r = await est.marcar({ codigoCocina: codigo, comandaId: c.id, estado })
+        const r = await est.marcar({ [codigoParam]: codigo, comandaId: c.id, estado })
         // Aviso al garzón: best-effort, sin esperar. Un fallo no impide el marcado.
         if (r?.avisar) notificarGarzon({ codigoCocina: codigo, garzon: r.garzon, mesa: r.mesa, sector: r.sector, estacion })
       } catch (e) {
-        if (String(e?.message || '').includes('Código de cocina inválido')) {
+        if (String(e?.message || '').includes(est.errorCodigo)) {
           onCodigoInvalido()
           return
         }
@@ -379,7 +390,7 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
         cargar(true)
       }
     },
-    [codigo, cargar, onCodigoInvalido, est, estacion]
+    [codigo, cargar, onCodigoInvalido, est, estacion, codigoParam]
   )
 
   const ocultar = useCallback(
@@ -499,6 +510,7 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
 // escribe una vez y queda guardado.
 function GateCocina({ estacion, aviso, onEntrar }) {
   const est = ESTACIONES[estacion]
+  const codigoParam = estacion === 'barra' ? 'codigoBarra' : 'codigoCocina'
   const [codigo, setCodigo] = useState('')
   const [validando, setValidando] = useState(false)
   const [error, setError] = useState(aviso || '')
@@ -509,12 +521,12 @@ function GateCocina({ estacion, aviso, onEntrar }) {
     setValidando(true)
     setError('')
     try {
-      await est.estado({ codigoCocina: limpio, version: null })
-      guardar(CODIGO_KEY, limpio)
+      await est.estado({ [codigoParam]: limpio, version: null })
+      guardar(est.codigoKey, limpio)
       onEntrar(limpio)
     } catch (e) {
       const msg = String(e?.message || '')
-      if (msg.includes('Código de cocina inválido')) setError('Código incorrecto.')
+      if (msg.includes(est.errorCodigo)) setError('Código incorrecto.')
       else if (e?.red && !e?.pg) setError('No se pudo conectar. Revisá el internet e intentá de nuevo.')
       else if (e?.pg === 'PGRST202') setError(`El sistema de ${estacion} todavía no está disponible. Avisá a quien administra el sistema.`)
       else setError(`No se pudo validar el código: ${msg}`)
@@ -527,7 +539,7 @@ function GateCocina({ estacion, aviso, onEntrar }) {
     <div className="min-h-screen bg-ink text-paper flex items-center justify-center px-6">
       <div className="w-full max-w-xs">
         <div className="font-mono text-[10px] tracking-[0.22em] text-gold uppercase mb-1 text-center">Varo's · {estacion === 'barra' ? 'Barra' : 'Cocina'}</div>
-        <h1 className="font-head text-xl font-semibold text-center mb-5">Código de cocina</h1>
+        <h1 className="font-head text-xl font-semibold text-center mb-5">{est.nombreCodigo}</h1>
         <input
           value={codigo}
           onChange={(e) => setCodigo(e.target.value)}
@@ -545,9 +557,7 @@ function GateCocina({ estacion, aviso, onEntrar }) {
           {validando ? 'Comprobando…' : 'Entrar'}
         </button>
         <p className="text-center text-paper/30 text-[11px] mt-4 leading-relaxed">
-          {estacion === 'barra'
-            ? 'Es el mismo código de la cocina. Pedilo a quien administra el sistema.'
-            : 'Pedile el código a quien administra el sistema.'}
+          {est.ayudaCodigo}
         </p>
       </div>
     </div>
@@ -559,14 +569,15 @@ export default function Cocina({ estacion: estacionProp = 'cocina' }) {
   const estacion = ESTACIONES[estacionProp] ? estacionProp : 'cocina'
   const tv = new URLSearchParams(window.location.search).get('tv') === '1'
   // En modo demo (solo desarrollo) se entra sin código.
-  const [codigo, setCodigo] = useState(() => leer(CODIGO_KEY) || (esModoDemo() ? 'demo' : null))
+  const est = ESTACIONES[estacion]
+  const [codigo, setCodigo] = useState(() => leer(est.codigoKey) || (esModoDemo() ? 'demo' : null))
   const [aviso, setAviso] = useState('')
 
   const codigoInvalido = useCallback(() => {
-    guardar(CODIGO_KEY, null)
-    setAviso('El código de cocina cambió o ya no es válido. Escribilo de nuevo.')
+    guardar(est.codigoKey, null)
+    setAviso(est.avisoCodigo)
     setCodigo(null)
-  }, [])
+  }, [est])
 
   if (!codigo) return <GateCocina estacion={estacion} aviso={aviso} onEntrar={setCodigo} />
   // key: si se navega /cocina <-> /barra sin recargar, el estado no se arrastra.

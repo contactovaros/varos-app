@@ -114,6 +114,8 @@ insert into public.garzones (nombre, codigo, activo) values
   ('Beto', '222222', true);
 insert into public.pos_config (clave, valor) values ('codigo_cocina', 'COCINA1')
   on conflict (clave) do update set valor = excluded.valor;
+-- La barra tiene su PROPIO código, distinto del de cocina (se inserta más abajo).
+delete from public.pos_config where clave = 'codigo_barra';
 update public.pos_config set valor = '12' where clave = 'comandas_vence_horas';
 
 -- =========================================================
@@ -134,21 +136,37 @@ select t.ok((select is_nullable = 'YES' from information_schema.columns
 select t.ok(t.err($$insert into public.comandas (mesa, estado_barra) values ('zz', 'roto')$$) like '%comandas_estado_barra_check%',
             'BR-A4 el check rechaza un estado_barra inválido');
 select t.ok((select count(*) from pg_proc where pronamespace = 'public'::regnamespace
-             and proname in ('barra_estado', 'barra_marcar', 'comandas_json_barra', 'crear_o_agregar_comanda', 'editar_items_comanda')) = 5,
+             and proname in ('barra_estado', 'barra_marcar', 'comandas_json_barra', 'comandas_autorizar_barra', 'crear_o_agregar_comanda', 'editar_items_comanda')) = 6,
             'BR-A5 una sola versión de cada función (sin sobrecargas duplicadas tras correr dos veces)');
 
 -- =========================================================
 -- B. Seguridad: anon, código, grants
 -- =========================================================
+-- Sin 'codigo_barra' en pos_config nadie entra a la barra (no hay código por defecto).
+select t.as('anon');
+select t.ok(t.err($$select public.barra_estado('BARRA1', null)$$) = 'Código de barra inválido', 'BR-B0a sin codigo_barra configurado, barra_estado rechaza cualquier código');
+select t.ok(t.err($$select public.barra_estado('COCINA1', null)$$) = 'Código de barra inválido', 'BR-B0b ni siquiera el de cocina abre la barra sin código de barra');
+select t.ok(t.err($$select public.barra_marcar('BARRA1', gen_random_uuid(), 'listo')$$) = 'Código de barra inválido', 'BR-B0c sin codigo_barra configurado, barra_marcar rechaza');
+select t.ok(t.err($$select public.barra_estado('', null)$$) = 'Código de barra inválido', 'BR-B0d y el código vacío tampoco');
+select t.as('root');
+insert into public.pos_config (clave, valor) values ('codigo_barra', 'BARRA1');
 select t.as('anon');
 select t.ok(t.err('select estado_barra from public.comandas') like 'permission denied%', 'BR-B1 anon no lee estado_barra directo');
 select t.ok(t.err($$update public.comandas set estado_barra = 'listo'$$) like 'permission denied%', 'BR-B2 anon no escribe estado_barra directo');
-select t.ok(t.err($$select public.barra_estado('mal', null)$$) = 'Código de cocina inválido', 'BR-B3 barra_estado con código malo falla');
-select t.ok(t.err($$select public.barra_estado(null, null)$$) = 'Código de cocina inválido', 'BR-B4 barra_estado con null falla');
-select t.ok(t.err($$select public.barra_marcar('mal', gen_random_uuid(), 'listo')$$) = 'Código de cocina inválido', 'BR-B5 barra_marcar con código malo falla');
-select t.ok(t.err($$select public.barra_marcar(null, gen_random_uuid(), 'listo')$$) = 'Código de cocina inválido', 'BR-B6 barra_marcar con null falla');
-select t.ok(t.err($$select public.barra_marcar('COCINA1', gen_random_uuid(), 'listo')$$) = 'Comanda no encontrada o ya cerrada', 'BR-B7 barra_marcar de una comanda inexistente falla');
+select t.ok(t.err($$select public.barra_estado('mal', null)$$) = 'Código de barra inválido', 'BR-B3 barra_estado con código malo falla');
+select t.ok(t.err($$select public.barra_estado(null, null)$$) = 'Código de barra inválido', 'BR-B4 barra_estado con null falla');
+select t.ok(t.err($$select public.barra_marcar('mal', gen_random_uuid(), 'listo')$$) = 'Código de barra inválido', 'BR-B5 barra_marcar con código malo falla');
+select t.ok(t.err($$select public.barra_marcar(null, gen_random_uuid(), 'listo')$$) = 'Código de barra inválido', 'BR-B6 barra_marcar con null falla');
+select t.ok(t.err($$select public.barra_estado('COCINA1', null)$$) = 'Código de barra inválido', 'BR-B7a SEPARACIÓN: el código de cocina NO abre barra_estado');
+select t.ok(t.err($$select public.barra_marcar('COCINA1', gen_random_uuid(), 'listo')$$) = 'Código de barra inválido', 'BR-B7b SEPARACIÓN: el código de cocina NO abre barra_marcar');
+select t.ok(t.err($$select public.cocina_estado('BARRA1', null)$$) = 'Código de cocina inválido', 'BR-B7c SEPARACIÓN: el código de barra NO abre cocina_estado');
+select t.ok(t.err($$select public.cocina_marcar('BARRA1', gen_random_uuid(), 'listo')$$) = 'Código de cocina inválido', 'BR-B7d SEPARACIÓN: el código de barra NO abre cocina_marcar');
+select t.ok(t.err($$select public.estadisticas_cocina('BARRA1', null, null)$$) = 'Código de cocina inválido', 'BR-B7e ni las estadísticas de cocina');
+select t.ok(t.err($$select public.comandas_abiertas('BARRA1', null)$$) = 'Código de garzón inválido', 'BR-B7f ni Mozo/Caja (comandas_abiertas)');
+select t.ok(t.err($$select public.barra_estado('barra1', null)$$) = 'Código de barra inválido', 'BR-B7g el código distingue mayúsculas');
+select t.ok(t.err($$select public.barra_marcar('BARRA1', gen_random_uuid(), 'listo')$$) = 'Comanda no encontrada o ya cerrada', 'BR-B7 barra_marcar de una comanda inexistente falla');
 select t.ok(t.err($$select public.comandas_json_barra()$$) like 'permission denied%', 'BR-B8 el helper comandas_json_barra no es ejecutable por anon');
+select t.ok(t.err($$select public.comandas_autorizar_barra('BARRA1')$$) like 'permission denied%', 'BR-B8b el helper comandas_autorizar_barra no es ejecutable por anon');
 select t.as('root');
 select t.ok(bool_and(has_function_privilege('anon', f, 'execute') and has_function_privilege('authenticated', f, 'execute')),
             'BR-B9 anon y authenticated ejecutan barra_estado, barra_marcar y las dos funciones recreadas')
@@ -158,20 +176,34 @@ from unnest(array[
   'public.crear_o_agregar_comanda(text,text,text,jsonb)',
   'public.editar_items_comanda(text,uuid,jsonb)']) f;
 select t.ok(not has_function_privilege('anon', 'public.comandas_json_barra()', 'execute')
-        and not has_function_privilege('authenticated', 'public.comandas_json_barra()', 'execute'),
-            'BR-B10 comandas_json_barra no es ejecutable por anon ni authenticated');
+        and not has_function_privilege('authenticated', 'public.comandas_json_barra()', 'execute')
+        and not has_function_privilege('anon', 'public.comandas_autorizar_barra(text)', 'execute')
+        and not has_function_privilege('authenticated', 'public.comandas_autorizar_barra(text)', 'execute'),
+            'BR-B10 los helpers comandas_json_barra y comandas_autorizar_barra no son ejecutables por anon ni authenticated');
 select t.ok(not exists (
   select 1
   from pg_proc p cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
   where p.pronamespace = 'public'::regnamespace
-    and p.proname in ('barra_estado', 'barra_marcar', 'comandas_json_barra', 'crear_o_agregar_comanda', 'editar_items_comanda')
+    and p.proname in ('barra_estado', 'barra_marcar', 'comandas_json_barra', 'comandas_autorizar_barra', 'crear_o_agregar_comanda', 'editar_items_comanda')
     and a.grantee = 0),
-            'BR-B11 ninguna de las 5 funciones quedó con execute para PUBLIC');
+            'BR-B11 ninguna de las 6 funciones quedó con execute para PUBLIC');
 select t.ok(not has_table_privilege('anon', 'public.comandas', 'select') and not has_table_privilege('anon', 'public.comandas', 'update'),
             'BR-B12 anon sigue sin privilegios sobre comandas (las columnas nuevas no abrieron nada)');
 select t.as('user');
 select t.ok((select count(*) from public.comandas) = 0, 'BR-B13 un autenticado no admin sigue viendo 0 filas de comandas');
 select t.as('root');
+
+select t.ok((select proargnames[1] from pg_proc where proname = 'barra_estado' and pronamespace = 'public'::regnamespace) = 'p_codigo_barra'
+        and (select proargnames[1] from pg_proc where proname = 'barra_marcar' and pronamespace = 'public'::regnamespace) = 'p_codigo_barra',
+            'BR-B14 el primer parámetro de barra_estado y barra_marcar se llama p_codigo_barra');
+-- Cambiar codigo_barra en pos_config toma efecto de inmediato; el de cocina no se entera.
+update public.pos_config set valor = 'BARRA-NUEVO' where clave = 'codigo_barra';
+select t.as('anon');
+select t.ok(t.err($$select public.barra_estado('BARRA1', null)$$) = 'Código de barra inválido', 'BR-B15 tras cambiar codigo_barra, el viejo deja de servir');
+select t.ok(public.barra_estado('BARRA-NUEVO', null) ? 'comandas', 'BR-B16 y el nuevo abre');
+select t.ok(public.cocina_estado('COCINA1', null) ? 'comandas', 'BR-B17 la cocina no se afecta');
+select t.as('root');
+update public.pos_config set valor = 'BARRA1' where clave = 'codigo_barra';
 
 -- =========================================================
 -- C. Comanda MIXTA: cocina ve solo comida, barra solo bebida
@@ -183,7 +215,7 @@ select t.set('m1', public.crear_o_agregar_comanda('111111', 'B1', 'Carpa', $j$[
   {"cant":2,"nombre":"Coca Cola 350"},
   {"cant":1,"nombre":"Pisco Sour","estacion":"barra"}]$j$::jsonb)::text);
 select t.set('cocina1', public.cocina_estado('COCINA1', null)::text);
-select t.set('barra1', public.barra_estado('COCINA1', null)::text);
+select t.set('barra1', public.barra_estado('BARRA1', null)::text);
 select t.as('root');
 select t.ok((t.get('barra1')::jsonb) ? 'version' and (t.get('barra1')::jsonb) ? 'ahora' and (t.get('barra1')::jsonb) ? 'comandas',
             'BR-C1 barra_estado devuelve version, ahora y comandas');
@@ -213,21 +245,21 @@ select t.ok((select estado = 'nuevo' and estado_barra = 'nuevo' and estado_barra
 -- D. Estados INDEPENDIENTES y aviso por estación
 -- =========================================================
 select t.as('anon');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, 'quemado')$$, t.get('m1'))) = 'Estado inválido', 'BR-D0 estado inválido falla');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, null)$$, t.get('m1'))) = 'Estado inválido', 'BR-D0b estado null falla');
-select t.set('bm1', public.barra_marcar('COCINA1', t.get('m1')::uuid, 'preparando')::text);
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, 'quemado')$$, t.get('m1'))) = 'Estado inválido', 'BR-D0 estado inválido falla');
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, null)$$, t.get('m1'))) = 'Estado inválido', 'BR-D0b estado null falla');
+select t.set('bm1', public.barra_marcar('BARRA1', t.get('m1')::uuid, 'preparando')::text);
 select t.ok((t.get('bm1')::jsonb->>'cambio')::boolean and not (t.get('bm1')::jsonb->>'avisar')::boolean
             and t.get('bm1')::jsonb->>'estado' = 'preparando' and t.get('bm1')::jsonb->>'estacion' = 'barra'
             and t.get('bm1')::jsonb->>'garzon' = 'Ana' and t.get('bm1')::jsonb->>'mesa' = 'B1' and t.get('bm1')::jsonb->>'sector' = 'Carpa',
             'BR-D1 barra nuevo->preparando: cambio, sin aviso, estacion=barra, garzon/mesa/sector');
 select t.ok(t.keys(t.get('bm1')::jsonb) = 'avisar,cambio,estacion,estado,garzon,id,mesa,ok,sector', 'BR-D2 contrato exacto de barra_marcar');
 select t.ok(public.cocina_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"nuevo"}]'::jsonb
-        and public.barra_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"preparando"}]'::jsonb,
+        and public.barra_estado('BARRA1', null)->'comandas' @> '[{"mesa":"B1","estado":"preparando"}]'::jsonb,
             'BR-D3 tras marcar en barra: cocina sigue en nuevo y barra muestra preparando');
-select t.set('bm2', public.barra_marcar('COCINA1', t.get('m1')::uuid, 'listo')::text);
+select t.set('bm2', public.barra_marcar('BARRA1', t.get('m1')::uuid, 'listo')::text);
 select t.ok((t.get('bm2')::jsonb->>'avisar')::boolean and (t.get('bm2')::jsonb->>'cambio')::boolean and t.get('bm2')::jsonb->>'estacion' = 'barra',
             'BR-D4 barra ->listo: avisar=true (estacion barra)');
-select t.set('bm3', public.barra_marcar('COCINA1', t.get('m1')::uuid, 'listo')::text);
+select t.set('bm3', public.barra_marcar('BARRA1', t.get('m1')::uuid, 'listo')::text);
 select t.ok(not (t.get('bm3')::jsonb->>'cambio')::boolean and not (t.get('bm3')::jsonb->>'avisar')::boolean and t.get('bm3')::jsonb->>'estacion' = 'barra',
             'BR-D5 barra listo->listo: sin cambio ni aviso (no avisa dos veces), y trae estacion');
 select t.as('root');
@@ -246,11 +278,11 @@ select t.ok((select estado = 'listo' and estado_barra = 'listo' and listo_at is 
             'BR-D10 cocina listo NO tocó estado_barra (siguió en listo por lo suyo) y cada estación tiene su marca');
 select t.as('anon');
 select t.ok(public.cocina_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb
-        and public.barra_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb,
+        and public.barra_estado('BARRA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb,
             'BR-D11 ambas pantallas muestran listo, cada una por su estado');
 select t.set('cm3', public.cocina_marcar('COCINA1', t.get('m1')::uuid, 'nuevo')::text);
 select t.ok(public.cocina_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"nuevo"}]'::jsonb
-        and public.barra_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb,
+        and public.barra_estado('BARRA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb,
             'BR-D12 devolver cocina a nuevo NO mueve la barra');
 select public.cocina_marcar('COCINA1', t.get('m1')::uuid, 'listo');
 select t.as('root');
@@ -271,9 +303,9 @@ select t.ok((select estado_barra = 'nuevo' and estado_barra_at > t.get('e_barra_
             'BR-E2 y sí reinicia la barra (estado_barra=nuevo, estado_barra_at avanza)');
 select t.as('anon');
 select t.ok(public.cocina_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"listo"}]'::jsonb
-        and public.barra_estado('COCINA1', null)->'comandas' @> '[{"mesa":"B1","estado":"nuevo"}]'::jsonb,
+        and public.barra_estado('BARRA1', null)->'comandas' @> '[{"mesa":"B1","estado":"nuevo"}]'::jsonb,
             'BR-E3 lo que ven las pantallas: cocina listo, barra nuevo');
-select public.barra_marcar('COCINA1', t.get('m1')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('m1')::uuid, 'listo');
 select t.as('root');
 select t.set('e_estado_at', (select estado_at::text from public.comandas where id = t.get('m1')::uuid));
 select t.set('e_barra_at', (select estado_barra_at::text from public.comandas where id = t.get('m1')::uuid));
@@ -303,7 +335,7 @@ select t.set('f', public.crear_o_agregar_comanda('111111', 'B4', 'Andino', $j$[
   {"cant":2,"nombre":"Coca Cola F"},
   {"cant":1,"nombre":"Mojito F"}]$j$::jsonb)::text);
 select public.cocina_marcar('COCINA1', t.get('f')::uuid, 'listo');
-select public.barra_marcar('COCINA1', t.get('f')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('f')::uuid, 'listo');
 select t.as('root');
 select t.set('f_lomo', t.item(t.get('f'), 'Lomo F'));
 select t.set('f_cev', t.item(t.get('f'), 'Ceviche F'));
@@ -323,7 +355,7 @@ select t.as('root');
 select t.ok((select estado = 'listo' and estado_barra = 'nuevo' from public.comandas where id = t.get('f')::uuid),
             'BR-F2 cambiar la cantidad de una bebida reinicia SOLO la barra');
 select t.as('anon');
-select public.barra_marcar('COCINA1', t.get('f')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('f')::uuid, 'listo');
 select t.set('f3', public.editar_items_comanda('111111', t.get('f')::uuid, format('[{"id":"%s","cant":1},{"id":"%s","cant":1}]', t.get('f_coca'), t.get('f_cev'))::jsonb)::text);
 select t.as('root');
 select t.ok((t.get('f3')::jsonb->>'cambios')::int = 0 and (select estado = 'listo' and estado_barra = 'listo' from public.comandas where id = t.get('f')::uuid),
@@ -335,14 +367,14 @@ select t.ok((t.get('f4')::jsonb->>'cambios')::int = 1 and not (t.get('f4')::json
             and (select estado = 'listo' and estado_barra = 'nuevo' from public.comandas where id = t.get('f')::uuid),
             'BR-F4 quitar una bebida reinicia SOLO la barra');
 select t.as('anon');
-select public.barra_marcar('COCINA1', t.get('f')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('f')::uuid, 'listo');
 select t.set('f5', public.editar_items_comanda('111111', t.get('f')::uuid, format('[{"id":"%s","cant":2},{"id":"%s","cant":2}]', t.get('f_cev'), t.get('f_coca'))::jsonb)::text);
 select t.as('root');
 select t.ok((t.get('f5')::jsonb->>'cambios')::int = 2 and (select estado = 'nuevo' and estado_barra = 'nuevo' from public.comandas where id = t.get('f')::uuid),
             'BR-F5 editar un plato y una bebida en la misma llamada reinicia las dos');
 select t.as('anon');
 select public.cocina_marcar('COCINA1', t.get('f')::uuid, 'listo');
-select public.barra_marcar('COCINA1', t.get('f')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('f')::uuid, 'listo');
 select public.editar_items_comanda('111111', t.get('f')::uuid, format('[{"id":"%s","cant":0}]', t.get('f_cev'))::jsonb);
 select t.as('root');
 select t.ok((select estado = 'nuevo' and estado_barra = 'listo' from public.comandas where id = t.get('f')::uuid),
@@ -353,10 +385,10 @@ select t.ok(t.err(format($$select public.editar_items_comanda('111111', %L, %L)$
 select t.ok(t.err(format($$select public.editar_items_comanda('111111', %L, '[{"id":"%s","cant":-1}]')$$, t.get('f'), t.get('f_coca'))) = 'Cantidad inválida', 'BR-F9 y "Cantidad inválida"');
 select t.set('f6', public.editar_items_comanda('111111', t.get('f')::uuid, format('[{"id":"%s","cant":0},{"id":"%s","cant":0}]', t.get('f_lomo'), t.get('f_coca'))::jsonb)::text);
 select t.ok((t.get('f6')::jsonb->>'cancelada')::boolean, 'BR-F10 dejar todo en cero sigue cancelando la comanda');
-select t.ok(not jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B4")')
+select t.ok(not jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B4")')
         and not jsonb_path_exists(public.cocina_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B4")'),
             'BR-F11 la cancelada desaparece de barra y de cocina');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, 'listo')$$, t.get('f'))) = 'Comanda no encontrada o ya cerrada', 'BR-F12 barra no puede marcar una cancelada');
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, 'listo')$$, t.get('f'))) = 'Comanda no encontrada o ya cerrada', 'BR-F12 barra no puede marcar una cancelada');
 select t.as('root');
 
 -- =========================================================
@@ -366,24 +398,24 @@ select t.as('anon');
 select t.set('g_bar', public.crear_o_agregar_comanda('111111', 'B2', 'Carpa', '[{"cant":1,"nombre":"Mojito"},{"cant":2,"nombre":"Pisco Sour"}]'::jsonb)::text);
 select t.set('g_coc', public.crear_o_agregar_comanda('111111', 'B3', 'Carpa', '[{"cant":1,"nombre":"Lomo G"},{"cant":1,"nombre":"Ensalada G"}]'::jsonb)::text);
 select t.ok(not jsonb_path_exists(public.cocina_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B2")'), 'BR-G1 una comanda SOLO de bebidas no aparece en cocina');
-select t.ok(jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B2")'), 'BR-G2 pero sí en barra');
-select t.ok(not jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B3")'), 'BR-G3 una comanda SOLO de comida no aparece en barra');
+select t.ok(jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B2")'), 'BR-G2 pero sí en barra');
+select t.ok(not jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B3")'), 'BR-G3 una comanda SOLO de comida no aparece en barra');
 select t.ok(jsonb_path_exists(public.cocina_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B3")'), 'BR-G4 pero sí en cocina');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, 'listo')$$, t.get('g_coc'))) = 'La comanda no tiene ítems de barra', 'BR-G5 barra_marcar sobre una comanda sin ítems de barra se rechaza');
-select t.set('g1', public.barra_marcar('COCINA1', t.get('g_bar')::uuid, 'listo')::text);
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, 'listo')$$, t.get('g_coc'))) = 'La comanda no tiene ítems de barra', 'BR-G5 barra_marcar sobre una comanda sin ítems de barra se rechaza');
+select t.set('g1', public.barra_marcar('BARRA1', t.get('g_bar')::uuid, 'listo')::text);
 select t.ok((t.get('g1')::jsonb->>'avisar')::boolean and t.get('g1')::jsonb->>'mesa' = 'B2', 'BR-G6 una comanda solo de bebidas se marca lista en barra y avisa');
 select t.as('root');
 select t.ok((select estado = 'nuevo' and estado_barra = 'listo' from public.comandas where id = t.get('g_bar')::uuid), 'BR-G7 sin tocar el estado de cocina de esa comanda');
 select t.as('anon');
 -- Agregar una bebida a una comanda que era solo comida: entra a la barra como nueva.
 select public.crear_o_agregar_comanda('111111', 'B3', 'Carpa', '[{"cant":1,"nombre":"Jugo natural"}]'::jsonb);
-select t.ok(jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B3" && @.estado == "nuevo")'), 'BR-G8 al agregar una bebida a una comanda solo de comida, aparece en barra como nueva');
+select t.ok(jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B3" && @.estado == "nuevo")'), 'BR-G8 al agregar una bebida a una comanda solo de comida, aparece en barra como nueva');
 select t.ok(jsonb_array_length(t.com(public.cocina_estado('COCINA1', null), 'B3')->'items') = 2, 'BR-G9 y cocina sigue viendo solo sus 2 platos');
 
 -- Cobrar cierra la comanda para las dos pantallas.
 select t.set('g_cobro', public.cerrar_mesa_y_cobrar('111111', 'B2', 'Carpa', '[{"nombre":"Mojito","cant":1}]'::jsonb, 5000, 'efectivo')::text);
-select t.ok(not jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B2")'), 'BR-G10 cerrar_mesa_y_cobrar saca la comanda de la barra');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, 'preparando')$$, t.get('g_bar'))) = 'Comanda no encontrada o ya cerrada', 'BR-G11 y barra no puede marcar una cobrada');
+select t.ok(not jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B2")'), 'BR-G10 cerrar_mesa_y_cobrar saca la comanda de la barra');
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, 'preparando')$$, t.get('g_bar'))) = 'Comanda no encontrada o ya cerrada', 'BR-G11 y barra no puede marcar una cobrada');
 
 -- Vencimiento (no cambia): una comanda de hace 13 h no aparece ni se marca.
 select t.set('g_old', public.crear_o_agregar_comanda('111111', 'B5', 'Carpa', '[{"cant":1,"nombre":"Mojito Viejo"}]'::jsonb)::text);
@@ -391,8 +423,8 @@ select t.as('root');
 update public.comanda_items set created_at = now() - interval '13 hours' where comanda_id = t.get('g_old')::uuid;
 update public.comandas set creado_at = now() - interval '13 hours', estado_at = now() - interval '13 hours' where id = t.get('g_old')::uuid;
 select t.as('anon');
-select t.ok(not jsonb_path_exists(public.barra_estado('COCINA1', null), '$.comandas[*] ? (@.mesa == "B5")'), 'BR-G12 una comanda de barra de hace 13 h no aparece (vencida)');
-select t.ok(t.err(format($$select public.barra_marcar('COCINA1', %L, 'listo')$$, t.get('g_old'))) = 'Comanda no encontrada o ya cerrada', 'BR-G13 y barra no puede marcarla');
+select t.ok(not jsonb_path_exists(public.barra_estado('BARRA1', null), '$.comandas[*] ? (@.mesa == "B5")'), 'BR-G12 una comanda de barra de hace 13 h no aparece (vencida)');
+select t.ok(t.err(format($$select public.barra_marcar('BARRA1', %L, 'listo')$$, t.get('g_old'))) = 'Comanda no encontrada o ya cerrada', 'BR-G13 y barra no puede marcarla');
 select t.as('root');
 update public.comandas set cerrada_at = now(), cierre = 'vencida' where id = t.get('g_old')::uuid;
 
@@ -400,29 +432,29 @@ update public.comandas set cerrada_at = now(), cierre = 'vencida' where id = t.g
 -- H. VERSIÓN
 -- =========================================================
 select t.as('anon');
-select t.set('v1', public.barra_estado('COCINA1', null)->>'version');
-select t.ok(public.barra_estado('COCINA1', t.get('v1')) = jsonb_build_object('version', t.get('v1'), 'sin_cambios', true), 'BR-H1 misma versión -> solo {version, sin_cambios:true}');
-select t.ok(length(public.barra_estado('COCINA1', t.get('v1'))::text) < 120, 'BR-H2 la respuesta "sin cambios" pesa < 120 bytes');
+select t.set('v1', public.barra_estado('BARRA1', null)->>'version');
+select t.ok(public.barra_estado('BARRA1', t.get('v1')) = jsonb_build_object('version', t.get('v1'), 'sin_cambios', true), 'BR-H1 misma versión -> solo {version, sin_cambios:true}');
+select t.ok(length(public.barra_estado('BARRA1', t.get('v1'))::text) < 120, 'BR-H2 la respuesta "sin cambios" pesa < 120 bytes');
 select t.ok(t.get('v1') = public.cocina_estado('COCINA1', null)->>'version' and t.get('v1') = public.comandas_abiertas('111111', null)->>'version',
             'BR-H3 barra, cocina y Mozo comparten la misma versión global');
 select t.set('h_com', public.crear_o_agregar_comanda('111111', 'B6', 'Terraza', '[{"cant":1,"nombre":"Pisco Sour"}]'::jsonb)::text);
-select t.ok(public.barra_estado('COCINA1', t.get('v1'))->>'sin_cambios' is null, 'BR-H4 crear una comanda cambia la versión que ve la barra');
-select t.set('v2', public.barra_estado('COCINA1', null)->>'version');
-select public.barra_marcar('COCINA1', t.get('h_com')::uuid, 'preparando');
-select t.ok(public.barra_estado('COCINA1', t.get('v2'))->>'sin_cambios' is null, 'BR-H5 marcar en barra cambia la versión');
-select t.set('v3', public.barra_estado('COCINA1', null)->>'version');
+select t.ok(public.barra_estado('BARRA1', t.get('v1'))->>'sin_cambios' is null, 'BR-H4 crear una comanda cambia la versión que ve la barra');
+select t.set('v2', public.barra_estado('BARRA1', null)->>'version');
+select public.barra_marcar('BARRA1', t.get('h_com')::uuid, 'preparando');
+select t.ok(public.barra_estado('BARRA1', t.get('v2'))->>'sin_cambios' is null, 'BR-H5 marcar en barra cambia la versión');
+select t.set('v3', public.barra_estado('BARRA1', null)->>'version');
 select t.ok(public.cocina_estado('COCINA1', t.get('v3'))->>'sin_cambios' = 'true', 'BR-H6 y cocina, con esa misma versión, recibe sin_cambios');
 select t.as('root');
 update public.comandas set estado_barra_at = clock_timestamp() where id = t.get('h_com')::uuid;
 select t.as('anon');
-select t.ok(public.barra_estado('COCINA1', t.get('v3'))->>'sin_cambios' is null, 'BR-H7 un cambio SOLO de estado_barra_at (trigger por fila) ya cambia la versión');
-select t.set('v4', public.barra_estado('COCINA1', null)->>'version');
+select t.ok(public.barra_estado('BARRA1', t.get('v3'))->>'sin_cambios' is null, 'BR-H7 un cambio SOLO de estado_barra_at (trigger por fila) ya cambia la versión');
+select t.set('v4', public.barra_estado('BARRA1', null)->>'version');
 select t.as('root');
 update public.comandas set listo_barra_at = clock_timestamp() where id = t.get('h_com')::uuid;
 select t.as('anon');
-select t.ok(public.barra_estado('COCINA1', t.get('v4'))->>'sin_cambios' is null, 'BR-H8 y de listo_barra_at también');
-select t.set('v5', public.barra_estado('COCINA1', null)->>'version');
-select t.ok(public.barra_estado('COCINA1', t.get('v5'))->>'sin_cambios' = 'true', 'BR-H9 releer sin cambios NO mueve la versión');
+select t.ok(public.barra_estado('BARRA1', t.get('v4'))->>'sin_cambios' is null, 'BR-H8 y de listo_barra_at también');
+select t.set('v5', public.barra_estado('BARRA1', null)->>'version');
+select t.ok(public.barra_estado('BARRA1', t.get('v5'))->>'sin_cambios' = 'true', 'BR-H9 releer sin cambios NO mueve la versión');
 select t.as('root');
 
 -- =========================================================
@@ -433,16 +465,16 @@ select t.set('i1', public.crear_o_agregar_comanda('111111', 'B7', 'Carpa', '[{"c
 select t.as('root');
 update public.comandas set creado_at = now() - interval '10 minutes', estado_at = now() - interval '10 minutes' where id = t.get('i1')::uuid;
 select t.as('anon');
-select t.ok((t.com(public.barra_estado('COCINA1', null), 'B7')->>'min_estado')::int between 10 and 11
-        and (t.com(public.barra_estado('COCINA1', null), 'B7')->>'min_creado')::int between 10 and 11,
+select t.ok((t.com(public.barra_estado('BARRA1', null), 'B7')->>'min_estado')::int between 10 and 11
+        and (t.com(public.barra_estado('BARRA1', null), 'B7')->>'min_creado')::int between 10 and 11,
             'BR-I1 con estado_barra_at null, min_estado cuenta desde creado_at');
 select t.as('root');
 update public.comandas set estado_barra_at = now() - interval '4 minutes' where id = t.get('i1')::uuid;
 select t.as('anon');
-select t.ok((t.com(public.barra_estado('COCINA1', null), 'B7')->>'min_estado')::int between 4 and 5
-        and (t.com(public.barra_estado('COCINA1', null), 'B7')->>'min_creado')::int between 10 and 11,
+select t.ok((t.com(public.barra_estado('BARRA1', null), 'B7')->>'min_estado')::int between 4 and 5
+        and (t.com(public.barra_estado('BARRA1', null), 'B7')->>'min_creado')::int between 10 and 11,
             'BR-I2 con estado_barra_at, min_estado cuenta desde ahí (min_creado sigue desde la creación)');
-select t.ok(t.com(public.barra_estado('COCINA1', null), 'B7')->>'estado_at' <> t.com(public.barra_estado('COCINA1', null), 'B7')->>'creado_at',
+select t.ok(t.com(public.barra_estado('BARRA1', null), 'B7')->>'estado_at' <> t.com(public.barra_estado('BARRA1', null), 'B7')->>'creado_at',
             'BR-I3 estado_at de barra refleja estado_barra_at');
 select t.as('root');
 
@@ -462,7 +494,7 @@ select t.as('root');
 select t.ok((select estado = 'listo' and estado_barra = 'nuevo' and estado_barra_at is null from public.comandas where id = t.get('j1')::uuid), 'BR-J6 y no toca nada de barra');
 -- estadisticas_cocina no cuenta bebidas aunque la barra las marque listas.
 select t.as('anon');
-select public.barra_marcar('COCINA1', t.get('j1')::uuid, 'listo');
+select public.barra_marcar('BARRA1', t.get('j1')::uuid, 'listo');
 select t.ok(not (public.estadisticas_cocina('COCINA1', null, null)->'ranking' @> '[{"nombre":"Mojito J"}]'), 'BR-J7 estadisticas_cocina sigue sin contar la barra');
 select t.ok(public.estadisticas_cocina('COCINA1', null, null)->'ranking' @> '[{"nombre":"Lomo J","unidades":1}]', 'BR-J8 y sí cuenta la comida lista');
 select t.as('root');

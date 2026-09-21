@@ -48,17 +48,21 @@ export default async (req) => {
 
   const supabaseAdmin = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-  const { garzon, mesa, sector, estacion, codigo_cocina: codigoCocina } = await req.json().catch(() => ({}))
+  const { garzon, mesa, sector, estacion, codigo_cocina: codigoCocina, codigo_barra: codigoBarra } = await req.json().catch(() => ({}))
 
   const clave = (req.headers.get('authorization') || '').replace('Bearer ', '')
   let autorizado = !!process.env.NOTIFICAR_GARZON_KEY && iguales(clave, process.env.NOTIFICAR_GARZON_KEY)
-  if (!autorizado && codigoCocina) {
+  // Cada estación tiene su propio código y no se mezclan: el aviso de la barra
+  // solo lo autoriza `codigo_barra`, el de la cocina solo `codigo_cocina`.
+  const esBarraLlamada = estacion === 'barra'
+  const codigoRecibido = esBarraLlamada ? codigoBarra : codigoCocina
+  if (!autorizado && codigoRecibido) {
     const { data: cfg } = await supabaseAdmin
       .from('pos_config')
       .select('valor')
-      .eq('clave', 'codigo_cocina')
+      .eq('clave', esBarraLlamada ? 'codigo_barra' : 'codigo_cocina')
       .maybeSingle()
-    autorizado = !!cfg?.valor && iguales(codigoCocina, cfg.valor)
+    autorizado = !!cfg?.valor && iguales(codigoRecibido, cfg.valor)
   }
   if (!autorizado) {
     return jsonResponse({ error: 'No autorizado' }, 401)

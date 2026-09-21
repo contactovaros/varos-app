@@ -16,11 +16,13 @@
 -- Qué hace (todo ADITIVO salvo las dos funciones recreadas, ver abajo):
 --  1. Tres columnas nuevas en comandas (las comandas existentes toman el
 --     default 'nuevo'; nada las lee todavía).
---  2. barra_estado(código, versión)  — gemela de cocina_estado: solo comandas
+--  2. comandas_autorizar_barra(código) — helper interno, gemelo de
+--     comandas_autorizar_cocina pero contra pos_config.codigo_barra.
+--     barra_estado(código_barra, versión)  — gemela de cocina_estado: solo comandas
 --     con >= 1 ítem de barra, con los ítems filtrados a barra y
 --     estado = estado_barra. MISMA forma de JSON que cocina_estado (la
 --     pantalla se reutiliza) y mismo mecanismo de `version`.
---  3. barra_marcar(código, comanda, estado) — gemela de cocina_marcar sobre
+--  3. barra_marcar(código_barra, comanda, estado) — gemela de cocina_marcar sobre
 --     estado_barra. Devuelve lo mismo MÁS estacion = 'barra'.
 --  4. REGLAS DE REINICIO. Hasta hoy crear_o_agregar_comanda y
 --     editar_items_comanda devolvían la comanda entera a 'nuevo' ante
@@ -37,8 +39,17 @@
 --     cerrar_mesa_y_cobrar / estadisticas_cocina / vencimiento: NO se tocan.
 --     La cocina sigue viendo solo ítems de cocina con `estado`.
 --
--- Código de acceso: la barra usa el MISMO código que la cocina
--- (pos_config.codigo_cocina, vía comandas_autorizar_cocina).
+-- CÓDIGO DE ACCESO PROPIO: la barra NO usa el de la cocina. Se guarda en
+-- pos_config con la clave 'codigo_barra' (igual que 'codigo_cocina') y se
+-- valida con comandas_autorizar_barra(). Separación estricta: el código de
+-- cocina no abre la barra y el de la barra no abre la cocina. NO hay código
+-- por defecto: mientras no se configure, barra_estado y barra_marcar fallan
+-- con 'Código de barra inválido'.
+--
+-- PASO MANUAL DEL USUARIO (SQL Editor, corre como postgres; elegir 6+
+-- caracteres, distinto del de cocina):
+--   insert into public.pos_config (clave, valor) values ('codigo_barra', 'TU_CODIGO')
+--     on conflict (clave) do update set valor = excluded.valor;
 --
 -- VERSIÓN: los triggers comandas_version_t / comanda_items_version_t de
 -- add_comandas.sql son por FILA y sin lista de columnas (after insert or
@@ -75,6 +86,25 @@ alter table public.comandas
 -- =========================================================
 -- 2. HELPER INTERNO (nadie lo llama desde el cliente)
 -- =========================================================
+
+-- Gemela de comandas_autorizar_cocina: compara contra pos_config.codigo_barra.
+-- Sin código configurado (o distinto) lanza 'Código de barra inválido'.
+create or replace function public.comandas_autorizar_barra(p_codigo text)
+returns void
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+declare
+  v_real text;
+begin
+  select valor into v_real from public.pos_config where clave = 'codigo_barra';
+  if v_real is null or p_codigo is null or v_real <> p_codigo then
+    raise exception 'Código de barra inválido';
+  end if;
+end;
+$$;
 
 -- Gemela de comandas_json(true) para la barra: comandas vigentes con >= 1
 -- ítem de barra, ítems filtrados a barra, estado = estado_barra. Mismas claves
@@ -125,8 +155,14 @@ $$;
 -- 3. FUNCIONES PÚBLICAS DE BARRA (las llama la tablet, sin login)
 -- =========================================================
 
+-- El parámetro se llama p_codigo_barra (no p_codigo_cocina). Cambiar el nombre
+-- de un parámetro no se puede con create or replace: se borran primero las dos
+-- funciones (son nuevas; los grants se reponen al final del archivo).
+drop function if exists public.barra_estado(text, text);
+drop function if exists public.barra_marcar(text, uuid, text);
+
 -- Barra: solo ítems de barra; omite comandas sin ítems de barra.
-create or replace function public.barra_estado(p_codigo_cocina text, p_version text default null)
+create or replace function public.barra_estado(p_codigo_barra text, p_version text default null)
 returns jsonb
 language plpgsql
 stable
@@ -136,7 +172,7 @@ as $$
 declare
   v_version text;
 begin
-  perform public.comandas_autorizar_cocina(p_codigo_cocina);
+  perform public.comandas_autorizar_barra(p_codigo_barra);
   v_version := public.comandas_version_actual();
   if p_version is not null and p_version = v_version then
     return jsonb_build_object('version', v_version, 'sin_cambios', true);
@@ -151,7 +187,7 @@ $$;
 -- Barra: nuevo | preparando | listo sobre estado_barra. `avisar` = true cuando
 -- pasa a 'listo' y antes no lo estaba (la pantalla entonces llama a
 -- notificar-garzon con el texto de barra: "Bebidas listas").
-create or replace function public.barra_marcar(p_codigo_cocina text, p_comanda_id uuid, p_estado text)
+create or replace function public.barra_marcar(p_codigo_barra text, p_comanda_id uuid, p_estado text)
 returns jsonb
 language plpgsql
 security definer
@@ -160,7 +196,7 @@ as $$
 declare
   v_c public.comandas;
 begin
-  perform public.comandas_autorizar_cocina(p_codigo_cocina);
+  perform public.comandas_autorizar_barra(p_codigo_barra);
   if p_estado is null or p_estado not in ('nuevo', 'preparando', 'listo') then
     raise exception 'Estado inválido';
   end if;
@@ -444,6 +480,7 @@ $$;
 -- =========================================================
 
 revoke all on function public.comandas_json_barra() from public, anon, authenticated;
+revoke all on function public.comandas_autorizar_barra(text) from public, anon, authenticated;
 
 revoke all on function public.barra_estado(text, text) from public, anon, authenticated;
 grant execute on function public.barra_estado(text, text) to anon, authenticated;
@@ -459,10 +496,10 @@ grant execute on function public.editar_items_comanda(text, uuid, jsonb) to anon
 
 -- Para verificar después de correr (esperado: barra_estado, barra_marcar,
 -- crear_o_agregar_comanda y editar_items_comanda con anon y authenticated;
--- comandas_json_barra sin ninguno de los dos):
+-- comandas_json_barra y comandas_autorizar_barra sin ninguno de los dos):
 --   select p.proname, pg_get_function_identity_arguments(p.oid) args, a.grantee::regrole, a.privilege_type
 --   from pg_proc p cross join lateral aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
 --   where p.pronamespace = 'public'::regnamespace
---     and p.proname in ('barra_estado','barra_marcar','comandas_json_barra',
+--     and p.proname in ('barra_estado','barra_marcar','comandas_json_barra','comandas_autorizar_barra',
 --                       'crear_o_agregar_comanda','editar_items_comanda')
 --   order by 1, 2, 3;
