@@ -53,12 +53,16 @@ self.addEventListener('push', (event) => {
     data = { body: event.data ? event.data.text() : '' };
   }
   const title = data.title || "Varo's Club";
+  // Los avisos a garzones (abren /mozo) vibran en ráfaga para notarlos con el
+  // celular en el bolsillo; los del club no llevan vibración propia.
+  const paraGarzon = (data.url || '').startsWith('/mozo');
   event.waitUntil(
     self.registration.showNotification(title, {
       body: data.body || '',
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      data: { url: data.url || '/club' }
+      data: { url: data.url || '/club' },
+      ...(paraGarzon ? { vibrate: [400, 150, 400, 150, 400] } : {})
     })
   );
 });
