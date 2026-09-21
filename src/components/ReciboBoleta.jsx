@@ -1,3 +1,6 @@
+import { useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+
 // Boleta de impresión de 80mm, compartida entre /admin/caja y /mozo — antes
 // vivía duplicada en AdminCaja.jsx; ahora que Mozo también imprime al cobrar
 // (pedido del usuario, 2026-09-16: "el botón de cobrar debiese imprimir"),
@@ -24,6 +27,24 @@ export function formatFechaTicket(iso) {
 // `cobro`: { id, mesa, sector, garzon, items: [{nombre, cant, precioUnit}],
 // total, medioPagoLabel, created_at }
 export default function ReciboBoleta({ cobro, onCerrar }) {
+  // El alto de la hoja se fija con el alto real de la boleta. Antes la regla
+  // era `@page { size: 80mm auto }`, que NO es CSS válido (el alto no admite
+  // "auto"): Chrome la descartaba y usaba el largo por defecto del driver
+  // (80 x 297 mm en la BIXOLON SRP-350III), así que salía ~20 cm de papel en
+  // blanco por boleta. Se mide de nuevo justo antes de imprimir por si cambió.
+  const estiloPagina = useRef(null)
+  useEffect(() => {
+    const ajustar = () => {
+      const el = document.getElementById('recibo-boleta')
+      if (!el || !estiloPagina.current) return
+      const mm = Math.ceil((el.getBoundingClientRect().height * 25.4) / 96) + 2
+      estiloPagina.current.textContent = `@page { size: 80mm ${mm}mm; margin: 0; }`
+    }
+    ajustar()
+    window.addEventListener('beforeprint', ajustar)
+    return () => window.removeEventListener('beforeprint', ajustar)
+  }, [])
+
   const items = cobro.items || []
   const subtotal = items.reduce((s, it) => s + (it.precioUnit != null ? it.precioUnit * it.cant : 0), 0)
   // No se guarda la propina como campo aparte (queda mezclada en `total`
@@ -32,14 +53,17 @@ export default function ReciboBoleta({ cobro, onCerrar }) {
   // ~0 y la línea no se muestra.
   const propina = Math.round(cobro.total - subtotal)
 
-  return (
-    <div className="fixed inset-0 z-50 bg-ink/95 flex flex-col items-center justify-center px-4 print:static print:bg-white print:block print:px-0">
+  // Va en un portal directo en <body> para poder ocultar TODO lo demás al
+  // imprimir con display:none. Con `visibility:hidden` la pantalla de detrás
+  // (Caja, Mozo) seguía ocupando espacio y Chrome sacaba páginas en blanco.
+  return createPortal(
+    <div id="recibo-print" className="fixed inset-0 z-50 bg-ink/95 flex flex-col items-center justify-center px-4 print:static print:bg-white print:block print:px-0">
+      <style ref={estiloPagina} />
       <style>{`
         @media print {
-          @page { size: 80mm auto; margin: 0; }
-          body * { visibility: hidden; }
-          #recibo-boleta, #recibo-boleta * { visibility: visible; }
-          #recibo-boleta { position: absolute; top: 0; left: 0; width: 80mm; }
+          body > *:not(#recibo-print) { display: none !important; }
+          html, body { margin: 0; padding: 0; background: #fff; height: auto; }
+          #recibo-boleta { width: 80mm; }
         }
       `}</style>
 
@@ -105,6 +129,7 @@ export default function ReciboBoleta({ cobro, onCerrar }) {
           🖨️ Imprimir boleta
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
