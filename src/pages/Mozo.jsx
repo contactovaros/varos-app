@@ -83,14 +83,31 @@ function parseCursosDeDescripcion(descripcion) {
   if (!descripcion) return null
   const porCurso = { Entrada: [], 'Plato Principal': [], 'Postres y Tentaciones': [] }
   let encontrado = false
+  // El admin no siempre carga "Curso: opción, opción" en una sola línea (formato
+  // que sugiere el placeholder del campo): en la práctica el encabezado suele ir
+  // solo en su renglón y cada plato abajo en el suyo, con "* " o "*" pegado al
+  // texto. Los dos formatos tienen que convivir sin que el mozo pierda cursos.
+  let cursoActual = null
   for (const linea of descripcion.split('\n')) {
-    const m = linea.trim().match(/^([^:]{1,28}):\s*(.+)$/)
-    if (!m) continue
-    const curso = ALIAS_CURSO_MENU_DIA[m[1].trim().toLowerCase()]
-    if (!curso) continue
-    const opciones = m[2].split(',').map((s) => s.trim()).filter(Boolean)
-    if (opciones.length) {
-      porCurso[curso].push(...opciones)
+    const texto = linea.trim()
+    if (!texto) continue
+    const mEncabezado = texto.match(/^([^:]{1,28}):\s*(.*)$/)
+    const cursoDeEncabezado = mEncabezado ? ALIAS_CURSO_MENU_DIA[mEncabezado[1].trim().toLowerCase()] : null
+    if (cursoDeEncabezado) {
+      cursoActual = cursoDeEncabezado
+      const resto = mEncabezado[2].trim()
+      if (resto) {
+        const opciones = resto.split(',').map((s) => s.trim().replace(/^\*\s*/, '')).filter(Boolean)
+        if (opciones.length) {
+          porCurso[cursoActual].push(...opciones)
+          encontrado = true
+        }
+      }
+      continue
+    }
+    const mViñeta = texto.match(/^\*\s*(.+)$/)
+    if (mViñeta && cursoActual) {
+      porCurso[cursoActual].push(mViñeta[1].trim())
       encontrado = true
     }
   }
@@ -961,18 +978,23 @@ export default function Mozo() {
     setMenuDiaItemActual(item)
   }
 
-  // Si /menu-catalog no trajo nada para ninguno de los 3 cursos (puente con
-  // gestion.php caído, o ni siquiera en uso), se usa el desglose escrito a
-  // mano en la Descripción del producto como respaldo — mismo texto que ya
-  // lee carta2.0, no hay que cargarlo dos veces.
-  const kdsMenuDiaVacio =
-    !menuDiaOpciones || CURSOS_MENU_DIA.every((curso) => !(menuDiaOpciones[curso]?.length))
+  // La Descripción del producto (lo que el admin edita en /admin/productos,
+  // mismo texto que ya lee carta2.0) es la fuente que manda: es la única que
+  // el restaurante actualiza a diario. /menu-catalog scrapea el POS viejo
+  // (gestion.php) vía un puente que casi no se usa desde el piloto "solo
+  // sistema nuevo" (2026-09-15) — puede quedar con platos de hace semanas
+  // sin que el Worker lo marque como vacío, así que antes ganaba SIEMPRE que
+  // trajera algo, aunque estuviera desactualizado (bug real: el mozo veía
+  // "Crema de Tomate" días después de que el admin ya la había cambiado por
+  // "Crema de Coliflor con Champiñones"). Ahora el catálogo del POS viejo
+  // queda solo como respaldo, para cuando todavía no se cargó ninguna
+  // Descripción.
   const cursosDeRespaldo = useMemo(
     () => parseCursosDeDescripcion(menuDiaItemActual?.description),
     [menuDiaItemActual]
   )
-  const usandoRespaldoMenuDia = kdsMenuDiaVacio && Boolean(cursosDeRespaldo)
-  const menuDiaOpcionesEfectivas = usandoRespaldoMenuDia ? cursosDeRespaldo : menuDiaOpciones
+  const usandoRespaldoMenuDia = Boolean(cursosDeRespaldo)
+  const menuDiaOpcionesEfectivas = cursosDeRespaldo ?? menuDiaOpciones
 
   function confirmarMenuDia() {
     const { Entrada, 'Plato Principal': principal, 'Postres y Tentaciones': postre } = menuDiaSel
@@ -1279,7 +1301,10 @@ export default function Mozo() {
                       {esMenuDia ? (
                         <button
                           onClick={() => abrirMenuDia(item)}
-                          disabled={!menuDiaOpciones}
+                          // No solo `menuDiaOpciones` (el catálogo del POS viejo): si la
+                          // Descripción del admin ya trae los cursos, alcanza para habilitar
+                          // el botón aunque el catálogo scrapeado no haya cargado o falle.
+                          disabled={!menuDiaOpciones && !parseCursosDeDescripcion(item.description)}
                           className="shrink-0 w-9 h-9 rounded-lg bg-inkSoft border border-white/10 text-gold text-lg font-semibold flex items-center justify-center disabled:opacity-30"
                         >
                           +
