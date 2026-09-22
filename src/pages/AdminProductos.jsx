@@ -636,7 +636,7 @@ export default function AdminProductos() {
                       value={descripcionForm}
                       onChange={(e) => setDescripcionForm(e.target.value)}
                       onBlur={guardarDescripcion}
-                      rows={3}
+                      rows={10}
                       className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-y"
                     />
                     <span className="self-start mt-2 text-[10px] text-paper/30 w-14 shrink-0">
