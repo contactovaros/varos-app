@@ -309,14 +309,22 @@ function PantallaCocina({ estacion, codigo, tv, onCodigoInvalido }) {
 
         // Sonido: comanda visible que no habíamos visto (o que volvió a "nuevo").
         const ahoraSrv = Date.now() + (Number.isFinite(desfase) ? desfase : 0)
-        const visiblesIds = lista
+        const visibles = lista
           .filter((c) => !ocultasRef.current.has(String(c.id)))
           .filter(
             (c) =>
               !(c.estado === 'listo' && Math.floor((ahoraSrv - Date.parse(c.estado_at)) / 60000) >= AUTO_HIDE_LISTO_MIN)
           )
-          .map((c) => String(c.id))
-        if (!primeraCargaRef.current && sonidoRef.current && visiblesIds.some((id) => !vistasRef.current.has(id))) {
+        const visiblesIds = visibles.map((c) => String(c.id))
+        // En la primera carga (recién abierta o recién recargada la pantalla) no se
+        // anuncian las que ya estaban en "preparando"/"listo" — la cocina ya sabe de
+        // esas. Pero una comanda en "nuevo" significa que TODAVÍA nadie la tocó, así
+        // que si la TV se recarga a mitad de turno con una nueva esperando, igual
+        // tiene que sonar — quedarse callada ahí es justo el caso que más importa.
+        const idsQueSuenan = primeraCargaRef.current
+          ? visibles.filter((c) => c.estado === 'nuevo').map((c) => String(c.id))
+          : visiblesIds
+        if (sonidoRef.current && idsQueSuenan.some((id) => !vistasRef.current.has(id))) {
           decirNuevaComanda(est.voz)
         }
         vistasRef.current = new Set(visiblesIds)
