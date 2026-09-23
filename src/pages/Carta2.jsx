@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
+import SelectorIdioma from '../components/SelectorIdioma.jsx'
+import { IDIOMAS_CARTA, useIdiomaCarta } from '../i18n/carta.js'
 
 // Carta pública de solo lectura ("carta2.0", nombre de trabajo — ver
 // DECISIONES.md, "Carta pública fuera del hosting frágil de GTD" ·
@@ -57,21 +59,21 @@ const CATEGORIAS_BEBIDAS = ['MOCKTAILS (SIN ALCOHOL)', 'VINOS & ESPUMANTES'].map
 // el desglose del Menú del Día — ver /admin/productos, campo Descripción),
 // la etiqueta se resalta en `wineSoft`, igual que los subgrupos en rojo
 // vino de la carta real.
-function DescripcionPlato({ texto }) {
+function DescripcionPlato({ texto, etiquetaCurso, nombrePlatoSuelto }) {
   const lineas = texto.split('\n').map((l) => l.trim()).filter(Boolean)
   return (
     <div className="mt-1 ml-4">
       {lineas.map((linea, i) => {
-        const m = linea.match(/^([^:]{1,28}):\s*(.+)$/)
+        const m = linea.match(/^([^:]{1,28}):\s*(.*)$/)
         return (
           <p key={i} className="text-paper/35 text-[11px] leading-relaxed italic">
             {m ? (
               <>
-                <span className="text-wineSoft not-italic font-semibold">{m[1]}: </span>
-                {m[2]}
+                <span className="text-wineSoft not-italic font-semibold">{etiquetaCurso(m[1])}: </span>
+                {nombrePlatoSuelto(m[2])}
               </>
             ) : (
-              linea
+              nombrePlatoSuelto(linea)
             )}
           </p>
         )
@@ -86,6 +88,7 @@ function formatCLP(valor) {
 }
 
 export default function Carta2() {
+  const { idioma, setIdioma, t, categoria, plato: traducirPlato, etiquetaCurso, nombrePlatoSuelto } = useIdiomaCarta()
   const [items, setItems] = useState([])
   const [cargando, setCargando] = useState(true)
   const [error, setError] = useState('')
@@ -168,13 +171,14 @@ export default function Carta2() {
           (activa ? 'text-ember' : color === 'diamond' ? 'text-diamond/70 hover:text-diamond' : 'text-paper/70 hover:text-paper')
         }
       >
-        {nombre}
+        {categoria(nombre)}
       </button>
     )
   }
 
   return (
-    <div className="min-h-screen bg-ink px-5 pt-10 pb-14">
+    <div className="relative min-h-screen bg-ink px-5 pt-10 pb-14">
+      <SelectorIdioma idioma={idioma} setIdioma={setIdioma} idiomas={IDIOMAS_CARTA} />
       {/* Wordmark real, no una aproximación con fuente: es el mismo PNG
           (`bg_logo.png`) que usa `varos.cl/carta` hoy — se sacó de la copia
           estática que ya se había crawleado (`varos-cl-copia/carta/`), así
@@ -192,12 +196,12 @@ export default function Carta2() {
 
       {error && (
         <p className="text-rose-400 text-xs text-center mb-6 leading-relaxed">
-          No se pudo cargar la carta: {error}
+          {t('error_carga')} {error}
         </p>
       )}
 
       {!cargando && categorias.length === 0 && !error && (
-        <p className="text-paper/35 text-sm text-center py-10">Todavía no hay platos publicados en la carta.</p>
+        <p className="text-paper/35 text-sm text-center py-10">{t('vacia')}</p>
       )}
 
       {categorias.length > 0 && (
@@ -225,10 +229,10 @@ export default function Carta2() {
                 href="/sommelier"
                 className="relative text-[11px] sm:text-xs font-head font-semibold uppercase tracking-wide whitespace-nowrap text-gold border border-gold/50 rounded-full px-3 py-1 hover:bg-gold/10 transition-colors"
               >
-                Sommelier
+                {t('sommelier')}
                 {/* Viñeta de lanzamiento: sacar cuando ya no sea novedad. */}
                 <span className="absolute -top-2.5 -right-3 rounded-full bg-ember text-ink text-[8px] font-bold tracking-wide px-1.5 py-0.5 leading-none">
-                  NUEVO
+                  {t('nuevo')}
                 </span>
               </a>
             </nav>
@@ -239,24 +243,33 @@ export default function Carta2() {
             <section className="max-w-lg mx-auto">
               <div className="flex items-baseline gap-2 mb-3">
                 <h2 className="text-gold font-head font-semibold text-sm uppercase tracking-wide shrink-0">
-                  {seleccion.nombre}
+                  {categoria(seleccion.nombre)}
                 </h2>
                 <span className="flex-1 min-w-[8px] border-b border-dotted border-gold/30 translate-y-[-3px]" />
               </div>
               <div className="flex flex-col gap-2.5">
-                {seleccion.platos.map((plato) => (
-                  <div key={plato.id}>
-                    <div className="flex items-baseline gap-2">
-                      <span className="text-paper/25 text-[10px] shrink-0">*</span>
-                      <span className="italic text-paper/80 text-[13px] leading-snug">{plato.name}</span>
-                      <span className="flex-1 min-w-[6px] border-b border-dotted border-paper/15 translate-y-[-3px]" />
-                      <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
-                        {formatCLP(plato.price_clp)}
-                      </span>
+                {seleccion.platos.map((plato) => {
+                  const tr = traducirPlato(plato)
+                  return (
+                    <div key={plato.id}>
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-paper/25 text-[10px] shrink-0">*</span>
+                        <span className="italic text-paper/80 text-[13px] leading-snug">{tr.nombre}</span>
+                        <span className="flex-1 min-w-[6px] border-b border-dotted border-paper/15 translate-y-[-3px]" />
+                        <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
+                          {formatCLP(plato.price_clp)}
+                        </span>
+                      </div>
+                      {tr.descripcion && (
+                        <DescripcionPlato
+                          texto={tr.descripcion}
+                          etiquetaCurso={etiquetaCurso}
+                          nombrePlatoSuelto={nombrePlatoSuelto}
+                        />
+                      )}
                     </div>
-                    {plato.description && <DescripcionPlato texto={plato.description} />}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </section>
           )}
@@ -266,7 +279,7 @@ export default function Carta2() {
       {/* Footer, separado del resto — mismo tratamiento que la carta real:
           teléfono en dorado, email y web como links en un tono azulado. */}
       <footer className="text-center mt-12 pt-6 border-t border-white/5">
-        <p className="text-gold text-sm font-head font-medium">Pedidos y Reservas al +56 9 9923 5368</p>
+        <p className="text-gold text-sm font-head font-medium">{t('pedidos')} +56 9 9923 5368</p>
         <p className="text-diamond/80 text-xs mt-2">
           <a href="mailto:contacto@varos.cl" className="hover:text-diamond">
             contacto@varos.cl

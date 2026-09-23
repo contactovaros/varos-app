@@ -4,10 +4,10 @@
 // posicionado absoluto sobre el contenedor raíz — discreto, sin tapar el Header
 // que está centrado.
 
-export default function SelectorIdioma({ idioma, setIdioma }) {
+export default function SelectorIdioma({ idioma, setIdioma, idiomas = ['es', 'en'] }) {
   return (
     <div className="absolute top-4 left-4 z-20 flex items-center gap-1.5 font-head text-[11px] tracking-[0.15em]">
-      {['es', 'en'].map((l, i) => (
+      {idiomas.map((l, i) => (
         <span key={l} className="flex items-center gap-1.5">
           {i > 0 && <span className="text-gold/25" aria-hidden="true">·</span>}
           <button
