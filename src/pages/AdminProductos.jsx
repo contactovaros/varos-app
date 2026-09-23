@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
+import { postJson } from '../lib/apiAdmin'
 
 // Primer módulo del reemplazo incremental del POS viejo (varos.cl/gestion).
 // Reusa `menu_items` (ver DECISIONES.md, "Reusar menu_items para el primer
@@ -101,6 +102,46 @@ export default function AdminProductos() {
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState('')
 
+  // Traducción automática de la carta (en/pt/it/zh) — ver netlify/functions/traducir-carta.mjs.
+  // Se dispara sola al guardar la descripción o crear un producto, y en bloque con el botón.
+  const [traduccion, setTraduccion] = useState(null) // null | { hechos, total }
+
+  async function traducirIds(ids, forzar = false) {
+    const res = await postJson('traducir-carta', { ids, forzar })
+    const { data } = await supabase.from('menu_items').select('id, traducciones').in('id', ids)
+    if (data?.length) {
+      const porId = new Map(data.map((d) => [d.id, d.traducciones]))
+      setItems((prev) => prev.map((i) => (porId.has(i.id) ? { ...i, traducciones: porId.get(i.id) } : i)))
+    }
+    return res
+  }
+
+  async function traducirEnSegundoPlano(id) {
+    try {
+      await traducirIds([id])
+    } catch (e) {
+      console.error('Traducción automática falló:', e)
+    }
+  }
+
+  async function traducirTodo() {
+    const pendientes = items
+      .filter((i) => !i.traducciones || String(i.category).toUpperCase().startsWith('MEN'))
+      .map((i) => i.id)
+    if (pendientes.length === 0) return
+    setTraduccion({ hechos: 0, total: pendientes.length })
+    try {
+      for (let k = 0; k < pendientes.length; k += 4) {
+        const lote = pendientes.slice(k, k + 4)
+        await traducirIds(lote)
+        setTraduccion({ hechos: Math.min(k + 4, pendientes.length), total: pendientes.length })
+      }
+    } catch (e) {
+      alert(`Se cortó la traducción: ${e.message}. Lo que ya se tradujo quedó guardado; podés volver a apretar el botón.`)
+    }
+    setTraduccion(null)
+  }
+
   async function cargar() {
     setCargando(true)
     const { data, error: err } = await supabase.from('menu_items').select('*')
@@ -198,6 +239,8 @@ export default function AdminProductos() {
       setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, description: anterior } : i)))
       setDescripcionForm(anterior ?? '')
       alert('No se pudo guardar la descripción: ' + err.message)
+    } else {
+      traducirEnSegundoPlano(seleccionado.id)
     }
     setGuardandoDescripcion(false)
   }
@@ -301,6 +344,7 @@ export default function AdminProductos() {
       return
     }
     setNuevoProducto(null)
+    traducirEnSegundoPlano(data.id)
     await cargar() // vuelve a leer todo para mantener el orden real (categoría → orden → nombre)
     setSeleccionadoId(data.id)
   }
@@ -332,12 +376,30 @@ export default function AdminProductos() {
             </p>
           )}
         </div>
-        <button
-          onClick={abrirNuevoProducto}
-          className="shrink-0 bg-gradient-to-br from-gold to-bronze text-ink font-head text-xs font-medium px-3.5 py-2.5 rounded-lg whitespace-nowrap"
-        >
-          + Nuevo producto
-        </button>
+        <div className="shrink-0 flex flex-col items-end gap-2">
+          <button
+            onClick={abrirNuevoProducto}
+            className="bg-gradient-to-br from-gold to-bronze text-ink font-head text-xs font-medium px-3.5 py-2.5 rounded-lg whitespace-nowrap"
+          >
+            + Nuevo producto
+          </button>
+          {(() => {
+            const sinTraducir = items.filter((i) => !i.traducciones).length
+            if (traduccion) {
+              return <span className="text-[11px] text-paper/50">Traduciendo {traduccion.hechos}/{traduccion.total}…</span>
+            }
+            if (cargando || sinTraducir === 0) return null
+            return (
+              <button
+                onClick={traducirTodo}
+                className="text-[11px] text-gold border border-gold/40 rounded-lg px-3 py-1.5 whitespace-nowrap hover:bg-gold/10"
+                title="Traduce a inglés, portugués, italiano y chino los platos que todavía no tienen traducción"
+              >
+                Traducir carta ({sinTraducir} sin traducir)
+              </button>
+            )
+          })()}
+        </div>
       </header>
 
       <div className="flex flex-col lg:flex-row gap-4">

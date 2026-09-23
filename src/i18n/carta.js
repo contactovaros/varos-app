@@ -115,7 +115,8 @@ export function useIdiomaCarta() {
   const plato = useCallback(
     (item) => {
       if (idioma === 'es') return { nombre: item.name, descripcion: item.description }
-      const tr = TRADUCCIONES[item.name]?.[idioma]
+      // Primero lo guardado en la base (automático); el archivo estático es el respaldo.
+      const tr = item.traducciones?.[idioma] ?? TRADUCCIONES[item.name]?.[idioma]
       return {
         nombre: tr?.n || item.name,
         // Sin "d" (p. ej. Menú del Día, que cambia a diario) queda la original y
@@ -130,11 +131,11 @@ export function useIdiomaCarta() {
     [idioma]
   )
   const nombrePlatoSuelto = useCallback(
-    (texto) => {
+    (texto, platos) => {
       if (idioma === 'es') return texto
       const prefijo = texto.match(/^[*\s-]*/)[0]
       const limpio = texto.slice(prefijo.length).trim()
-      const n = TRADUCCIONES[limpio]?.[idioma]?.n
+      const n = platos?.[limpio]?.[idioma] ?? TRADUCCIONES[limpio]?.[idioma]?.n
       return n ? prefijo + n : texto
     },
     [idioma]

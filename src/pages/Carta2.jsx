@@ -59,7 +59,7 @@ const CATEGORIAS_BEBIDAS = ['MOCKTAILS (SIN ALCOHOL)', 'VINOS & ESPUMANTES'].map
 // el desglose del Menú del Día — ver /admin/productos, campo Descripción),
 // la etiqueta se resalta en `wineSoft`, igual que los subgrupos en rojo
 // vino de la carta real.
-function DescripcionPlato({ texto, etiquetaCurso, nombrePlatoSuelto }) {
+function DescripcionPlato({ texto, platos, etiquetaCurso, nombrePlatoSuelto }) {
   const lineas = texto.split('\n').map((l) => l.trim()).filter(Boolean)
   return (
     <div className="mt-1 ml-4">
@@ -70,10 +70,10 @@ function DescripcionPlato({ texto, etiquetaCurso, nombrePlatoSuelto }) {
             {m ? (
               <>
                 <span className="text-wineSoft not-italic font-semibold">{etiquetaCurso(m[1])}: </span>
-                {nombrePlatoSuelto(m[2])}
+                {nombrePlatoSuelto(m[2], platos)}
               </>
             ) : (
-              nombrePlatoSuelto(linea)
+              nombrePlatoSuelto(linea, platos)
             )}
           </p>
         )
@@ -263,6 +263,7 @@ export default function Carta2() {
                       {tr.descripcion && (
                         <DescripcionPlato
                           texto={tr.descripcion}
+                          platos={plato.traducciones?.platos}
                           etiquetaCurso={etiquetaCurso}
                           nombrePlatoSuelto={nombrePlatoSuelto}
                         />
