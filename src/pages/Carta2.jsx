@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { supabase } from '../lib/supabase'
-import SelectorIdioma from '../components/SelectorIdioma.jsx'
+import MenuIdioma from '../components/MenuIdioma.jsx'
 import { IDIOMAS_CARTA, useIdiomaCarta } from '../i18n/carta.js'
 
 // Carta pública de solo lectura ("carta2.0", nombre de trabajo — ver
@@ -178,7 +178,7 @@ export default function Carta2() {
 
   return (
     <div className="relative min-h-screen bg-ink px-5 pt-10 pb-14">
-      <SelectorIdioma idioma={idioma} setIdioma={setIdioma} idiomas={IDIOMAS_CARTA} />
+      <MenuIdioma idioma={idioma} setIdioma={setIdioma} idiomas={IDIOMAS_CARTA} />
       {/* Wordmark real, no una aproximación con fuente: es el mismo PNG
           (`bg_logo.png`) que usa `varos.cl/carta` hoy — se sacó de la copia
           estática que ya se había crawleado (`varos-cl-copia/carta/`), así
