@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-const NOMBRES = { es: 'Español', en: 'English', pt: 'Português' }
+const NOMBRES = { es: 'Español', en: 'English', pt: 'Português', it: 'Italiano', zh: '中文' }
 
 // Botón desplegable de idioma (globo + código). Más evidente que el texto
 // "ES · EN" de la reserva: en la carta el cliente tiene que verlo a la primera.

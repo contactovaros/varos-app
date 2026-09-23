@@ -1,216 +1,3854 @@
 {
-"Amaretto Disaronno Fizz":{"en":{"n":"Amaretto Disaronno Fizz","d":"(Amaretto, lemon and orange juice, simple syrup and tonic water)"},"pt":{"n":"Amaretto Disaronno Fizz","d":"(Amaretto, suco de limão e laranja, xarope de açúcar e água tônica)"}},
-"Aperol Negroni":{"en":{"n":"Aperol Negroni","d":"(Aperol, gin and vermouth)"},"pt":{"n":"Aperol Negroni","d":"(Aperol, gin e vermute)"}},
-"Caipirinha":{"en":{"n":"Caipirinha","d":"Classic, passion fruit or strawberry"},"pt":{"n":"Caipirinha","d":"Tradicional, de maracujá ou de morango"}},
-"Cocktail Gin de Verano (Gin  Red Bull Sandia)":{"en":{"n":"Summer Gin Cocktail (Gin + Red Bull Watermelon)","d":""},"pt":{"n":"Coquetel Gin de Verão (Gin + Red Bull Melancia)","d":""}},
-"Cocktail GIN del Dragon ( Gin  Red Bull Dragon)":{"en":{"n":"Dragon Gin Cocktail (Gin + Red Bull Dragon Fruit)","d":""},"pt":{"n":"Coquetel Gin do Dragão (Gin + Red Bull Pitaya)","d":""}},
-"Cocktail Gin Tropical (Gin  Red Bull Maracuya)":{"en":{"n":"Tropical Gin Cocktail (Gin + Red Bull Passion Fruit)","d":"(Gin + Red Bull Tropical)"},"pt":{"n":"Coquetel Gin Tropical (Gin + Red Bull Maracujá)","d":"(Gin + Red Bull Tropical)"}},
-"Cocktail HGENDRICKS FIZZ":{"en":{"n":"Hendrick's Fizz Cocktail","d":"(Gin, lemon juice, simple syrup, soda)"},"pt":{"n":"Coquetel Hendrick's Fizz","d":"(Gin, suco de limão, xarope de açúcar, soda)"}},
-"Cocktail MARGARITA":{"en":{"n":"Margarita Cocktail","d":"(Tequila, triple sec, lime and salt)"},"pt":{"n":"Coquetel Margarita","d":"(Tequila, triple sec, limão e sal)"}},
-"Frutilla Colada":{"en":{"n":"Strawberry Colada","d":""},"pt":{"n":"Morango Colada","d":""}},
-"HUGO FREE SPRITZ":{"en":{"n":"Hugo Free Spritz","d":"Light and refreshing, the alcohol-free Hugo Spritz combines floral elderflower notes with fresh lime, mint and sparkling soda, making an elegant, perfectly balanced drink for any occasion."},"pt":{"n":"Hugo Free Spritz","d":"Leve e refrescante, o Hugo Spritz sem álcool combina notas florais de sabugueiro com limão fresco, hortelã e soda borbulhante, criando uma bebida elegante e perfeitamente equilibrada para qualquer ocasião."}},
-"Mojito Cerveza":{"en":{"n":"Beer Mojito","d":"Choose: Corona, Heineken, Royal, Cusqueña"},"pt":{"n":"Mojito de Cerveja","d":"Escolha: Corona, Heineken, Royal, Cusqueña"}},
-"Mojito Cerveza Premium":{"en":{"n":"Premium Beer Mojito","d":"Choose: Kunstmann Torobayo, Kunstmann Miel, Austral Calafate, Dolbek Maki"},"pt":{"n":"Mojito de Cerveja Premium","d":"Escolha: Kunstmann Torobayo, Kunstmann Miel, Austral Calafate, Dolbek Maki"}},
-"MOJITO Cubano Ron Bacardí":{"en":{"n":"Cuban Mojito with Bacardí Rum","d":""},"pt":{"n":"Mojito Cubano com Rum Bacardí","d":""}},
-"MOJITO Espumante":{"en":{"n":"Sparkling Wine Mojito","d":""},"pt":{"n":"Mojito de Espumante","d":""}},
-"MOJITO Frutal":{"en":{"n":"Fruit Mojito","d":"with natural fruit pulp and Bacardí rum (mango, passion fruit or strawberry)"},"pt":{"n":"Mojito Frutal","d":"com polpa de fruta natural e rum Bacardí (manga, maracujá ou morango)"}},
-"MOJITO Malibu":{"en":{"n":"Malibu Mojito","d":"Tropical and refreshing, the Malibu Mojito blends the sweetness of coconut rum with fresh lime, mint and a touch of bubbles, for a smooth, vibrant Caribbean take on the classic mojito."},"pt":{"n":"Mojito Malibu","d":"Tropical e refrescante, o Mojito Malibu mistura a doçura do rum de coco com limão fresco, hortelã e um toque borbulhante, resultando numa versão caribenha, suave e vibrante do clássico mojito."}},
-"Piña Colada  🍍":{"en":{"n":"Piña Colada","d":"The original recipe that conquered the world."},"pt":{"n":"Piña Colada","d":"A receita original que conquistou o mundo."}},
-"Piña Colada Pink 🍓":{"en":{"n":"Pink Piña Colada","d":"The classic with an irresistible twist of fresh strawberries. (Pineapple and strawberries)"},"pt":{"n":"Piña Colada Pink","d":"A clássica com um toque irresistível de morangos frescos. (Abacaxi e morangos)"}},
-"Piña Colada Tropical":{"en":{"n":"Tropical Piña Colada","d":"An exotic explosion of pineapple and passion fruit."},"pt":{"n":"Piña Colada Tropical","d":"A explosão exótica de abacaxi e maracujá."}},
-"Sour Amaretto":{"en":{"n":"Amaretto Sour","d":"Disaronno"},"pt":{"n":"Amaretto Sour","d":"Disaronno"}},
-"Sour CATEDRAL 40º (GRAN CRUZ-PERUANO)":{"en":{"n":"Catedral 40º Pisco Sour (Gran Cruz - Peruvian)","d":""},"pt":{"n":"Pisco Sour Catedral 40º (Gran Cruz - Peruano)","d":""}},
-"Sour CATEDRAL 40º(BARSOL-PERUANO)":{"en":{"n":"Catedral 40º Pisco Sour (Barsol - Peruvian)","d":"Choose classic, mango or passion fruit"},"pt":{"n":"Pisco Sour Catedral 40º (Barsol - Peruano)","d":"Escolha tradicional, manga ou maracujá"}},
-"Sour Chardonay (Soft Drink)":{"en":{"n":"Chardonnay Sour (Soft Drink)","d":""},"pt":{"n":"Chardonnay Sour (Sem álcool)","d":""}},
-"Sour de Mango Azapeño":{"en":{"n":"Azapa Mango Sour","d":""},"pt":{"n":"Sour de Manga Azapeño","d":""}},
-"Sour Macerado Catedral":{"en":{"n":"Catedral Infused Sour","d":"Rosemary and ginger / cinnamon"},"pt":{"n":"Sour Macerado Catedral","d":"Alecrim e gengibre / canela"}},
-"Sour Maracuya Apasionada":{"en":{"n":"Passionate Passion Fruit Sour","d":""},"pt":{"n":"Sour de Maracujá Apaixonada","d":""}},
-"Sour Pisco 40º (BAUZA - CHILENO)":{"en":{"n":"Pisco Sour 40º (Bauzá - Chilean)","d":""},"pt":{"n":"Pisco Sour 40º (Bauzá - Chileno)","d":""}},
-"Sour Ramazzotti":{"en":{"n":"Ramazzotti Sour","d":""},"pt":{"n":"Ramazzotti Sour","d":""}},
-"Spritz Aperol":{"en":{"n":"Aperol Spritz","d":""},"pt":{"n":"Aperol Spritz","d":""}},
-"Spritz Chambord":{"en":{"n":"Chambord Spritz","d":"Chambord (red berries) (sparkling wine, mineral water)"},"pt":{"n":"Chambord Spritz","d":"Chambord (frutas vermelhas) (espumante, água mineral)"}},
-"Spritz Cynar (Alcachofa)":{"en":{"n":"Cynar Spritz (Artichoke)","d":""},"pt":{"n":"Cynar Spritz (Alcachofra)","d":""}},
-"Spritz de Varo´s":{"en":{"n":"Varo's Spritz","d":"(Aperol, passion fruit, sparkling wine and sparkling water)"},"pt":{"n":"Spritz do Varo's","d":"(Aperol, maracujá, espumante e água com gás)"}},
-"Spritz Parfait Amour":{"en":{"n":"Parfait Amour Spritz","d":"(Parfait Amour, sparkling wine, mineral water)"},"pt":{"n":"Parfait Amour Spritz","d":"(Parfait Amour, espumante, água mineral)"}},
-"Spritz Ramazzotti":{"en":{"n":"Ramazzotti Spritz","d":"Rosato / Violetto (sparkling wine, mineral water)"},"pt":{"n":"Ramazzotti Spritz","d":"Rosato / Violetto (espumante, água mineral)"}},
-"Spritz St Germain":{"en":{"n":"St Germain Spritz","d":"(St Germain, sparkling wine, mineral water)"},"pt":{"n":"St Germain Spritz","d":"(St Germain, espumante, água mineral)"}},
-"-TIRADITO DE SALMON AHUMADO":{"en":{"n":"Smoked Salmon Tiradito","d":"Our smoked salmon tiradito brings together the best of the sea with a fresh citrus touch, making it light, flavorful and perfect to start."},"pt":{"n":"Tiradito de Salmão Defumado","d":"Nosso tiradito de salmão defumado une o melhor do mar com um toque cítrico e fresco que o torna leve, saboroso e perfeito para começar."}},
-"CAUSA & PULPO AL OLIVO":{"en":{"n":"Causa with Octopus in Olive Sauce","d":"Filled with tender octopus pieces covered in a smooth Azapa olive cream."},"pt":{"n":"Causa com Polvo ao Olivo","d":"Recheada com pedaços macios de polvo cobertos por um suave creme de azeitonas de Azapa."}},
-"CAUSA LIMEÑA ACEVICHADA":{"en":{"n":"Causa Limeña Acevichada","d":"Topped with fish ceviche in creamy leche de tigre."},"pt":{"n":"Causa Limeña Acevichada","d":"Coberta com ceviche de peixe em cremoso leite de tigre."}},
-"CAUSA LIMEÑA CON POLLO":{"en":{"n":"Causa Limeña with Chicken","d":"Smooth yellow potato purée with ají amarillo, filled with shredded chicken, mayonnaise and avocado."},"pt":{"n":"Causa Limeña com Frango","d":"Suave purê de batata amarela com ají amarillo, recheado com frango desfiado, maionese e abacate."}},
-"CAUSA LIMEÑA DE CAMARONES EN SALSA GOLF":{"en":{"n":"Causa Limeña with Shrimp in Golf Sauce","d":"Shrimp in Golf sauce over our traditional causa base."},"pt":{"n":"Causa Limeña de Camarões com Molho Golf","d":"Camarões com molho Golf sobre nossa tradicional base de causa."}},
-"CEVICHE MIXTO":{"en":{"n":"Mixed Ceviche","d":"Mix of sea bass and shellfish such as mussels, clams and octopus with onion, cilantro and leche de tigre."},"pt":{"n":"Ceviche Misto","d":"Mistura de corvina e frutos do mar como mexilhões, amêijoas e polvo com cebola, coentro e leite de tigre."}},
-"CEVICHE TRADICIONAL":{"en":{"n":"Traditional Ceviche","d":"The sea served at its freshest!"},"pt":{"n":"Ceviche Tradicional","d":"O mar servido na sua forma mais fresca!"}},
-"ENSALADA CESAR AL ESTILO VARO`S":{"en":{"n":"Varo's-Style Caesar Salad","d":"(Romaine lettuce, croutons, Parmesan cheese, black olives and cherry tomatoes.)"},"pt":{"n":"Salada Caesar Estilo Varo's","d":"(Alface romana, croutons, queijo parmesão, azeitonas pretas e tomate-cereja.)"}},
-"PALTA REINA (Coronada con Pollo y mayonesa en mix de hojas verdes)":{"en":{"n":"Palta Reina","d":"Avocado topped with chicken and mayonnaise on mixed greens"},"pt":{"n":"Palta Reina","d":"Abacate coberto com frango e maionese sobre mix de folhas verdes"}},
-"PULPO A LA OLIVA":{"en":{"n":"Octopus in Olive Sauce","d":"Thin slices of octopus in leche de tigre with Azapa olives"},"pt":{"n":"Polvo à Oliva","d":"Finas fatias de polvo com leite de tigre e azeitonas de Azapa"}},
-"TIRADITO NIKKEI":{"en":{"n":"Nikkei Tiradito","d":"Order it with sea bass or octopus (thin slices in leche de tigre with a touch of ají amarillo and sesame)"},"pt":{"n":"Tiradito Nikkei","d":"Peça com corvina ou polvo (finas fatias em leite de tigre com um toque de ají amarillo e gergelim)"}},
-"TRILOGIA DE CAUSA LIMEÑA":{"en":{"n":"Causa Limeña Trilogy","d":"Shrimp, chicken and octopus in 3 sauces: olive, ají amarillo and garlic."},"pt":{"n":"Trilogia de Causa Limeña","d":"Camarão, frango e polvo em 3 molhos: azeitona, ají amarillo e alho."}},
-"ARROZ TRADICIONAL":{"en":{"n":"Traditional Rice","d":""},"pt":{"n":"Arroz Tradicional","d":""}},
-"ENSALADA CHILENA":{"en":{"n":"Chilean Salad","d":""},"pt":{"n":"Salada Chilena","d":""}},
-"ENSALADA SURTIDA":{"en":{"n":"Mixed Salad","d":""},"pt":{"n":"Salada Mista","d":""}},
-"ENSALADA VERDE (Palta, lechuga, pepino, zapallo italiano)":{"en":{"n":"Green Salad (avocado, lettuce, cucumber, zucchini)","d":""},"pt":{"n":"Salada Verde (abacate, alface, pepino, abobrinha)","d":""}},
-"PAPAS A LA HUANCAINA":{"en":{"n":"Potatoes a la Huancaína","d":""},"pt":{"n":"Batatas à Huancaína","d":""}},
-"PAPAS FRITAS":{"en":{"n":"French Fries","d":""},"pt":{"n":"Batatas Fritas","d":""}},
-"PAPAS SALTEADAS AL PROVENZAL":{"en":{"n":"Provençal Sautéed Potatoes","d":""},"pt":{"n":"Batatas Salteadas à Provençal","d":""}},
-"PURE TRADICIONAL / PURE AL MERKEN":{"en":{"n":"Traditional Mashed Potatoes / Merkén Mashed Potatoes","d":""},"pt":{"n":"Purê Tradicional / Purê de Merkén","d":""}},
-"VEGETALES SALTEADOS ORIENTAL":{"en":{"n":"Oriental Sautéed Vegetables","d":""},"pt":{"n":"Legumes Salteados Estilo Oriental","d":""}},
-"ARROZ AL OLIVO":{"en":{"n":"Olive Rice","d":""},"pt":{"n":"Arroz ao Olivo","d":""}},
-"ENSALADA DE PAPAS MAYO":{"en":{"n":"Potato Salad with Mayonnaise","d":""},"pt":{"n":"Salada de Batata com Maionese","d":""}},
-"PAN EXTRA":{"en":{"n":"Extra Bread","d":""},"pt":{"n":"Pão Extra","d":""}},
-"Menú del Día (Martes a Domingo)":{"en":{"n":"Menu of the Day (Tuesday to Sunday)","d":""},"pt":{"n":"Menu do Dia (Terça a Domingo)","d":""}},
-"Ceviche Tradicional":{"en":{"n":"Traditional Ceviche","d":""},"pt":{"n":"Ceviche Tradicional","d":""}},
-"Causa Limeña de pollo":{"en":{"n":"Causa Limeña with Chicken","d":""},"pt":{"n":"Causa Limeña de Frango","d":""}},
-"Crema de Coliflor con Champiñones":{"en":{"n":"Cream of Cauliflower Soup with Mushrooms","d":""},"pt":{"n":"Creme de Couve-flor com Cogumelos","d":""}},
-"Palta Reina":{"en":{"n":"Palta Reina","d":"Stuffed avocado with chicken salad"},"pt":{"n":"Palta Reina","d":"Abacate recheado com salada de frango"}},
-"Papa huancaina":{"en":{"n":"Papa a la Huancaína","d":"Potatoes in creamy yellow chili and cheese sauce"},"pt":{"n":"Papa à Huancaína","d":"Batatas com creme de ají amarillo e queijo"}},
-"Carne a la olla con Papas Salteadas":{"en":{"n":"Pot Roast Beef with Sautéed Potatoes","d":""},"pt":{"n":"Carne de Panela com Batatas Salteadas","d":""}},
-"Costillar de Cerdo con Arroz Chaufa":{"en":{"n":"Pork Ribs with Chaufa Rice","d":""},"pt":{"n":"Costelas de Porco com Arroz Chaufa","d":""}},
-"Suprema a la Plancha con Salsa de Queso y Arroz al Olivo":{"en":{"n":"Grilled Chicken Breast with Cheese Sauce and Olive Rice","d":""},"pt":{"n":"Peito de Frango Grelhado com Molho de Queijo e Arroz ao Olivo","d":""}},
-"Picante de GUata con Arroz":{"en":{"n":"Picante de Guata with Rice","d":"Spicy beef tripe stew with rice"},"pt":{"n":"Picante de Guata com Arroz","d":"Ensopado picante de bucho bovino com arroz"}},
-"Tallarines con Albacora y Salsa Putanesca":{"en":{"n":"Tagliatelle with Swordfish and Puttanesca Sauce","d":""},"pt":{"n":"Talharim com Espadarte e Molho Puttanesca","d":""}},
-"Selección de Postres":{"en":{"n":"Dessert Selection","d":""},"pt":{"n":"Seleção de Sobremesas","d":""}},
-"ATARDECER":{"en":{"n":"Sunset","d":"Hibiscus, mango, passion fruit, ginger ale"},"pt":{"n":"Entardecer","d":"Hibisco, manga, maracujá, ginger ale"}},
-"BODA AZAPEÑA":{"en":{"n":"Azapa Wedding","d":"(Mango and passion fruit mix with mint)"},"pt":{"n":"Casamento Azapeño","d":"(Mix de manga e maracujá com hortelã)"}},
-"FROZEN LIMONADA HIERBA BUENA & JENGIBRE":{"en":{"n":"Frozen Mint & Ginger Lemonade","d":""},"pt":{"n":"Limonada Gelada de Hortelã e Gengibre","d":""}},
-"Jugo Limonada Hierba Buena y Jengibre":{"en":{"n":"Mint and Ginger Lemonade","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Limonada de Hortelã e Gengibre","d":"Preparada com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"Jugo Limonada Tradicional":{"en":{"n":"Traditional Lemonade","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Limonada Tradicional","d":"Preparada com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"Jugo Natural de 1 Litro":{"en":{"n":"Fresh Juice, 1 Liter","d":""},"pt":{"n":"Suco Natural de 1 Litro","d":""}},
-"Jugo Natural de Frutilla":{"en":{"n":"Fresh Strawberry Juice","d":""},"pt":{"n":"Suco Natural de Morango","d":""}},
-"Jugo Natural de Maracuya":{"en":{"n":"Fresh Passion Fruit Juice","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Suco Natural de Maracujá","d":"Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"Jugo Natural de Piña y Jengibre":{"en":{"n":"Fresh Pineapple and Ginger Juice","d":"Fresh pineapple and ginger juice. Refreshing, digestive and full of vitamin C"},"pt":{"n":"Suco Natural de Abacaxi e Gengibre","d":"Suco natural de abacaxi e gengibre. Refrescante, digestivo e cheio de vitamina C"}},
-"Jugo Natural de Sandia":{"en":{"n":"Fresh Watermelon Juice","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Suco Natural de Melancia","d":"Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"Jugo Natural Guayaba":{"en":{"n":"Fresh Guava Juice","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Suco Natural de Goiaba","d":"Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"Jugo Natural Piña":{"en":{"n":"Fresh Pineapple Juice","d":"Made with stevia; if you prefer another sweetener, just let us know."},"pt":{"n":"Suco Natural de Abacaxi","d":"Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."}},
-"LA PALOMITA":{"en":{"n":"La Palomita","d":"(Pineapple juice, orange juice, tonic, ice)"},"pt":{"n":"La Palomita","d":"(Suco de abacaxi, suco de laranja, tônica, gelo)"}},
-"LIMONADA ULA ULA PINK":{"en":{"n":"Ula Ula Pink Lemonade","d":"(Rose tonic, lemon, strawberry jam, ice)"},"pt":{"n":"Limonada Ula Ula Pink","d":"(Tônica rosé, limão, geleia de morango, gelo)"}},
-"MAÑANA SERA BONITO":{"en":{"n":"Mañana Será Bonito","d":"(Indian chai, mango, ginger ale)"},"pt":{"n":"Mañana Será Bonito","d":"(Chai indiano, manga, ginger ale)"}},
-"MARACUYA COLADA":{"en":{"n":"Passion Fruit Colada","d":"(Passion fruit juice, coconut cream, ice)"},"pt":{"n":"Maracujá Colada","d":"(Suco de maracujá, creme de coco, gelo)"}},
-"MARACUYA SMILE":{"en":{"n":"Passion Fruit Smile","d":"(Passion fruit juice, Tabasco, Tajín rim)"},"pt":{"n":"Maracujá Smile","d":"(Suco de maracujá, Tabasco, borda de Tajín)"}},
-"MARIPOSA AZUL":{"en":{"n":"Blue Butterfly","d":"Butterfly pea infusion, ginger, lemon, ginger ale"},"pt":{"n":"Borboleta Azul","d":"Infusão de flor de ervilha-borboleta, gengibre, limão, ginger ale"}},
-"MOJITO DE 15":{"en":{"n":"Mojito de 15","d":"(Mint, lemon, simple syrup, tonic or ginger ale)"},"pt":{"n":"Mojito de 15","d":"(Hortelã, limão, xarope de açúcar, tônica ou ginger ale)"}},
-"NOT-CHELADA":{"en":{"n":"Not-Chelada","d":"(Non-alcoholic beer, salt, lime, Tabasco or merkén)"},"pt":{"n":"Not-Chelada","d":"(Cerveja sem álcool, sal, limão, Tabasco ou merkén)"}},
-"NOT-JITO CERVEZA 0,0":{"en":{"n":"Not-Jito 0.0 Beer","d":"(0.0° beer, mint, lime, simple syrup)"},"pt":{"n":"Not-Jito Cerveja 0,0","d":"(Cerveja 0,0°, hortelã, limão, xarope de açúcar)"}},
-"PIÑA COCO THAI":{"en":{"n":"Thai Pineapple Coconut","d":"(Pineapple, coconut cream, grenadine, simple syrup)"},"pt":{"n":"Abacaxi Coco Thai","d":"(Abacaxi, creme de coco, grenadine, xarope de açúcar)"}},
-"SWEET ESPRESSO & TONIC":{"en":{"n":"Sweet Espresso & Tonic","d":"(Vanilla espresso coffee, tonic, lemon, ice)"},"pt":{"n":"Sweet Espresso & Tonic","d":"(Café espresso de baunilha, tônica, limão, gelo)"}},
-"TÉ DE HOJA VARO`S":{"en":{"n":"Varo's Leaf Tea","d":"(Lemongrass, lemon verbena and cinnamon)"},"pt":{"n":"Chá de Folhas do Varo's","d":"(Capim-limão, cidró e canela)"}},
-"TOREADOR GINGER ALE":{"en":{"n":"Toreador Ginger Ale","d":"(Ginger ale, ginger, simple syrup, lemon, ice)"},"pt":{"n":"Toreador Ginger Ale","d":"(Ginger ale, gengibre, xarope de açúcar, limão, gelo)"}},
-"NIÑO CHICHARRON DE PESCADO CON ARROZ  PAPAS FRITAS":{"en":{"n":"Kids Fish Chicharrón with Rice and French Fries","d":"Includes Bilz or Pap soda and dessert"},"pt":{"n":"Infantil Chicharrón de Peixe com Arroz e Batatas Fritas","d":"Inclui refrigerante Bilz ou Pap e sobremesa"}},
-"NIÑO CHICHARRON DE POLLO CON ARROZ  PAPAS FRITAS":{"en":{"n":"Kids Chicken Chicharrón with Rice and French Fries","d":"Includes dessert + soft drink or fresh juice"},"pt":{"n":"Infantil Chicharrón de Frango com Arroz e Batatas Fritas","d":"Inclui sobremesa + refrigerante ou suco natural"}},
-"NIÑO CODITOS CON SALSA PESTO Y PESCADO CHICHARRON":{"en":{"n":"Kids Elbow Pasta with Pesto Sauce and Fish Chicharrón","d":"Includes drink + dessert"},"pt":{"n":"Infantil Macarrão Cotovelo com Molho Pesto e Chicharrón de Peixe","d":"Inclui bebida + sobremesa"}},
-"NIÑO CODITOS CON SALSA PESTO Y POLLO CHICHARRON":{"en":{"n":"Kids Elbow Pasta with Pesto Sauce and Chicken Chicharrón","d":"Includes drink or juice + dessert"},"pt":{"n":"Infantil Macarrão Cotovelo com Molho Pesto e Chicharrón de Frango","d":"Inclui bebida ou suco + sobremesa"}},
-"Sandwich Pollo crispy":{"en":{"n":"Crispy Chicken Sandwich","d":"Crispy chicken, tomato, lettuce and sauce + French fries"},"pt":{"n":"Sanduíche de Frango Crocante","d":"Frango crocante, tomate, alface e molho + batatas fritas"}},
-"HAMBURGUESA ITALIANA":{"en":{"n":"Italian Burger","d":"(Tomato, avocado and mayonnaise) Includes drink and dessert"},"pt":{"n":"Hambúrguer Italiano","d":"(Tomate, abacate e maionese) Inclui bebida e sobremesa"}},
-"Base Michelada":{"en":{"n":"Michelada Base","d":""},"pt":{"n":"Base de Michelada","d":""}},
-"Beb. Agua Mineral CON GAS":{"en":{"n":"Sparkling Mineral Water","d":""},"pt":{"n":"Água Mineral com Gás","d":""}},
-"Beb. Agua Mineral SIN GAS":{"en":{"n":"Still Mineral Water","d":""},"pt":{"n":"Água Mineral sem Gás","d":""}},
-"Beb. Agua Tonica SCHWEPPES 350cc":{"en":{"n":"Schweppes Tonic Water 350cc","d":""},"pt":{"n":"Água Tônica Schweppes 350cc","d":""}},
-"Beb. Coca Cola 350 cc":{"en":{"n":"Coca-Cola 350 cc","d":""},"pt":{"n":"Coca-Cola 350 cc","d":""}},
-"Beb. Coca cola Zero 350 cc":{"en":{"n":"Coca-Cola Zero 350 cc","d":""},"pt":{"n":"Coca-Cola Zero 350 cc","d":""}},
-"Beb. Fanta 350 cc":{"en":{"n":"Fanta 350 cc","d":""},"pt":{"n":"Fanta 350 cc","d":""}},
-"Beb. Ginger Ale SCHWEPPES 350cc":{"en":{"n":"Schweppes Ginger Ale 350cc","d":""},"pt":{"n":"Ginger Ale Schweppes 350cc","d":""}},
-"Beb. Ginger Ale Zero Canada Dry350 cc":{"en":{"n":"Canada Dry Ginger Ale Zero 350 cc","d":""},"pt":{"n":"Ginger Ale Zero Canada Dry 350 cc","d":""}},
-"Beb. Pepsi 350 cc":{"en":{"n":"Pepsi 350 cc","d":""},"pt":{"n":"Pepsi 350 cc","d":""}},
-"Beb. Pepsi zero 350 cc":{"en":{"n":"Pepsi Zero 350 cc","d":""},"pt":{"n":"Pepsi Zero 350 cc","d":""}},
-"Beb. Sprite 350 cc":{"en":{"n":"Sprite 350 cc","d":""},"pt":{"n":"Sprite 350 cc","d":""}},
-"Café Espresso 40ml (India -Caramelo- Vainilla- Forte)":{"en":{"n":"Espresso 40ml (India - Caramel - Vanilla - Strong)","d":""},"pt":{"n":"Café Espresso 40ml (Índia - Caramelo - Baunilha - Forte)","d":""}},
-"Café Espresso Cortado (Caramelo-Vainilla-India-Espresso) 120ml":{"en":{"n":"Espresso Cortado (Caramel - Vanilla - India - Espresso) 120ml","d":""},"pt":{"n":"Café Espresso Cortado (Caramelo - Baunilha - Índia - Espresso) 120ml","d":""}},
-"Café Espresso Doble Forte 80 ml":{"en":{"n":"Double Strong Espresso 80 ml","d":""},"pt":{"n":"Café Espresso Duplo Forte 80 ml","d":""}},
-"Cerveza Austral Calafate":{"en":{"n":"Austral Calafate Beer","d":""},"pt":{"n":"Cerveja Austral Calafate","d":""}},
-"Cerveza Corona":{"en":{"n":"Corona Beer","d":""},"pt":{"n":"Cerveja Corona","d":""}},
-"Cerveza Cusqueña":{"en":{"n":"Cusqueña Beer","d":""},"pt":{"n":"Cerveja Cusqueña","d":""}},
-"Cerveza Dolbek MAKI":{"en":{"n":"Dolbek Maki Beer","d":""},"pt":{"n":"Cerveja Dolbek Maki","d":""}},
-"Cerveza Heineken":{"en":{"n":"Heineken Beer","d":""},"pt":{"n":"Cerveja Heineken","d":""}},
-"Cerveza Kunstmann Miel 330cc":{"en":{"n":"Kunstmann Miel Beer 330cc","d":""},"pt":{"n":"Cerveja Kunstmann Miel 330cc","d":""}},
-"Cerveza Kunstmann Torobayo 330cc":{"en":{"n":"Kunstmann Torobayo Beer 330cc","d":""},"pt":{"n":"Cerveja Kunstmann Torobayo 330cc","d":""}},
-"Cerveza Mestra Cero 0,0":{"en":{"n":"Mestra Cero 0.0 Beer","d":""},"pt":{"n":"Cerveja Mestra Cero 0,0","d":""}},
-"Cerveza SOL":{"en":{"n":"Sol Beer","d":""},"pt":{"n":"Cerveja Sol","d":""}},
-"Cocktail Hawaiano Azul":{"en":{"n":"Blue Hawaiian Cocktail","d":""},"pt":{"n":"Coquetel Blue Hawaiian","d":""}},
-"Cocktail J.W. Wine Cask (J.W. Wine Cask Ginger Ale)":{"en":{"n":"J.W. Wine Cask Cocktail (J.W. Wine Cask + Ginger Ale)","d":""},"pt":{"n":"Coquetel J.W. Wine Cask (J.W. Wine Cask + Ginger Ale)","d":""}},
-"Cocktail Kir Royal ( Espumante y Casis)":{"en":{"n":"Kir Royal Cocktail (Sparkling Wine and Cassis)","d":""},"pt":{"n":"Coquetel Kir Royal (Espumante e Cassis)","d":""}},
-"Cocktail TEQUILA SUNRISE":{"en":{"n":"Tequila Sunrise Cocktail","d":""},"pt":{"n":"Coquetel Tequila Sunrise","d":""}},
-"Copa de Espumante":{"en":{"n":"Glass of Sparkling Wine","d":""},"pt":{"n":"Taça de Espumante","d":""}},
-"COPA DE VINO RESERVA":{"en":{"n":"Glass of Reserve Wine","d":""},"pt":{"n":"Taça de Vinho Reserva","d":""}},
-"Destilado Bacardi Carta Blanca":{"en":{"n":"Bacardi Carta Blanca Spirit","d":""},"pt":{"n":"Destilado Bacardi Carta Blanca","d":""}},
-"Destilado Bacardi Carta Oro":{"en":{"n":"Bacardi Carta Oro Spirit","d":""},"pt":{"n":"Destilado Bacardi Carta Oro","d":""}},
-"Destilado Baileys":{"en":{"n":"Baileys Spirit","d":""},"pt":{"n":"Destilado Baileys","d":""}},
-"Destilado Chivas Regal":{"en":{"n":"Chivas Regal Spirit","d":""},"pt":{"n":"Destilado Chivas Regal","d":""}},
-"Destilado Clavo Oxidado":{"en":{"n":"Rusty Nail Spirit","d":""},"pt":{"n":"Destilado Rusty Nail","d":""}},
-"Destilado Gin BullDog":{"en":{"n":"Bulldog Gin Spirit","d":"add a mixer"},"pt":{"n":"Destilado Gin Bulldog","d":"adicionar refrigerante"}},
-"Destilado Gin HENDRICK`S":{"en":{"n":"Hendrick's Gin Spirit","d":""},"pt":{"n":"Destilado Gin Hendrick's","d":""}},
-"Destilado Gin Tanqueray":{"en":{"n":"Tanqueray Gin Spirit","d":""},"pt":{"n":"Destilado Gin Tanqueray","d":""}},
-"Destilado Havana Añejo Reserva":{"en":{"n":"Havana Añejo Reserva Spirit","d":"Mixer not included"},"pt":{"n":"Destilado Havana Añejo Reserva","d":"Não inclui refrigerante"}},
-"Destilado Havana Blanco":{"en":{"n":"Havana Blanco Spirit","d":""},"pt":{"n":"Destilado Havana Blanco","d":""}},
-"Destilado Jack Daniel`s":{"en":{"n":"Jack Daniel's Spirit","d":"Mixer not included"},"pt":{"n":"Destilado Jack Daniel's","d":"Não inclui refrigerante"}},
-"Destilado Jack Daniel`s (Fire, Manzana, Miel, Blackberry)":{"en":{"n":"Jack Daniel's Spirit (Fire, Apple, Honey, Blackberry)","d":"Mixer not included"},"pt":{"n":"Destilado Jack Daniel's (Fire, Maçã, Mel, Blackberry)","d":"Não inclui refrigerante"}},
-"Destilado Jhonnie Walker E-NEGRA":{"en":{"n":"Johnnie Walker Black Label Spirit","d":""},"pt":{"n":"Destilado Johnnie Walker Etiqueta Preta","d":""}},
-"Destilado Jhonnie Walker E-Roja":{"en":{"n":"Johnnie Walker Red Label Spirit","d":"Mixer not included"},"pt":{"n":"Destilado Johnnie Walker Etiqueta Vermelha","d":"Não inclui refrigerante"}},
-"Destilado Pisco Alto del Carmen 35º":{"en":{"n":"Alto del Carmen Pisco 35º Spirit","d":"Mixer not included"},"pt":{"n":"Destilado Pisco Alto del Carmen 35º","d":"Não inclui refrigerante"}},
-"Destilado Pisco Alto del Carmen 40º":{"en":{"n":"Alto del Carmen Pisco 40º Spirit","d":""},"pt":{"n":"Destilado Pisco Alto del Carmen 40º","d":""}},
-"Destilado Pisco Horcon Quemado 1 año":{"en":{"n":"Horcón Quemado Pisco 1 Year Spirit","d":"Mixer not included"},"pt":{"n":"Destilado Pisco Horcón Quemado 1 Ano","d":"Não inclui refrigerante"}},
-"Destilado Pisco Mistral 35°":{"en":{"n":"Mistral Pisco 35° Spirit","d":""},"pt":{"n":"Destilado Pisco Mistral 35°","d":""}},
-"Destilado Pisco Mistral Roble 40º":{"en":{"n":"Mistral Roble Pisco 40º Spirit","d":""},"pt":{"n":"Destilado Pisco Mistral Roble 40º","d":""}},
-"Destilado Vodka Skyy Sabores (Durazno, Piña, Frutilla, Manzana, Naranja)":{"en":{"n":"Skyy Flavored Vodka Spirit (Peach, Pineapple, Strawberry, Apple, Orange)","d":""},"pt":{"n":"Destilado Vodka Skyy Sabores (Pêssego, Abacaxi, Morango, Maçã, Laranja)","d":""}},
-"Red Bull 250 cc / Original / Tropical/ Sandia":{"en":{"n":"Red Bull 250 cc / Original / Tropical / Watermelon","d":""},"pt":{"n":"Red Bull 250 cc / Original / Tropical / Melancia","d":""}},
-"TÉ DE HOJA VARO`S (Hierba Luisa, Cedrón y Canela)":{"en":{"n":"Varo's Leaf Tea (Lemongrass, Lemon Verbena and Cinnamon)","d":""},"pt":{"n":"Chá de Folhas do Varo's (Capim-limão, Cidró e Canela)","d":""}},
-"PULPO A LA PARRILLA EN SALSA BBQ CON  PAPAS DORADAS":{"en":{"n":"Grilled Octopus in BBQ Sauce with Golden Potatoes","d":"Tender grilled octopus in our house BBQ sauce, served with crispy golden potatoes."},"pt":{"n":"Polvo na Grelha com Molho BBQ e Batatas Douradas","d":"Polvo macio grelhado, coberto com o molho BBQ da casa, acompanhado de batatas douradas crocantes."}},
-"🍲 SOPA MARINERA":{"en":{"n":"Seafood Soup (Sopa Marinera)","d":"Rich broth with fresh shellfish and fish, full of flavor and the tradition of our Chilean coast."},"pt":{"n":"Sopa Marinera (Sopa de Frutos do Mar)","d":"Caldo intenso com frutos do mar frescos e peixe, cheio de sabor e da tradição da nossa costa chilena."}},
-"🍽️ TRIO MARINO":{"en":{"n":"Seafood Trio","d":"Rice with assorted shellfish, traditional ceviche and fish chicharrón, all on one plate to enjoy."},"pt":{"n":"Trio Marinho","d":"Arroz com frutos do mar variados, ceviche tradicional e chicharrón de peixe em um só prato para aproveitar."}},
-"ARROZ A LA MARINERA":{"en":{"n":"Seafood Rice (Arroz a la Marinera)","d":"Tasty coastal-inspired rice prepared with shrimp, octopus, clams, mussels and scallops, sautéed with the aromas and flavors of the sea, paying homage to the chinchorrera tradition of northern Chile. An intense, fresh seafood experience full of local identity."},"pt":{"n":"Arroz à Marinera (Arroz com Frutos do Mar)","d":"Saboroso arroz de inspiração costeira, preparado com camarão, polvo, amêijoas, mexilhões e vieiras, salteados com aromas e sabores do mar que homenageiam a tradição chinchorrera do norte do Chile. Uma experiência marinha intensa, fresca e cheia de identidade local."}},
-"CEVICHE MIXTO DEL PACIFICO CON CHICHARRON DE PESCADO Y LECHE DE TIGRE":{"en":{"n":"Pacific Mixed Ceviche with Fish Chicharrón and Leche de Tigre","d":"A fresh combination of shellfish such as mussels, clams, shrimp, octopus and catch of the day in leche de tigre, served with crispy fish chicharrón and potato."},"pt":{"n":"Ceviche Misto do Pacífico com Chicharrón de Peixe e Leite de Tigre","d":"Fresca combinação de frutos do mar como mexilhões, amêijoas, camarões, polvo e peixe do dia em leite de tigre, acompanhada de chicharrón de peixe crocante e batata."}},
-"CEVICHE TRADICIONAL CON CHICHARRON DE PESCADO Y LECHE DE TIGRE":{"en":{"n":"Traditional Ceviche with Fish Chicharrón and Leche de Tigre","d":"Fresh fillets marinated in citrusy leche de tigre, served with crispy fish chicharrón and potatoes."},"pt":{"n":"Ceviche Tradicional com Chicharrón de Peixe e Leite de Tigre","d":"Filés frescos marinados em leite de tigre cítrico, acompanhados de chicharrón de peixe crocante e batatas."}},
-"FETTUCCINE A LA HUANCAINA CON LOMO SALTADO":{"en":{"n":"Fettuccine a la Huancaína with Lomo Saltado","d":""},"pt":{"n":"Fettuccine à Huancaína com Lomo Saltado","d":""}},
-"PARRILLADA (1 lomo, 1 truto, 1 prieta, 2 longaniza)  2 GUARNICION":{"en":{"n":"Mixed Grill (1 tenderloin, 1 chicken leg, 1 blood sausage, 2 longaniza sausages) with 2 sides","d":""},"pt":{"n":"Parrillada (1 lombo, 1 coxa de frango, 1 morcela, 2 linguiças) com 2 acompanhamentos","d":""}},
-"REINETA EN SALSA DE CAMARONES CON ACOMPAÑAMIENTO A ELECCION":{"en":{"n":"Reineta in Shrimp Sauce with Side of Your Choice","d":"Juicy fillet covered in shrimp sauce. Perfect with the side of your choice: rice, potatoes or salad. A delicate, flavorful dish."},"pt":{"n":"Reineta ao Molho de Camarões com Acompanhamento à Escolha","d":"Filé suculento coberto com molho de camarões. Perfeito com o acompanhamento de sua escolha: arroz, batatas ou salada. Um prato delicado e cheio de sabor."}},
-"REINETA EN SALSA DE MARISCOS ACOMPAÑAMIENTO A ELECCION":{"en":{"n":"Reineta in Seafood Sauce with Side of Your Choice","d":""},"pt":{"n":"Reineta ao Molho de Frutos do Mar com Acompanhamento à Escolha","d":""}},
-"REINETA FRITA CON ENSALADA SURTIDA DEL VALLE":{"en":{"n":"Fried Reineta with Mixed Valley Salad","d":"Fish fillet crispy on the outside and juicy inside, served with a mixed salad from our valley."},"pt":{"n":"Reineta Frita com Salada Mista do Vale","d":"Filé de peixe crocante por fora e suculento por dentro, acompanhado de salada mista do nosso vale."}},
-"🥩ENTRECOT DE VACUNO GRILLE CON CHIMICHURRI 500 Gramos GUARNICION A ELECCION":{"en":{"n":"Grilled Beef Entrecôte with Chimichurri, 500 g, Side of Your Choice","d":""},"pt":{"n":"Entrecôte Bovino Grelhado com Chimichurri 500 g, Acompanhamento à Escolha","d":""}},
-"🌶️PICANTE DE GUATA Y PATA CON ARROZ BLANCO":{"en":{"n":"Picante de Guata y Pata with White Rice","d":"Northern Chilean tradition: tender tripe and trotters in a spiced sauce, served with white rice."},"pt":{"n":"Picante de Guata y Pata com Arroz Branco","d":"Tradicional do norte do Chile: bucho e mocotó macios em molho temperado, acompanhado de arroz branco."}},
-"🌶️PICANTE DE MARISCOS CON ARROZ":{"en":{"n":"Picante de Mariscos with Rice","d":"Spicy seafood stew with rice"},"pt":{"n":"Picante de Mariscos com Arroz","d":"Ensopado picante de frutos do mar com arroz"}},
-"🌶️PICANTE DE PULPO CON ARROZ":{"en":{"n":"Picante de Pulpo with Rice","d":"An ancestral heritage dish of northern Chile and southern Peru, where tender octopus is cooked in a creamy, spiced ají sauce, served with traditional rice."},"pt":{"n":"Picante de Pulpo com Arroz","d":"Prato ancestral e patrimonial do norte do Chile e sul do Peru, em que o polvo macio é cozido em um cremoso e temperado molho de ají, acompanhado de arroz tradicional."}},
-"BIFE DE CHORIZO 350 GMOS   2 GUARNICIONES A ELECCIÓN":{"en":{"n":"Sirloin Steak 350 g with 2 Sides of Your Choice","d":""},"pt":{"n":"Bife de Chorizo 350 g com 2 Acompanhamentos à Escolha","d":""}},
-"LOMO A LO POBRE 200 GRMS":{"en":{"n":"Lomo a lo Pobre 200 g","d":"Classic Chilean dish with 200 g of juicy tenderloin, served with french fries, two fried eggs, rice and sautéed onion."},"pt":{"n":"Lomo a lo Pobre 200 g","d":"Clássico prato chileno com 200 g de lombo suculento, acompanhado de batatas fritas, dois ovos fritos, arroz e cebola salteada."}},
-"LOMO GRILLE 200 GRAMOS A LA ORDEN":{"en":{"n":"Grilled Tenderloin 200 g, Cooked to Order","d":""},"pt":{"n":"Lombo Grelhado 200 g, no Ponto Desejado","d":""}},
-"LOMO SALTADO CLASICO":{"en":{"n":"Classic Lomo Saltado","d":"Wok-sautéed with onion, tomato and spices, served with rice and french fries."},"pt":{"n":"Lomo Saltado Clássico","d":"Salteado no wok com cebola, tomate e temperos, acompanhado de arroz e batatas fritas."}},
-"LOMO SALTADO CON RISSOTTO A LA HUANCAINA":{"en":{"n":"Lomo Saltado with Risotto a la Huancaína","d":"Italian-Peruvian fusion with creamy ají amarillo risotto."},"pt":{"n":"Lomo Saltado com Risoto à Huancaína","d":"Fusão ítalo-peruana com cremoso risoto de ají amarillo."}},
-"SPAGUETTI EN TINTA DE CALAMAR CON SALSA DE MARISCOS":{"en":{"n":"Squid Ink Spaghetti with Seafood Sauce","d":""},"pt":{"n":"Espaguete de Tinta de Lula com Molho de Frutos do Mar","d":""}},
-"SUPREMA DE AVE A LA PLANCHA EN SALSA HUANCAINA ACOMPAÑADO DE ARROZ AL OLIVO":{"en":{"n":"Grilled Chicken Breast in Huancaína Sauce with Olive Rice","d":""},"pt":{"n":"Peito de Frango Grelhado com Molho Huancaína e Arroz ao Olivo","d":""}},
-"SUPREMA DE AVE CON SALSA DE  CHAMPIGNONES ARROZ A LAS FINAS HIERBAS":{"en":{"n":"Chicken Breast with Mushroom Sauce and Fine Herb Rice","d":""},"pt":{"n":"Peito de Frango com Molho de Cogumelos e Arroz com Ervas Finas","d":""}},
-"🍖 COSTILLAR DE CERDO ASADO  GUARNICION A ELECCION":{"en":{"n":"Roasted Pork Ribs with Side of Your Choice","d":"Slow-cooked ribs with smoky notes, served with merkén mashed potatoes."},"pt":{"n":"Costelas de Porco Assadas com Acompanhamento à Escolha","d":"Costelas cozidas lentamente, com notas defumadas, acompanhadas de purê de merkén."}},
-"🥩 TOMAHAWK 800 GRMS CON CHIMICHURRI Y 2 ACOMPAÑAMIENTOS A ELECCION":{"en":{"n":"Tomahawk 800 g with Chimichurri and 2 Sides of Your Choice","d":"Premium grilled cut, juicy, served with house-made chimichurri and two sides of your choice."},"pt":{"n":"Tomahawk 800 g com Chimichurri e 2 Acompanhamentos à Escolha","d":"Corte premium na grelha, suculento, servido com chimichurri caseiro e dois acompanhamentos à escolha."}},
-"🥩ASADO DE TIRA AL VINO TINTO CON GUARNICION A LA ORDEN 500gm":{"en":{"n":"Short Ribs in Red Wine with Side of Your Choice 500 g","d":"Tender, flavorful cut slow-cooked in red wine to bring out its deep flavor, served with a side of your choice."},"pt":{"n":"Assado de Tira ao Vinho Tinto com Acompanhamento à Escolha 500 g","d":"Corte macio e saboroso cozido lentamente em vinho tinto, realçando seu sabor profundo, acompanhado de um acompanhamento à escolha."}},
-"🥩FLAT IRON STEAK 350 GMS  GUARNICION A ELECCIÓN":{"en":{"n":"Flat Iron Steak 350 g with Side of Your Choice","d":""},"pt":{"n":"Flat Iron Steak 350 g com Acompanhamento à Escolha","d":""}},
-"🌊 FIESTA DEL MAR":{"en":{"n":"Sea Feast (Fiesta del Mar)","d":"A dish to share: ceviche, grilled octopus, fish chicharrón, seafood rice and octopus causa."},"pt":{"n":"Festa do Mar (Fiesta del Mar)","d":"Experiência para compartilhar: ceviche, polvo na grelha, chicharrón de peixe, arroz com frutos do mar e causa de polvo."}},
-"BROWNIE CON HELADO":{"en":{"n":"Brownie with Ice Cream","d":"(You can choose the ice cream flavor.) Warm, moist, intense chocolate brownie with creamy ice cream for a perfect contrast of temperature and flavor."},"pt":{"n":"Brownie com Sorvete","d":"(Você pode escolher o sabor do sorvete.) Brownie de chocolate morno, úmido e intenso, acompanhado de sorvete cremoso para um contraste perfeito de temperatura e sabor."}},
-"CHEESECAKE CON SALSA DE FRUTILLA, MANGO O MARACUYA":{"en":{"n":"Cheesecake with Strawberry, Mango or Passion Fruit Sauce","d":""},"pt":{"n":"Cheesecake com Calda de Morango, Manga ou Maracujá","d":""}},
-"COPA DE HELADO":{"en":{"n":"Ice Cream Cup","d":"3 FLAVORS"},"pt":{"n":"Taça de Sorvete","d":"3 SABORES"}},
-"COPA DE HELADO 1 SABOR (ACAI)":{"en":{"n":"Ice Cream Cup, 1 Flavor (Açaí)","d":""},"pt":{"n":"Taça de Sorvete, 1 Sabor (Açaí)","d":""}},
-"FONDUE DE FRUTILLAS CON NUTELLA":{"en":{"n":"Strawberry Fondue with Nutella","d":"An irresistible warm, smooth and creamy Nutella, served with strawberries and more for dipping and enjoying. A sweet, elegant dessert, perfect for sharing."},"pt":{"n":"Fondue de Morangos com Nutella","d":"Um irresistível creme de Nutella morno, suave e cremoso, acompanhado de morangos e mais para mergulhar e desfrutar. Uma sobremesa doce, elegante e perfeita para compartilhar."}},
-"LECHE ASADA":{"en":{"n":"Leche Asada","d":"Traditional Chilean baked milk custard with a soft texture and homemade flavor, oven-baked with a fine golden top and a delicate caramel that enhances its sweetness."},"pt":{"n":"Leche Asada","d":"Tradicional pudim de leite assado chileno, de textura suave e sabor caseiro, preparado no forno com uma fina camada dourada e acompanhado de um delicado caramelo que realça sua doçura."}},
-"MOUSSE DE MARACUYA EN SALSA DE MARACUYA":{"en":{"n":"Passion Fruit Mousse in Passion Fruit Sauce","d":""},"pt":{"n":"Mousse de Maracujá com Calda de Maracujá","d":""}},
-"PANACOTTA CON SALSA DE FRUTILLA":{"en":{"n":"Panna Cotta with Strawberry Sauce","d":"Classic Italian dessert with a soft, silky texture, made with cream and served with a delicate natural strawberry sauce that enhances its freshness and sweetness."},"pt":{"n":"Panna Cotta com Calda de Morango","d":"Clássica sobremesa italiana de textura suave e sedosa, preparada com creme de leite e acompanhada de uma delicada calda de morangos naturais que realça sua frescura e doçura."}},
-"SUSPIRO LIMEÑO":{"en":{"n":"Suspiro Limeño","d":"Creamy traditional dessert made with dulce de leche and milk, topped with soft meringue and a touch of cinnamon. Sweet, delicate and perfect to close the experience."},"pt":{"n":"Suspiro Limeño","d":"Cremosa sobremesa tradicional à base de doce de leite e leite, coberta com suave merengue e um toque de canela. Doce, delicada e perfeita para fechar a experiência."}},
-"TENTACION x 4 UNIDADES":{"en":{"n":"Temptation x 4 Pieces","d":"(Panna cotta with strawberry sauce, passion fruit mousse, leche asada, chocolate volcano)"},"pt":{"n":"Tentação x 4 Unidades","d":"(Panna cotta com calda de morango, mousse de maracujá, leche asada, vulcão de chocolate)"}},
-"TIRAMISÚ":{"en":{"n":"Tiramisu","d":"Italian dessert of smooth cream, coffee and cocoa, with a creamy texture and a delicate yet intense flavor."},"pt":{"n":"Tiramisù","d":"Sobremesa italiana de creme suave, café e cacau, com textura cremosa e sabor delicado e intenso."}},
-"VOLCÁN DE CHOCOLATE CON HELADO":{"en":{"n":"Chocolate Volcano with Ice Cream","d":"(You can choose the ice cream flavor.) Warm chocolate cake with a molten center, served with ice cream for a perfect contrast of warmth, creaminess and sweetness."},"pt":{"n":"Vulcão de Chocolate com Sorvete","d":"(Você pode escolher o sabor do sorvete.) Bolo de chocolate morno com centro derretido, acompanhado de sorvete para um contraste perfeito entre calor, cremosidade e doçura."}},
-"ALPACA RESERVA - CARMENERE - 2023 VIÑA SAN PEDRO":{"en":{"n":"Alpaca Reserva - Carmenère - 2023 Viña San Pedro","d":""},"pt":{"n":"Alpaca Reserva - Carmenère - 2023 Viña San Pedro","d":""}},
-"CALITERRA RESERVA SHIRAZ 2013 -750cc":{"en":{"n":"Caliterra Reserva Shiraz 2013 - 750cc","d":""},"pt":{"n":"Caliterra Reserva Shiraz 2013 - 750cc","d":""}},
-"CASILLERO DEL DIABLO DARK BLACK / RED":{"en":{"n":"Casillero del Diablo Dark Black / Red","d":""},"pt":{"n":"Casillero del Diablo Dark Black / Red","d":""}},
-"CASTILLO DE MOLINA GRAN RESERVA /CABERNET SAUVIGNON 2021":{"en":{"n":"Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021","d":""},"pt":{"n":"Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021","d":""}},
-"Copa de Vino Tinto Reserva":{"en":{"n":"Glass of Reserve Red Wine","d":""},"pt":{"n":"Taça de Vinho Tinto Reserva","d":""}},
-"ESPUMANTE BARON LACROIX- MOSCATO -750 cc":{"en":{"n":"Baron Lacroix Sparkling Wine - Moscato - 750 cc","d":""},"pt":{"n":"Espumante Baron Lacroix - Moscato - 750 cc","d":""}},
-"FRIDA KAHLO - Gran Reserva -CARMENERE- VIÑA CARMEN 750 CC":{"en":{"n":"Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc","d":""},"pt":{"n":"Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc","d":""}},
-"Frida Kahlo Reserva Cabernet Sauvignon 2021":{"en":{"n":"Frida Kahlo Reserva Cabernet Sauvignon 2021","d":""},"pt":{"n":"Frida Kahlo Reserva Cabernet Sauvignon 2021","d":""}},
-"GREY - CABERNET SAUVIGNON 2019":{"en":{"n":"Grey - Cabernet Sauvignon 2019","d":""},"pt":{"n":"Grey - Cabernet Sauvignon 2019","d":""}},
-"KALFU MOLU":{"en":{"n":"Kalfu Molu","d":""},"pt":{"n":"Kalfu Molu","d":""}},
-"LA JOYA, GRAN RESERVA, CABERNET SAUVIGNON 2020, 750 cc":{"en":{"n":"La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc","d":""},"pt":{"n":"La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc","d":""}},
-"MEDALLA REAL  Cabernet Sauvignon":{"en":{"n":"Medalla Real Cabernet Sauvignon","d":""},"pt":{"n":"Medalla Real Cabernet Sauvignon","d":""}},
-"Medalla Real Sauvignon Blanc":{"en":{"n":"Medalla Real Sauvignon Blanc","d":""},"pt":{"n":"Medalla Real Sauvignon Blanc","d":""}},
-"Misiones de Rengo Chardonay 2003 D.O Valle de Casa Blanca":{"en":{"n":"Misiones de Rengo Chardonnay 2003 D.O. Casablanca Valley","d":""},"pt":{"n":"Misiones de Rengo Chardonnay 2003 D.O. Vale de Casablanca","d":""}},
-"MISIONES DE RENGO RESERVA - CARMENERE 2022":{"en":{"n":"Misiones de Rengo Reserva - Carmenère 2022","d":""},"pt":{"n":"Misiones de Rengo Reserva - Carmenère 2022","d":""}},
-"OVEJA NEGRA RESERVA CABERNET FRANC /CARMENERE 2022 750cc":{"en":{"n":"Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc","d":""},"pt":{"n":"Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc","d":""}},
-"RAMIRANA TRINIDAD (syrah-cab sauv-carmenere) 2019- 750 cc":{"en":{"n":"Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc","d":""},"pt":{"n":"Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc","d":""}},
-"SANGRE DE TORO ORIGINAL 2019 (GARNACHA /CARIGNAN) 750cc":{"en":{"n":"Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc","d":""},"pt":{"n":"Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc","d":""}},
-"TERRA ANDINA RESERVA  Cabernet Sauvignon 2021":{"en":{"n":"Terra Andina Reserva Cabernet Sauvignon 2021","d":""},"pt":{"n":"Terra Andina Reserva Cabernet Sauvignon 2021","d":""}},
-"VERTICE APALTA VINEYARD 2017":{"en":{"n":"Vértice Apalta Vineyard 2017","d":""},"pt":{"n":"Vértice Apalta Vineyard 2017","d":""}}
+  "Amaretto Disaronno Fizz": {
+    "en": {
+      "n": "Amaretto Disaronno Fizz",
+      "d": "(Amaretto, lemon and orange juice, simple syrup and tonic water)"
+    },
+    "pt": {
+      "n": "Amaretto Disaronno Fizz",
+      "d": "(Amaretto, suco de limão e laranja, xarope de açúcar e água tônica)"
+    },
+    "it": {
+      "n": "Amaretto Disaronno Fizz",
+      "d": "(Amaretto, succo di limone e arancia, sciroppo semplice e acqua tonica)"
+    },
+    "zh": {
+      "n": "Amaretto Disaronno Fizz",
+      "d": "(Amaretto、柠檬和橙汁、糖浆、汤力水)"
+    }
+  },
+  "Aperol Negroni": {
+    "en": {
+      "n": "Aperol Negroni",
+      "d": "(Aperol, gin and vermouth)"
+    },
+    "pt": {
+      "n": "Aperol Negroni",
+      "d": "(Aperol, gin e vermute)"
+    },
+    "it": {
+      "n": "Aperol Negroni",
+      "d": "(Aperol, gin e vermut)"
+    },
+    "zh": {
+      "n": "Aperol Negroni",
+      "d": "(Aperol、金酒和苦艾酒)"
+    }
+  },
+  "Caipirinha": {
+    "en": {
+      "n": "Caipirinha",
+      "d": "Classic, passion fruit or strawberry"
+    },
+    "pt": {
+      "n": "Caipirinha",
+      "d": "Tradicional, de maracujá ou de morango"
+    },
+    "it": {
+      "n": "Caipirinha",
+      "d": "Classica, al frutto della passione o alla fragola"
+    },
+    "zh": {
+      "n": "Caipirinha",
+      "d": "经典、百香果或草莓口味"
+    }
+  },
+  "Cocktail Gin de Verano (Gin  Red Bull Sandia)": {
+    "en": {
+      "n": "Summer Gin Cocktail (Gin + Red Bull Watermelon)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel Gin de Verão (Gin + Red Bull Melancia)",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail Gin d'Estate (Gin + Red Bull Anguria)",
+      "d": ""
+    },
+    "zh": {
+      "n": "夏日金酒鸡尾酒(金酒+红牛西瓜味)",
+      "d": ""
+    }
+  },
+  "Cocktail GIN del Dragon ( Gin  Red Bull Dragon)": {
+    "en": {
+      "n": "Dragon Gin Cocktail (Gin + Red Bull Dragon Fruit)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel Gin do Dragão (Gin + Red Bull Pitaya)",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail Gin del Drago (Gin + Red Bull Frutto del Drago)",
+      "d": ""
+    },
+    "zh": {
+      "n": "火龙果金酒鸡尾酒(金酒+红牛火龙果味)",
+      "d": ""
+    }
+  },
+  "Cocktail Gin Tropical (Gin  Red Bull Maracuya)": {
+    "en": {
+      "n": "Tropical Gin Cocktail (Gin + Red Bull Passion Fruit)",
+      "d": "(Gin + Red Bull Tropical)"
+    },
+    "pt": {
+      "n": "Coquetel Gin Tropical (Gin + Red Bull Maracujá)",
+      "d": "(Gin + Red Bull Tropical)"
+    },
+    "it": {
+      "n": "Cocktail Gin Tropicale (Gin + Red Bull Frutto della Passione)",
+      "d": "(Gin + Red Bull Tropical)"
+    },
+    "zh": {
+      "n": "热带金酒鸡尾酒(金酒+红牛百香果味)",
+      "d": "(金酒+红牛热带味)"
+    }
+  },
+  "Cocktail HGENDRICKS FIZZ": {
+    "en": {
+      "n": "Hendrick's Fizz Cocktail",
+      "d": "(Gin, lemon juice, simple syrup, soda)"
+    },
+    "pt": {
+      "n": "Coquetel Hendrick's Fizz",
+      "d": "(Gin, suco de limão, xarope de açúcar, soda)"
+    },
+    "it": {
+      "n": "Cocktail Hendrick's Fizz",
+      "d": "(Gin, succo di limone, sciroppo semplice, soda)"
+    },
+    "zh": {
+      "n": "Hendrick's Fizz鸡尾酒",
+      "d": "(金酒、柠檬汁、糖浆、苏打水)"
+    }
+  },
+  "Cocktail MARGARITA": {
+    "en": {
+      "n": "Margarita Cocktail",
+      "d": "(Tequila, triple sec, lime and salt)"
+    },
+    "pt": {
+      "n": "Coquetel Margarita",
+      "d": "(Tequila, triple sec, limão e sal)"
+    },
+    "it": {
+      "n": "Cocktail Margarita",
+      "d": "(Tequila, triple sec, lime e sale)"
+    },
+    "zh": {
+      "n": "Margarita鸡尾酒",
+      "d": "(龙舌兰酒、橙皮甜酒、青柠和盐)"
+    }
+  },
+  "Frutilla Colada": {
+    "en": {
+      "n": "Strawberry Colada",
+      "d": ""
+    },
+    "pt": {
+      "n": "Morango Colada",
+      "d": ""
+    },
+    "it": {
+      "n": "Fragola Colada",
+      "d": ""
+    },
+    "zh": {
+      "n": "草莓Colada",
+      "d": ""
+    }
+  },
+  "HUGO FREE SPRITZ": {
+    "en": {
+      "n": "Hugo Free Spritz",
+      "d": "Light and refreshing, the alcohol-free Hugo Spritz combines floral elderflower notes with fresh lime, mint and sparkling soda, making an elegant, perfectly balanced drink for any occasion."
+    },
+    "pt": {
+      "n": "Hugo Free Spritz",
+      "d": "Leve e refrescante, o Hugo Spritz sem álcool combina notas florais de sabugueiro com limão fresco, hortelã e soda borbulhante, criando uma bebida elegante e perfeitamente equilibrada para qualquer ocasião."
+    },
+    "it": {
+      "n": "Hugo Free Spritz",
+      "d": "Leggero e rinfrescante, l'Hugo Spritz analcolico unisce note floreali di fiori di sambuco a lime fresco, menta e soda frizzante, per una bevanda elegante e perfettamente equilibrata in ogni occasione."
+    },
+    "zh": {
+      "n": "Hugo Free Spritz",
+      "d": "清爽轻盈的无酒精Hugo Spritz,将接骨木花的花香与新鲜青柠、薄荷和气泡苏打水融合,是一款优雅而平衡的饮品,适合任何场合。"
+    }
+  },
+  "Mojito Cerveza": {
+    "en": {
+      "n": "Beer Mojito",
+      "d": "Choose: Corona, Heineken, Royal, Cusqueña"
+    },
+    "pt": {
+      "n": "Mojito de Cerveja",
+      "d": "Escolha: Corona, Heineken, Royal, Cusqueña"
+    },
+    "it": {
+      "n": "Mojito alla Birra",
+      "d": "Scegli: Corona, Heineken, Royal, Cusqueña"
+    },
+    "zh": {
+      "n": "啤酒莫吉托",
+      "d": "可选:Corona、Heineken、Royal、Cusqueña"
+    }
+  },
+  "Mojito Cerveza Premium": {
+    "en": {
+      "n": "Premium Beer Mojito",
+      "d": "Choose: Kunstmann Torobayo, Kunstmann Miel, Austral Calafate, Dolbek Maki"
+    },
+    "pt": {
+      "n": "Mojito de Cerveja Premium",
+      "d": "Escolha: Kunstmann Torobayo, Kunstmann Miel, Austral Calafate, Dolbek Maki"
+    },
+    "it": {
+      "n": "Mojito alla Birra Premium",
+      "d": "Scegli: Kunstmann Torobayo, Kunstmann Miel, Austral Calafate, Dolbek Maki"
+    },
+    "zh": {
+      "n": "高级啤酒莫吉托",
+      "d": "可选:Kunstmann Torobayo、Kunstmann Miel、Austral Calafate、Dolbek Maki"
+    }
+  },
+  "MOJITO Cubano Ron Bacardí": {
+    "en": {
+      "n": "Cuban Mojito with Bacardí Rum",
+      "d": ""
+    },
+    "pt": {
+      "n": "Mojito Cubano com Rum Bacardí",
+      "d": ""
+    },
+    "it": {
+      "n": "Mojito Cubano con Rum Bacardí",
+      "d": ""
+    },
+    "zh": {
+      "n": "古巴莫吉托(百加得朗姆酒)",
+      "d": ""
+    }
+  },
+  "MOJITO Espumante": {
+    "en": {
+      "n": "Sparkling Wine Mojito",
+      "d": ""
+    },
+    "pt": {
+      "n": "Mojito de Espumante",
+      "d": ""
+    },
+    "it": {
+      "n": "Mojito allo Spumante",
+      "d": ""
+    },
+    "zh": {
+      "n": "起泡酒莫吉托",
+      "d": ""
+    }
+  },
+  "MOJITO Frutal": {
+    "en": {
+      "n": "Fruit Mojito",
+      "d": "with natural fruit pulp and Bacardí rum (mango, passion fruit or strawberry)"
+    },
+    "pt": {
+      "n": "Mojito Frutal",
+      "d": "com polpa de fruta natural e rum Bacardí (manga, maracujá ou morango)"
+    },
+    "it": {
+      "n": "Mojito alla Frutta",
+      "d": "con polpa di frutta naturale e rum Bacardí (mango, frutto della passione o fragola)"
+    },
+    "zh": {
+      "n": "水果莫吉托",
+      "d": "加入天然果肉和百加得朗姆酒(芒果、百香果或草莓)"
+    }
+  },
+  "MOJITO Malibu": {
+    "en": {
+      "n": "Malibu Mojito",
+      "d": "Tropical and refreshing, the Malibu Mojito blends the sweetness of coconut rum with fresh lime, mint and a touch of bubbles, for a smooth, vibrant Caribbean take on the classic mojito."
+    },
+    "pt": {
+      "n": "Mojito Malibu",
+      "d": "Tropical e refrescante, o Mojito Malibu mistura a doçura do rum de coco com limão fresco, hortelã e um toque borbulhante, resultando numa versão caribenha, suave e vibrante do clássico mojito."
+    },
+    "it": {
+      "n": "Mojito Malibu",
+      "d": "Tropicale e rinfrescante, il Mojito Malibu unisce la dolcezza del rum al cocco con lime fresco, menta e un tocco di bollicine, per una versione caraibica morbida e vivace del classico mojito."
+    },
+    "zh": {
+      "n": "Malibu莫吉托",
+      "d": "热带清爽的Malibu莫吉托,将椰子朗姆酒的甜味与新鲜青柠、薄荷和一丝气泡相融合,是经典莫吉托顺滑而活力四射的加勒比风味。"
+    }
+  },
+  "Piña Colada  🍍": {
+    "en": {
+      "n": "Piña Colada",
+      "d": "The original recipe that conquered the world."
+    },
+    "pt": {
+      "n": "Piña Colada",
+      "d": "A receita original que conquistou o mundo."
+    },
+    "it": {
+      "n": "Piña Colada",
+      "d": "La ricetta originale che ha conquistato il mondo."
+    },
+    "zh": {
+      "n": "Piña Colada",
+      "d": "征服世界的原版配方。"
+    }
+  },
+  "Piña Colada Pink 🍓": {
+    "en": {
+      "n": "Pink Piña Colada",
+      "d": "The classic with an irresistible twist of fresh strawberries. (Pineapple and strawberries)"
+    },
+    "pt": {
+      "n": "Piña Colada Pink",
+      "d": "A clássica com um toque irresistível de morangos frescos. (Abacaxi e morangos)"
+    },
+    "it": {
+      "n": "Piña Colada Pink",
+      "d": "La classica con un irresistibile tocco di fragole fresche. (Ananas e fragole)"
+    },
+    "zh": {
+      "n": "粉红Piña Colada",
+      "d": "经典口味,加入令人难以抗拒的新鲜草莓。(菠萝和草莓)"
+    }
+  },
+  "Piña Colada Tropical": {
+    "en": {
+      "n": "Tropical Piña Colada",
+      "d": "An exotic explosion of pineapple and passion fruit."
+    },
+    "pt": {
+      "n": "Piña Colada Tropical",
+      "d": "A explosão exótica de abacaxi e maracujá."
+    },
+    "it": {
+      "n": "Piña Colada Tropicale",
+      "d": "L'esplosione esotica di ananas e frutto della passione."
+    },
+    "zh": {
+      "n": "热带Piña Colada",
+      "d": "菠萝与百香果的异域风味大爆发。"
+    }
+  },
+  "Sour Amaretto": {
+    "en": {
+      "n": "Amaretto Sour",
+      "d": "Disaronno"
+    },
+    "pt": {
+      "n": "Amaretto Sour",
+      "d": "Disaronno"
+    },
+    "it": {
+      "n": "Amaretto Sour",
+      "d": "Disaronno"
+    },
+    "zh": {
+      "n": "Amaretto Sour",
+      "d": "Disaronno"
+    }
+  },
+  "Sour CATEDRAL 40º (GRAN CRUZ-PERUANO)": {
+    "en": {
+      "n": "Catedral 40º Pisco Sour (Gran Cruz - Peruvian)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Pisco Sour Catedral 40º (Gran Cruz - Peruano)",
+      "d": ""
+    },
+    "it": {
+      "n": "Pisco Sour Catedral 40º (Gran Cruz - Peruviano)",
+      "d": ""
+    },
+    "zh": {
+      "n": "Catedral 40º皮斯科酸酒(Gran Cruz,秘鲁产)",
+      "d": ""
+    }
+  },
+  "Sour CATEDRAL 40º(BARSOL-PERUANO)": {
+    "en": {
+      "n": "Catedral 40º Pisco Sour (Barsol - Peruvian)",
+      "d": "Choose classic, mango or passion fruit"
+    },
+    "pt": {
+      "n": "Pisco Sour Catedral 40º (Barsol - Peruano)",
+      "d": "Escolha tradicional, manga ou maracujá"
+    },
+    "it": {
+      "n": "Pisco Sour Catedral 40º (Barsol - Peruviano)",
+      "d": "Scegli classico, mango o frutto della passione"
+    },
+    "zh": {
+      "n": "Catedral 40º皮斯科酸酒(Barsol,秘鲁产)",
+      "d": "可选经典、芒果或百香果口味"
+    }
+  },
+  "Sour Chardonay (Soft Drink)": {
+    "en": {
+      "n": "Chardonnay Sour (Soft Drink)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Chardonnay Sour (Sem álcool)",
+      "d": ""
+    },
+    "it": {
+      "n": "Chardonnay Sour (Analcolico)",
+      "d": ""
+    },
+    "zh": {
+      "n": "霞多丽酸酒(无酒精)",
+      "d": ""
+    }
+  },
+  "Sour de Mango Azapeño": {
+    "en": {
+      "n": "Azapa Mango Sour",
+      "d": ""
+    },
+    "pt": {
+      "n": "Sour de Manga Azapeño",
+      "d": ""
+    },
+    "it": {
+      "n": "Sour al Mango di Azapa",
+      "d": ""
+    },
+    "zh": {
+      "n": "阿萨帕芒果酸酒",
+      "d": ""
+    }
+  },
+  "Sour Macerado Catedral": {
+    "en": {
+      "n": "Catedral Infused Sour",
+      "d": "Rosemary and ginger / cinnamon"
+    },
+    "pt": {
+      "n": "Sour Macerado Catedral",
+      "d": "Alecrim e gengibre / canela"
+    },
+    "it": {
+      "n": "Sour Macerato Catedral",
+      "d": "Rosmarino e zenzero / cannella"
+    },
+    "zh": {
+      "n": "Catedral浸渍酸酒",
+      "d": "迷迭香和姜 / 肉桂"
+    }
+  },
+  "Sour Maracuya Apasionada": {
+    "en": {
+      "n": "Passionate Passion Fruit Sour",
+      "d": ""
+    },
+    "pt": {
+      "n": "Sour de Maracujá Apaixonada",
+      "d": ""
+    },
+    "it": {
+      "n": "Sour al Frutto della Passione Appassionata",
+      "d": ""
+    },
+    "zh": {
+      "n": "热情百香果酸酒",
+      "d": ""
+    }
+  },
+  "Sour Pisco 40º (BAUZA - CHILENO)": {
+    "en": {
+      "n": "Pisco Sour 40º (Bauzá - Chilean)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Pisco Sour 40º (Bauzá - Chileno)",
+      "d": ""
+    },
+    "it": {
+      "n": "Pisco Sour 40º (Bauzá - Cileno)",
+      "d": ""
+    },
+    "zh": {
+      "n": "皮斯科酸酒40º(Bauzá,智利产)",
+      "d": ""
+    }
+  },
+  "Sour Ramazzotti": {
+    "en": {
+      "n": "Ramazzotti Sour",
+      "d": ""
+    },
+    "pt": {
+      "n": "Ramazzotti Sour",
+      "d": ""
+    },
+    "it": {
+      "n": "Ramazzotti Sour",
+      "d": ""
+    },
+    "zh": {
+      "n": "Ramazzotti Sour",
+      "d": ""
+    }
+  },
+  "Spritz Aperol": {
+    "en": {
+      "n": "Aperol Spritz",
+      "d": ""
+    },
+    "pt": {
+      "n": "Aperol Spritz",
+      "d": ""
+    },
+    "it": {
+      "n": "Aperol Spritz",
+      "d": ""
+    },
+    "zh": {
+      "n": "Aperol Spritz",
+      "d": ""
+    }
+  },
+  "Spritz Chambord": {
+    "en": {
+      "n": "Chambord Spritz",
+      "d": "Chambord (red berries) (sparkling wine, mineral water)"
+    },
+    "pt": {
+      "n": "Chambord Spritz",
+      "d": "Chambord (frutas vermelhas) (espumante, água mineral)"
+    },
+    "it": {
+      "n": "Chambord Spritz",
+      "d": "Chambord (frutti rossi) (spumante, acqua minerale)"
+    },
+    "zh": {
+      "n": "Chambord Spritz",
+      "d": "Chambord(红莓)(起泡酒、矿泉水)"
+    }
+  },
+  "Spritz Cynar (Alcachofa)": {
+    "en": {
+      "n": "Cynar Spritz (Artichoke)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cynar Spritz (Alcachofra)",
+      "d": ""
+    },
+    "it": {
+      "n": "Cynar Spritz (Carciofo)",
+      "d": ""
+    },
+    "zh": {
+      "n": "Cynar Spritz(洋蓟)",
+      "d": ""
+    }
+  },
+  "Spritz de Varo´s": {
+    "en": {
+      "n": "Varo's Spritz",
+      "d": "(Aperol, passion fruit, sparkling wine and sparkling water)"
+    },
+    "pt": {
+      "n": "Spritz do Varo's",
+      "d": "(Aperol, maracujá, espumante e água com gás)"
+    },
+    "it": {
+      "n": "Spritz di Varo's",
+      "d": "(Aperol, frutto della passione, spumante e acqua frizzante)"
+    },
+    "zh": {
+      "n": "Varo's特调Spritz",
+      "d": "(Aperol、百香果、起泡酒和气泡水)"
+    }
+  },
+  "Spritz Parfait Amour": {
+    "en": {
+      "n": "Parfait Amour Spritz",
+      "d": "(Parfait Amour, sparkling wine, mineral water)"
+    },
+    "pt": {
+      "n": "Parfait Amour Spritz",
+      "d": "(Parfait Amour, espumante, água mineral)"
+    },
+    "it": {
+      "n": "Parfait Amour Spritz",
+      "d": "(Parfait Amour, spumante, acqua minerale)"
+    },
+    "zh": {
+      "n": "Parfait Amour Spritz",
+      "d": "(Parfait Amour、起泡酒、矿泉水)"
+    }
+  },
+  "Spritz Ramazzotti": {
+    "en": {
+      "n": "Ramazzotti Spritz",
+      "d": "Rosato / Violetto (sparkling wine, mineral water)"
+    },
+    "pt": {
+      "n": "Ramazzotti Spritz",
+      "d": "Rosato / Violetto (espumante, água mineral)"
+    },
+    "it": {
+      "n": "Ramazzotti Spritz",
+      "d": "Rosato / Violetto (spumante, acqua minerale)"
+    },
+    "zh": {
+      "n": "Ramazzotti Spritz",
+      "d": "Rosato / Violetto(起泡酒、矿泉水)"
+    }
+  },
+  "Spritz St Germain": {
+    "en": {
+      "n": "St Germain Spritz",
+      "d": "(St Germain, sparkling wine, mineral water)"
+    },
+    "pt": {
+      "n": "St Germain Spritz",
+      "d": "(St Germain, espumante, água mineral)"
+    },
+    "it": {
+      "n": "St Germain Spritz",
+      "d": "(St Germain, spumante, acqua minerale)"
+    },
+    "zh": {
+      "n": "St Germain Spritz",
+      "d": "(St Germain、起泡酒、矿泉水)"
+    }
+  },
+  "-TIRADITO DE SALMON AHUMADO": {
+    "en": {
+      "n": "Smoked Salmon Tiradito",
+      "d": "Our smoked salmon tiradito brings together the best of the sea with a fresh citrus touch, making it light, flavorful and perfect to start."
+    },
+    "pt": {
+      "n": "Tiradito de Salmão Defumado",
+      "d": "Nosso tiradito de salmão defumado une o melhor do mar com um toque cítrico e fresco que o torna leve, saboroso e perfeito para começar."
+    },
+    "it": {
+      "n": "Tiradito di Salmone Affumicato",
+      "d": "Il nostro tiradito di salmone affumicato unisce il meglio del mare a un fresco tocco di agrumi, rendendolo leggero, saporito e perfetto per iniziare."
+    },
+    "zh": {
+      "n": "烟熏三文鱼提拉迪托",
+      "d": "我们的烟熏三文鱼提拉迪托汇集大海的精华,配以清新的柑橘风味,清爽可口,是开胃的绝佳之选。"
+    }
+  },
+  "CAUSA & PULPO AL OLIVO": {
+    "en": {
+      "n": "Causa with Octopus in Olive Sauce",
+      "d": "Filled with tender octopus pieces covered in a smooth Azapa olive cream."
+    },
+    "pt": {
+      "n": "Causa com Polvo ao Olivo",
+      "d": "Recheada com pedaços macios de polvo cobertos por um suave creme de azeitonas de Azapa."
+    },
+    "it": {
+      "n": "Causa con Polpo all'Olivo",
+      "d": "Farcita con morbidi pezzi di polpo ricoperti da una vellutata crema di olive di Azapa."
+    },
+    "zh": {
+      "n": "橄榄酱章鱼卡乌萨",
+      "d": "内馅是软嫩的章鱼块,淋上细滑的阿萨帕橄榄奶油酱。"
+    }
+  },
+  "CAUSA LIMEÑA ACEVICHADA": {
+    "en": {
+      "n": "Causa Limeña Acevichada",
+      "d": "Topped with fish ceviche in creamy leche de tigre."
+    },
+    "pt": {
+      "n": "Causa Limeña Acevichada",
+      "d": "Coberta com ceviche de peixe em cremoso leite de tigre."
+    },
+    "it": {
+      "n": "Causa Limeña Acevichada",
+      "d": "Ricoperta di ceviche di pesce in cremosa leche de tigre."
+    },
+    "zh": {
+      "n": "Causa Limeña配鱼肉酸橘汁腌鱼",
+      "d": "上面铺着浸在浓滑虎奶汁中的鱼肉酸橘汁腌鱼。"
+    }
+  },
+  "CAUSA LIMEÑA CON POLLO": {
+    "en": {
+      "n": "Causa Limeña with Chicken",
+      "d": "Smooth yellow potato purée with ají amarillo, filled with shredded chicken, mayonnaise and avocado."
+    },
+    "pt": {
+      "n": "Causa Limeña com Frango",
+      "d": "Suave purê de batata amarela com ají amarillo, recheado com frango desfiado, maionese e abacate."
+    },
+    "it": {
+      "n": "Causa Limeña con Pollo",
+      "d": "Morbido purè di patate gialle con ají amarillo, farcito con pollo sfilacciato, maionese e avocado."
+    },
+    "zh": {
+      "n": "Causa Limeña配鸡肉",
+      "d": "细腻的黄土豆泥拌黄辣椒,内馅是鸡丝、蛋黄酱和牛油果。"
+    }
+  },
+  "CAUSA LIMEÑA DE CAMARONES EN SALSA GOLF": {
+    "en": {
+      "n": "Causa Limeña with Shrimp in Golf Sauce",
+      "d": "Shrimp in Golf sauce over our traditional causa base."
+    },
+    "pt": {
+      "n": "Causa Limeña de Camarões com Molho Golf",
+      "d": "Camarões com molho Golf sobre nossa tradicional base de causa."
+    },
+    "it": {
+      "n": "Causa Limeña di Gamberetti con Salsa Golf",
+      "d": "Gamberetti in salsa Golf sulla nostra tradizionale base di causa."
+    },
+    "zh": {
+      "n": "Causa Limeña配虾仁高尔夫酱",
+      "d": "高尔夫酱虾仁,铺在我们传统的卡乌萨底上。"
+    }
+  },
+  "CEVICHE MIXTO": {
+    "en": {
+      "n": "Mixed Ceviche",
+      "d": "Mix of sea bass and shellfish such as mussels, clams and octopus with onion, cilantro and leche de tigre."
+    },
+    "pt": {
+      "n": "Ceviche Misto",
+      "d": "Mistura de corvina e frutos do mar como mexilhões, amêijoas e polvo com cebola, coentro e leite de tigre."
+    },
+    "it": {
+      "n": "Ceviche Misto",
+      "d": "Mix di branzino e frutti di mare come cozze, vongole e polpo con cipolla, coriandolo e leche de tigre."
+    },
+    "zh": {
+      "n": "综合酸橘汁腌鱼",
+      "d": "海鲈鱼与贻贝、蛤蜊、章鱼等海鲜的组合,配洋葱、香菜和虎奶汁。"
+    }
+  },
+  "CEVICHE TRADICIONAL": {
+    "en": {
+      "n": "Traditional Ceviche",
+      "d": "The sea served at its freshest!"
+    },
+    "pt": {
+      "n": "Ceviche Tradicional",
+      "d": "O mar servido na sua forma mais fresca!"
+    },
+    "it": {
+      "n": "Ceviche Tradizionale",
+      "d": "Il mare servito nella sua massima freschezza!"
+    },
+    "zh": {
+      "n": "传统酸橘汁腌鱼",
+      "d": "最新鲜的大海风味!"
+    }
+  },
+  "ENSALADA CESAR AL ESTILO VARO`S": {
+    "en": {
+      "n": "Varo's-Style Caesar Salad",
+      "d": "(Romaine lettuce, croutons, Parmesan cheese, black olives and cherry tomatoes.)"
+    },
+    "pt": {
+      "n": "Salada Caesar Estilo Varo's",
+      "d": "(Alface romana, croutons, queijo parmesão, azeitonas pretas e tomate-cereja.)"
+    },
+    "it": {
+      "n": "Insalata Caesar Stile Varo's",
+      "d": "(Lattuga romana, crostini, parmigiano, olive nere e pomodorini.)"
+    },
+    "zh": {
+      "n": "Varo's风格凯撒沙拉",
+      "d": "(罗马生菜、面包丁、帕玛森奶酪、黑橄榄和圣女果。)"
+    }
+  },
+  "PALTA REINA (Coronada con Pollo y mayonesa en mix de hojas verdes)": {
+    "en": {
+      "n": "Palta Reina",
+      "d": "Avocado topped with chicken and mayonnaise on mixed greens"
+    },
+    "pt": {
+      "n": "Palta Reina",
+      "d": "Abacate coberto com frango e maionese sobre mix de folhas verdes"
+    },
+    "it": {
+      "n": "Palta Reina",
+      "d": "Avocado ricoperto di pollo e maionese su mix di insalate verdi"
+    },
+    "zh": {
+      "n": "Palta Reina",
+      "d": "牛油果配鸡肉和蛋黄酱,铺在混合青菜上"
+    }
+  },
+  "PULPO A LA OLIVA": {
+    "en": {
+      "n": "Octopus in Olive Sauce",
+      "d": "Thin slices of octopus in leche de tigre with Azapa olives"
+    },
+    "pt": {
+      "n": "Polvo à Oliva",
+      "d": "Finas fatias de polvo com leite de tigre e azeitonas de Azapa"
+    },
+    "it": {
+      "n": "Polpo all'Oliva",
+      "d": "Sottili fettine di polpo in leche de tigre con olive di Azapa"
+    },
+    "zh": {
+      "n": "橄榄酱章鱼",
+      "d": "薄切章鱼浸在虎奶汁中,配阿萨帕橄榄"
+    }
+  },
+  "TIRADITO NIKKEI": {
+    "en": {
+      "n": "Nikkei Tiradito",
+      "d": "Order it with sea bass or octopus (thin slices in leche de tigre with a touch of ají amarillo and sesame)"
+    },
+    "pt": {
+      "n": "Tiradito Nikkei",
+      "d": "Peça com corvina ou polvo (finas fatias em leite de tigre com um toque de ají amarillo e gergelim)"
+    },
+    "it": {
+      "n": "Tiradito Nikkei",
+      "d": "Ordinalo con branzino o polpo (fettine sottili in leche de tigre con un tocco di ají amarillo e sesamo)"
+    },
+    "zh": {
+      "n": "日裔风味提拉迪托",
+      "d": "可选海鲈鱼或章鱼(薄切浸在虎奶汁中,略带黄辣椒和芝麻风味)"
+    }
+  },
+  "TRILOGIA DE CAUSA LIMEÑA": {
+    "en": {
+      "n": "Causa Limeña Trilogy",
+      "d": "Shrimp, chicken and octopus in 3 sauces: olive, ají amarillo and garlic."
+    },
+    "pt": {
+      "n": "Trilogia de Causa Limeña",
+      "d": "Camarão, frango e polvo em 3 molhos: azeitona, ají amarillo e alho."
+    },
+    "it": {
+      "n": "Trilogia di Causa Limeña",
+      "d": "Gamberetti, pollo e polpo in 3 salse: oliva, ají amarillo e aglio."
+    },
+    "zh": {
+      "n": "Causa Limeña三重奏",
+      "d": "虾、鸡肉和章鱼配三种酱:橄榄、黄辣椒和大蒜。"
+    }
+  },
+  "ARROZ TRADICIONAL": {
+    "en": {
+      "n": "Traditional Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Arroz Tradicional",
+      "d": ""
+    },
+    "it": {
+      "n": "Riso Tradizionale",
+      "d": ""
+    },
+    "zh": {
+      "n": "传统米饭",
+      "d": ""
+    }
+  },
+  "ENSALADA CHILENA": {
+    "en": {
+      "n": "Chilean Salad",
+      "d": ""
+    },
+    "pt": {
+      "n": "Salada Chilena",
+      "d": ""
+    },
+    "it": {
+      "n": "Insalata Cilena",
+      "d": ""
+    },
+    "zh": {
+      "n": "智利沙拉",
+      "d": ""
+    }
+  },
+  "ENSALADA SURTIDA": {
+    "en": {
+      "n": "Mixed Salad",
+      "d": ""
+    },
+    "pt": {
+      "n": "Salada Mista",
+      "d": ""
+    },
+    "it": {
+      "n": "Insalata Mista",
+      "d": ""
+    },
+    "zh": {
+      "n": "什锦沙拉",
+      "d": ""
+    }
+  },
+  "ENSALADA VERDE (Palta, lechuga, pepino, zapallo italiano)": {
+    "en": {
+      "n": "Green Salad (avocado, lettuce, cucumber, zucchini)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Salada Verde (abacate, alface, pepino, abobrinha)",
+      "d": ""
+    },
+    "it": {
+      "n": "Insalata Verde (avocado, lattuga, cetriolo, zucchine)",
+      "d": ""
+    },
+    "zh": {
+      "n": "青菜沙拉(牛油果、生菜、黄瓜、西葫芦)",
+      "d": ""
+    }
+  },
+  "PAPAS A LA HUANCAINA": {
+    "en": {
+      "n": "Potatoes a la Huancaína",
+      "d": ""
+    },
+    "pt": {
+      "n": "Batatas à Huancaína",
+      "d": ""
+    },
+    "it": {
+      "n": "Patate alla Huancaína",
+      "d": ""
+    },
+    "zh": {
+      "n": "万卡依纳酱土豆",
+      "d": ""
+    }
+  },
+  "PAPAS FRITAS": {
+    "en": {
+      "n": "French Fries",
+      "d": ""
+    },
+    "pt": {
+      "n": "Batatas Fritas",
+      "d": ""
+    },
+    "it": {
+      "n": "Patatine Fritte",
+      "d": ""
+    },
+    "zh": {
+      "n": "炸薯条",
+      "d": ""
+    }
+  },
+  "PAPAS SALTEADAS AL PROVENZAL": {
+    "en": {
+      "n": "Provençal Sautéed Potatoes",
+      "d": ""
+    },
+    "pt": {
+      "n": "Batatas Salteadas à Provençal",
+      "d": ""
+    },
+    "it": {
+      "n": "Patate Saltate alla Provenzale",
+      "d": ""
+    },
+    "zh": {
+      "n": "普罗旺斯风味炒土豆",
+      "d": ""
+    }
+  },
+  "PURE TRADICIONAL / PURE AL MERKEN": {
+    "en": {
+      "n": "Traditional Mashed Potatoes / Merkén Mashed Potatoes",
+      "d": ""
+    },
+    "pt": {
+      "n": "Purê Tradicional / Purê de Merkén",
+      "d": ""
+    },
+    "it": {
+      "n": "Purè Tradizionale / Purè al Merkén",
+      "d": ""
+    },
+    "zh": {
+      "n": "传统土豆泥 / Merkén辣椒土豆泥",
+      "d": ""
+    }
+  },
+  "VEGETALES SALTEADOS ORIENTAL": {
+    "en": {
+      "n": "Oriental Sautéed Vegetables",
+      "d": ""
+    },
+    "pt": {
+      "n": "Legumes Salteados Estilo Oriental",
+      "d": ""
+    },
+    "it": {
+      "n": "Verdure Saltate all'Orientale",
+      "d": ""
+    },
+    "zh": {
+      "n": "东方风味炒蔬菜",
+      "d": ""
+    }
+  },
+  "ARROZ AL OLIVO": {
+    "en": {
+      "n": "Olive Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Arroz ao Olivo",
+      "d": ""
+    },
+    "it": {
+      "n": "Riso all'Olivo",
+      "d": ""
+    },
+    "zh": {
+      "n": "橄榄饭",
+      "d": ""
+    }
+  },
+  "ENSALADA DE PAPAS MAYO": {
+    "en": {
+      "n": "Potato Salad with Mayonnaise",
+      "d": ""
+    },
+    "pt": {
+      "n": "Salada de Batata com Maionese",
+      "d": ""
+    },
+    "it": {
+      "n": "Insalata di Patate con Maionese",
+      "d": ""
+    },
+    "zh": {
+      "n": "蛋黄酱土豆沙拉",
+      "d": ""
+    }
+  },
+  "PAN EXTRA": {
+    "en": {
+      "n": "Extra Bread",
+      "d": ""
+    },
+    "pt": {
+      "n": "Pão Extra",
+      "d": ""
+    },
+    "it": {
+      "n": "Pane Extra",
+      "d": ""
+    },
+    "zh": {
+      "n": "加面包",
+      "d": ""
+    }
+  },
+  "Menú del Día (Martes a Domingo)": {
+    "en": {
+      "n": "Menu of the Day (Tuesday to Sunday)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Menu do Dia (Terça a Domingo)",
+      "d": ""
+    },
+    "it": {
+      "n": "Menù del Giorno (Da Martedì a Domenica)",
+      "d": ""
+    },
+    "zh": {
+      "n": "今日套餐(周二至周日)",
+      "d": ""
+    }
+  },
+  "Ceviche Tradicional": {
+    "en": {
+      "n": "Traditional Ceviche",
+      "d": ""
+    },
+    "pt": {
+      "n": "Ceviche Tradicional",
+      "d": ""
+    },
+    "it": {
+      "n": "Ceviche Tradizionale",
+      "d": ""
+    },
+    "zh": {
+      "n": "传统酸橘汁腌鱼",
+      "d": ""
+    }
+  },
+  "Causa Limeña de pollo": {
+    "en": {
+      "n": "Causa Limeña with Chicken",
+      "d": ""
+    },
+    "pt": {
+      "n": "Causa Limeña de Frango",
+      "d": ""
+    },
+    "it": {
+      "n": "Causa Limeña di Pollo",
+      "d": ""
+    },
+    "zh": {
+      "n": "鸡肉Causa Limeña",
+      "d": ""
+    }
+  },
+  "Crema de Coliflor con Champiñones": {
+    "en": {
+      "n": "Cream of Cauliflower Soup with Mushrooms",
+      "d": ""
+    },
+    "pt": {
+      "n": "Creme de Couve-flor com Cogumelos",
+      "d": ""
+    },
+    "it": {
+      "n": "Crema di Cavolfiore con Funghi",
+      "d": ""
+    },
+    "zh": {
+      "n": "菜花蘑菇浓汤",
+      "d": ""
+    }
+  },
+  "Palta Reina": {
+    "en": {
+      "n": "Palta Reina",
+      "d": "Stuffed avocado with chicken salad"
+    },
+    "pt": {
+      "n": "Palta Reina",
+      "d": "Abacate recheado com salada de frango"
+    },
+    "it": {
+      "n": "Palta Reina",
+      "d": "Avocado ripieno di insalata di pollo"
+    },
+    "zh": {
+      "n": "Palta Reina",
+      "d": "牛油果酿鸡肉沙拉"
+    }
+  },
+  "Papa huancaina": {
+    "en": {
+      "n": "Papa a la Huancaína",
+      "d": "Potatoes in creamy yellow chili and cheese sauce"
+    },
+    "pt": {
+      "n": "Papa à Huancaína",
+      "d": "Batatas com creme de ají amarillo e queijo"
+    },
+    "it": {
+      "n": "Papa a la Huancaína",
+      "d": "Patate in crema di peperoncino giallo e formaggio"
+    },
+    "zh": {
+      "n": "万卡依纳酱土豆",
+      "d": "土豆配黄辣椒奶酪奶油酱"
+    }
+  },
+  "Carne a la olla con Papas Salteadas": {
+    "en": {
+      "n": "Pot Roast Beef with Sautéed Potatoes",
+      "d": ""
+    },
+    "pt": {
+      "n": "Carne de Panela com Batatas Salteadas",
+      "d": ""
+    },
+    "it": {
+      "n": "Carne in Umido con Patate Saltate",
+      "d": ""
+    },
+    "zh": {
+      "n": "炖牛肉配炒土豆",
+      "d": ""
+    }
+  },
+  "Costillar de Cerdo con Arroz Chaufa": {
+    "en": {
+      "n": "Pork Ribs with Chaufa Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Costelas de Porco com Arroz Chaufa",
+      "d": ""
+    },
+    "it": {
+      "n": "Costine di Maiale con Riso Chaufa",
+      "d": ""
+    },
+    "zh": {
+      "n": "猪肋排配Chaufa炒饭",
+      "d": ""
+    }
+  },
+  "Suprema a la Plancha con Salsa de Queso y Arroz al Olivo": {
+    "en": {
+      "n": "Grilled Chicken Breast with Cheese Sauce and Olive Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Peito de Frango Grelhado com Molho de Queijo e Arroz ao Olivo",
+      "d": ""
+    },
+    "it": {
+      "n": "Petto di Pollo alla Piastra con Salsa al Formaggio e Riso all'Olivo",
+      "d": ""
+    },
+    "zh": {
+      "n": "铁板鸡胸配奶酪酱和橄榄饭",
+      "d": ""
+    }
+  },
+  "Picante de GUata con Arroz": {
+    "en": {
+      "n": "Picante de Guata with Rice",
+      "d": "Spicy beef tripe stew with rice"
+    },
+    "pt": {
+      "n": "Picante de Guata com Arroz",
+      "d": "Ensopado picante de bucho bovino com arroz"
+    },
+    "it": {
+      "n": "Picante de Guata con Riso",
+      "d": "Stufato piccante di trippa di manzo con riso"
+    },
+    "zh": {
+      "n": "Picante de Guata配米饭",
+      "d": "香辣牛肚炖菜配米饭"
+    }
+  },
+  "Tallarines con Albacora y Salsa Putanesca": {
+    "en": {
+      "n": "Tagliatelle with Swordfish and Puttanesca Sauce",
+      "d": ""
+    },
+    "pt": {
+      "n": "Talharim com Espadarte e Molho Puttanesca",
+      "d": ""
+    },
+    "it": {
+      "n": "Tagliatelle con Pesce Spada e Salsa Puttanesca",
+      "d": ""
+    },
+    "zh": {
+      "n": "旗鱼配塔利亚泰利面和puttanesca酱",
+      "d": ""
+    }
+  },
+  "Selección de Postres": {
+    "en": {
+      "n": "Dessert Selection",
+      "d": ""
+    },
+    "pt": {
+      "n": "Seleção de Sobremesas",
+      "d": ""
+    },
+    "it": {
+      "n": "Selezione di Dolci",
+      "d": ""
+    },
+    "zh": {
+      "n": "甜点拼盘",
+      "d": ""
+    }
+  },
+  "ATARDECER": {
+    "en": {
+      "n": "Sunset",
+      "d": "Hibiscus, mango, passion fruit, ginger ale"
+    },
+    "pt": {
+      "n": "Entardecer",
+      "d": "Hibisco, manga, maracujá, ginger ale"
+    },
+    "it": {
+      "n": "Tramonto",
+      "d": "Ibisco, mango, frutto della passione, ginger ale"
+    },
+    "zh": {
+      "n": "黄昏",
+      "d": "木槿花、芒果、百香果、姜汁汽水"
+    }
+  },
+  "BODA AZAPEÑA": {
+    "en": {
+      "n": "Azapa Wedding",
+      "d": "(Mango and passion fruit mix with mint)"
+    },
+    "pt": {
+      "n": "Casamento Azapeño",
+      "d": "(Mix de manga e maracujá com hortelã)"
+    },
+    "it": {
+      "n": "Nozze di Azapa",
+      "d": "(Mix di mango e frutto della passione con menta)"
+    },
+    "zh": {
+      "n": "阿萨帕婚礼",
+      "d": "(芒果百香果混合,配薄荷)"
+    }
+  },
+  "FROZEN LIMONADA HIERBA BUENA & JENGIBRE": {
+    "en": {
+      "n": "Frozen Mint & Ginger Lemonade",
+      "d": ""
+    },
+    "pt": {
+      "n": "Limonada Gelada de Hortelã e Gengibre",
+      "d": ""
+    },
+    "it": {
+      "n": "Limonata Frozen Menta e Zenzero",
+      "d": ""
+    },
+    "zh": {
+      "n": "冰沙薄荷姜柠檬水",
+      "d": ""
+    }
+  },
+  "Jugo Limonada Hierba Buena y Jengibre": {
+    "en": {
+      "n": "Mint and Ginger Lemonade",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Limonada de Hortelã e Gengibre",
+      "d": "Preparada com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Limonata Menta e Zenzero",
+      "d": "Preparata con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "薄荷姜柠檬水",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "Jugo Limonada Tradicional": {
+    "en": {
+      "n": "Traditional Lemonade",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Limonada Tradicional",
+      "d": "Preparada com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Limonata Tradizionale",
+      "d": "Preparata con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "传统柠檬水",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "Jugo Natural de 1 Litro": {
+    "en": {
+      "n": "Fresh Juice, 1 Liter",
+      "d": ""
+    },
+    "pt": {
+      "n": "Suco Natural de 1 Litro",
+      "d": ""
+    },
+    "it": {
+      "n": "Succo Naturale da 1 Litro",
+      "d": ""
+    },
+    "zh": {
+      "n": "天然果汁1升",
+      "d": ""
+    }
+  },
+  "Jugo Natural de Frutilla": {
+    "en": {
+      "n": "Fresh Strawberry Juice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Suco Natural de Morango",
+      "d": ""
+    },
+    "it": {
+      "n": "Succo Naturale di Fragola",
+      "d": ""
+    },
+    "zh": {
+      "n": "天然草莓汁",
+      "d": ""
+    }
+  },
+  "Jugo Natural de Maracuya": {
+    "en": {
+      "n": "Fresh Passion Fruit Juice",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Suco Natural de Maracujá",
+      "d": "Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Succo Naturale di Frutto della Passione",
+      "d": "Preparato con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "天然百香果汁",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "Jugo Natural de Piña y Jengibre": {
+    "en": {
+      "n": "Fresh Pineapple and Ginger Juice",
+      "d": "Fresh pineapple and ginger juice. Refreshing, digestive and full of vitamin C"
+    },
+    "pt": {
+      "n": "Suco Natural de Abacaxi e Gengibre",
+      "d": "Suco natural de abacaxi e gengibre. Refrescante, digestivo e cheio de vitamina C"
+    },
+    "it": {
+      "n": "Succo Naturale di Ananas e Zenzero",
+      "d": "Succo fresco di ananas e zenzero. Rinfrescante, digestivo e ricco di vitamina C"
+    },
+    "zh": {
+      "n": "天然菠萝姜汁",
+      "d": "新鲜菠萝和姜榨汁。清爽、助消化,富含维生素C"
+    }
+  },
+  "Jugo Natural de Sandia": {
+    "en": {
+      "n": "Fresh Watermelon Juice",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Suco Natural de Melancia",
+      "d": "Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Succo Naturale di Anguria",
+      "d": "Preparato con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "天然西瓜汁",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "Jugo Natural Guayaba": {
+    "en": {
+      "n": "Fresh Guava Juice",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Suco Natural de Goiaba",
+      "d": "Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Succo Naturale di Guava",
+      "d": "Preparato con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "天然番石榴汁",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "Jugo Natural Piña": {
+    "en": {
+      "n": "Fresh Pineapple Juice",
+      "d": "Made with stevia; if you prefer another sweetener, just let us know."
+    },
+    "pt": {
+      "n": "Suco Natural de Abacaxi",
+      "d": "Preparado com stévia; se preferir adoçar de outra forma, é só nos avisar."
+    },
+    "it": {
+      "n": "Succo Naturale di Ananas",
+      "d": "Preparato con stevia; se preferisci un altro dolcificante, basta chiedere."
+    },
+    "zh": {
+      "n": "天然菠萝汁",
+      "d": "以甜菊糖调味;如需其他甜味剂,请告知我们。"
+    }
+  },
+  "LA PALOMITA": {
+    "en": {
+      "n": "La Palomita",
+      "d": "(Pineapple juice, orange juice, tonic, ice)"
+    },
+    "pt": {
+      "n": "La Palomita",
+      "d": "(Suco de abacaxi, suco de laranja, tônica, gelo)"
+    },
+    "it": {
+      "n": "La Palomita",
+      "d": "(Succo di ananas, succo d'arancia, tonica, ghiaccio)"
+    },
+    "zh": {
+      "n": "La Palomita",
+      "d": "(菠萝汁、橙汁、汤力水、冰)"
+    }
+  },
+  "LIMONADA ULA ULA PINK": {
+    "en": {
+      "n": "Ula Ula Pink Lemonade",
+      "d": "(Rose tonic, lemon, strawberry jam, ice)"
+    },
+    "pt": {
+      "n": "Limonada Ula Ula Pink",
+      "d": "(Tônica rosé, limão, geleia de morango, gelo)"
+    },
+    "it": {
+      "n": "Limonata Ula Ula Pink",
+      "d": "(Tonica rosé, limone, marmellata di fragole, ghiaccio)"
+    },
+    "zh": {
+      "n": "Ula Ula粉红柠檬水",
+      "d": "(玫瑰汤力水、柠檬、草莓酱、冰)"
+    }
+  },
+  "MAÑANA SERA BONITO": {
+    "en": {
+      "n": "Mañana Será Bonito",
+      "d": "(Indian chai, mango, ginger ale)"
+    },
+    "pt": {
+      "n": "Mañana Será Bonito",
+      "d": "(Chai indiano, manga, ginger ale)"
+    },
+    "it": {
+      "n": "Mañana Será Bonito",
+      "d": "(Chai indiano, mango, ginger ale)"
+    },
+    "zh": {
+      "n": "Mañana Será Bonito",
+      "d": "(印度茶、芒果、姜汁汽水)"
+    }
+  },
+  "MARACUYA COLADA": {
+    "en": {
+      "n": "Passion Fruit Colada",
+      "d": "(Passion fruit juice, coconut cream, ice)"
+    },
+    "pt": {
+      "n": "Maracujá Colada",
+      "d": "(Suco de maracujá, creme de coco, gelo)"
+    },
+    "it": {
+      "n": "Maracuya Colada",
+      "d": "(Succo di frutto della passione, crema di cocco, ghiaccio)"
+    },
+    "zh": {
+      "n": "百香果Colada",
+      "d": "(百香果汁、椰奶油、冰)"
+    }
+  },
+  "MARACUYA SMILE": {
+    "en": {
+      "n": "Passion Fruit Smile",
+      "d": "(Passion fruit juice, Tabasco, Tajín rim)"
+    },
+    "pt": {
+      "n": "Maracujá Smile",
+      "d": "(Suco de maracujá, Tabasco, borda de Tajín)"
+    },
+    "it": {
+      "n": "Maracuya Smile",
+      "d": "(Succo di frutto della passione, Tabasco, bordo di Tajín)"
+    },
+    "zh": {
+      "n": "百香果Smile",
+      "d": "(百香果汁、Tabasco辣酱、Tajín杯口)"
+    }
+  },
+  "MARIPOSA AZUL": {
+    "en": {
+      "n": "Blue Butterfly",
+      "d": "Butterfly pea infusion, ginger, lemon, ginger ale"
+    },
+    "pt": {
+      "n": "Borboleta Azul",
+      "d": "Infusão de flor de ervilha-borboleta, gengibre, limão, ginger ale"
+    },
+    "it": {
+      "n": "Farfalla Azzurra",
+      "d": "Infuso di fiore di pisello farfalla, zenzero, limone, ginger ale"
+    },
+    "zh": {
+      "n": "蓝蝴蝶",
+      "d": "蝶豆花茶、姜、柠檬、姜汁汽水"
+    }
+  },
+  "MOJITO DE 15": {
+    "en": {
+      "n": "Mojito de 15",
+      "d": "(Mint, lemon, simple syrup, tonic or ginger ale)"
+    },
+    "pt": {
+      "n": "Mojito de 15",
+      "d": "(Hortelã, limão, xarope de açúcar, tônica ou ginger ale)"
+    },
+    "it": {
+      "n": "Mojito de 15",
+      "d": "(Menta, limone, sciroppo semplice, tonica o ginger ale)"
+    },
+    "zh": {
+      "n": "Mojito de 15",
+      "d": "(薄荷、柠檬、糖浆、汤力水或姜汁汽水)"
+    }
+  },
+  "NOT-CHELADA": {
+    "en": {
+      "n": "Not-Chelada",
+      "d": "(Non-alcoholic beer, salt, lime, Tabasco or merkén)"
+    },
+    "pt": {
+      "n": "Not-Chelada",
+      "d": "(Cerveja sem álcool, sal, limão, Tabasco ou merkén)"
+    },
+    "it": {
+      "n": "Not-Chelada",
+      "d": "(Birra analcolica, sale, lime, Tabasco o merkén)"
+    },
+    "zh": {
+      "n": "Not-Chelada",
+      "d": "(无酒精啤酒、盐、青柠、Tabasco辣酱或merkén辣椒)"
+    }
+  },
+  "NOT-JITO CERVEZA 0,0": {
+    "en": {
+      "n": "Not-Jito 0.0 Beer",
+      "d": "(0.0° beer, mint, lime, simple syrup)"
+    },
+    "pt": {
+      "n": "Not-Jito Cerveja 0,0",
+      "d": "(Cerveja 0,0°, hortelã, limão, xarope de açúcar)"
+    },
+    "it": {
+      "n": "Not-Jito Birra 0,0",
+      "d": "(Birra 0,0°, menta, lime, sciroppo semplice)"
+    },
+    "zh": {
+      "n": "Not-Jito 0.0啤酒",
+      "d": "(0.0°啤酒、薄荷、青柠、糖浆)"
+    }
+  },
+  "PIÑA COCO THAI": {
+    "en": {
+      "n": "Thai Pineapple Coconut",
+      "d": "(Pineapple, coconut cream, grenadine, simple syrup)"
+    },
+    "pt": {
+      "n": "Abacaxi Coco Thai",
+      "d": "(Abacaxi, creme de coco, grenadine, xarope de açúcar)"
+    },
+    "it": {
+      "n": "Ananas Cocco Thai",
+      "d": "(Ananas, crema di cocco, granatina, sciroppo semplice)"
+    },
+    "zh": {
+      "n": "泰式菠萝椰子",
+      "d": "(菠萝、椰奶油、红石榴糖浆、糖浆)"
+    }
+  },
+  "SWEET ESPRESSO & TONIC": {
+    "en": {
+      "n": "Sweet Espresso & Tonic",
+      "d": "(Vanilla espresso coffee, tonic, lemon, ice)"
+    },
+    "pt": {
+      "n": "Sweet Espresso & Tonic",
+      "d": "(Café espresso de baunilha, tônica, limão, gelo)"
+    },
+    "it": {
+      "n": "Sweet Espresso & Tonic",
+      "d": "(Caffè espresso alla vaniglia, tonica, limone, ghiaccio)"
+    },
+    "zh": {
+      "n": "Sweet Espresso & Tonic",
+      "d": "(香草浓缩咖啡、汤力水、柠檬、冰)"
+    }
+  },
+  "TÉ DE HOJA VARO`S": {
+    "en": {
+      "n": "Varo's Leaf Tea",
+      "d": "(Lemongrass, lemon verbena and cinnamon)"
+    },
+    "pt": {
+      "n": "Chá de Folhas do Varo's",
+      "d": "(Capim-limão, cidró e canela)"
+    },
+    "it": {
+      "n": "Tè in Foglie di Varo's",
+      "d": "(Citronella, cedrina e cannella)"
+    },
+    "zh": {
+      "n": "Varo's叶茶",
+      "d": "(香茅、柠檬马鞭草和肉桂)"
+    }
+  },
+  "TOREADOR GINGER ALE": {
+    "en": {
+      "n": "Toreador Ginger Ale",
+      "d": "(Ginger ale, ginger, simple syrup, lemon, ice)"
+    },
+    "pt": {
+      "n": "Toreador Ginger Ale",
+      "d": "(Ginger ale, gengibre, xarope de açúcar, limão, gelo)"
+    },
+    "it": {
+      "n": "Toreador Ginger Ale",
+      "d": "(Ginger ale, zenzero, sciroppo semplice, limone, ghiaccio)"
+    },
+    "zh": {
+      "n": "Toreador姜汁汽水",
+      "d": "(姜汁汽水、姜、糖浆、柠檬、冰)"
+    }
+  },
+  "NIÑO CHICHARRON DE PESCADO CON ARROZ  PAPAS FRITAS": {
+    "en": {
+      "n": "Kids Fish Chicharrón with Rice and French Fries",
+      "d": "Includes Bilz or Pap soda and dessert"
+    },
+    "pt": {
+      "n": "Infantil Chicharrón de Peixe com Arroz e Batatas Fritas",
+      "d": "Inclui refrigerante Bilz ou Pap e sobremesa"
+    },
+    "it": {
+      "n": "Bimbi: Chicharrón di Pesce con Riso e Patatine Fritte",
+      "d": "Include bibita Bilz o Pap e dolce"
+    },
+    "zh": {
+      "n": "儿童餐:炸鱼块配米饭和薯条",
+      "d": "含Bilz或Pap汽水和甜点"
+    }
+  },
+  "NIÑO CHICHARRON DE POLLO CON ARROZ  PAPAS FRITAS": {
+    "en": {
+      "n": "Kids Chicken Chicharrón with Rice and French Fries",
+      "d": "Includes dessert + soft drink or fresh juice"
+    },
+    "pt": {
+      "n": "Infantil Chicharrón de Frango com Arroz e Batatas Fritas",
+      "d": "Inclui sobremesa + refrigerante ou suco natural"
+    },
+    "it": {
+      "n": "Bimbi: Chicharrón di Pollo con Riso e Patatine Fritte",
+      "d": "Include dolce + bibita o succo naturale"
+    },
+    "zh": {
+      "n": "儿童餐:炸鸡块配米饭和薯条",
+      "d": "含甜点+软饮或天然果汁"
+    }
+  },
+  "NIÑO CODITOS CON SALSA PESTO Y PESCADO CHICHARRON": {
+    "en": {
+      "n": "Kids Elbow Pasta with Pesto Sauce and Fish Chicharrón",
+      "d": "Includes drink + dessert"
+    },
+    "pt": {
+      "n": "Infantil Macarrão Cotovelo com Molho Pesto e Chicharrón de Peixe",
+      "d": "Inclui bebida + sobremesa"
+    },
+    "it": {
+      "n": "Bimbi: Coditos con Salsa Pesto e Chicharrón di Pesce",
+      "d": "Include bevanda + dolce"
+    },
+    "zh": {
+      "n": "儿童餐:弯管面配香蒜酱和炸鱼块",
+      "d": "含饮料+甜点"
+    }
+  },
+  "NIÑO CODITOS CON SALSA PESTO Y POLLO CHICHARRON": {
+    "en": {
+      "n": "Kids Elbow Pasta with Pesto Sauce and Chicken Chicharrón",
+      "d": "Includes drink or juice + dessert"
+    },
+    "pt": {
+      "n": "Infantil Macarrão Cotovelo com Molho Pesto e Chicharrón de Frango",
+      "d": "Inclui bebida ou suco + sobremesa"
+    },
+    "it": {
+      "n": "Bimbi: Coditos con Salsa Pesto e Chicharrón di Pollo",
+      "d": "Include bevanda o succo + dolce"
+    },
+    "zh": {
+      "n": "儿童餐:弯管面配香蒜酱和炸鸡块",
+      "d": "含饮料或果汁+甜点"
+    }
+  },
+  "Sandwich Pollo crispy": {
+    "en": {
+      "n": "Crispy Chicken Sandwich",
+      "d": "Crispy chicken, tomato, lettuce and sauce + French fries"
+    },
+    "pt": {
+      "n": "Sanduíche de Frango Crocante",
+      "d": "Frango crocante, tomate, alface e molho + batatas fritas"
+    },
+    "it": {
+      "n": "Sandwich di Pollo Croccante",
+      "d": "Pollo croccante, pomodoro, lattuga e salsa + patatine fritte"
+    },
+    "zh": {
+      "n": "脆皮鸡肉三明治",
+      "d": "脆皮鸡肉、番茄、生菜和酱汁+薯条"
+    }
+  },
+  "HAMBURGUESA ITALIANA": {
+    "en": {
+      "n": "Italian Burger",
+      "d": "(Tomato, avocado and mayonnaise) Includes drink and dessert"
+    },
+    "pt": {
+      "n": "Hambúrguer Italiano",
+      "d": "(Tomate, abacate e maionese) Inclui bebida e sobremesa"
+    },
+    "it": {
+      "n": "Hamburger all'Italiana",
+      "d": "(Pomodoro, avocado e maionese) Include bevanda e dolce"
+    },
+    "zh": {
+      "n": "意式汉堡",
+      "d": "(番茄、牛油果和蛋黄酱)含饮料和甜点"
+    }
+  },
+  "Base Michelada": {
+    "en": {
+      "n": "Michelada Base",
+      "d": ""
+    },
+    "pt": {
+      "n": "Base de Michelada",
+      "d": ""
+    },
+    "it": {
+      "n": "Base per Michelada",
+      "d": ""
+    },
+    "zh": {
+      "n": "Michelada基底",
+      "d": ""
+    }
+  },
+  "Beb. Agua Mineral CON GAS": {
+    "en": {
+      "n": "Sparkling Mineral Water",
+      "d": ""
+    },
+    "pt": {
+      "n": "Água Mineral com Gás",
+      "d": ""
+    },
+    "it": {
+      "n": "Acqua Minerale Frizzante",
+      "d": ""
+    },
+    "zh": {
+      "n": "气泡矿泉水",
+      "d": ""
+    }
+  },
+  "Beb. Agua Mineral SIN GAS": {
+    "en": {
+      "n": "Still Mineral Water",
+      "d": ""
+    },
+    "pt": {
+      "n": "Água Mineral sem Gás",
+      "d": ""
+    },
+    "it": {
+      "n": "Acqua Minerale Naturale",
+      "d": ""
+    },
+    "zh": {
+      "n": "无气矿泉水",
+      "d": ""
+    }
+  },
+  "Beb. Agua Tonica SCHWEPPES 350cc": {
+    "en": {
+      "n": "Schweppes Tonic Water 350cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Água Tônica Schweppes 350cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Acqua Tonica Schweppes 350cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Schweppes汤力水 350cc",
+      "d": ""
+    }
+  },
+  "Beb. Coca Cola 350 cc": {
+    "en": {
+      "n": "Coca-Cola 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coca-Cola 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Coca-Cola 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Coca-Cola 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Coca cola Zero 350 cc": {
+    "en": {
+      "n": "Coca-Cola Zero 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coca-Cola Zero 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Coca-Cola Zero 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Coca-Cola Zero 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Fanta 350 cc": {
+    "en": {
+      "n": "Fanta 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Fanta 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Fanta 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Fanta 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Ginger Ale SCHWEPPES 350cc": {
+    "en": {
+      "n": "Schweppes Ginger Ale 350cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Ginger Ale Schweppes 350cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Ginger Ale Schweppes 350cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Schweppes姜汁汽水 350cc",
+      "d": ""
+    }
+  },
+  "Beb. Ginger Ale Zero Canada Dry350 cc": {
+    "en": {
+      "n": "Canada Dry Ginger Ale Zero 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Ginger Ale Zero Canada Dry 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Ginger Ale Zero Canada Dry 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Canada Dry零度姜汁汽水 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Pepsi 350 cc": {
+    "en": {
+      "n": "Pepsi 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Pepsi 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Pepsi 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Pepsi 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Pepsi zero 350 cc": {
+    "en": {
+      "n": "Pepsi Zero 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Pepsi Zero 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Pepsi Zero 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Pepsi Zero 350 cc",
+      "d": ""
+    }
+  },
+  "Beb. Sprite 350 cc": {
+    "en": {
+      "n": "Sprite 350 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Sprite 350 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Sprite 350 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Sprite 350 cc",
+      "d": ""
+    }
+  },
+  "Café Espresso 40ml (India -Caramelo- Vainilla- Forte)": {
+    "en": {
+      "n": "Espresso 40ml (India - Caramel - Vanilla - Strong)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Café Espresso 40ml (Índia - Caramelo - Baunilha - Forte)",
+      "d": ""
+    },
+    "it": {
+      "n": "Caffè Espresso 40ml (India - Caramello - Vaniglia - Forte)",
+      "d": ""
+    },
+    "zh": {
+      "n": "浓缩咖啡40毫升(India、焦糖、香草、浓烈)",
+      "d": ""
+    }
+  },
+  "Café Espresso Cortado (Caramelo-Vainilla-India-Espresso) 120ml": {
+    "en": {
+      "n": "Espresso Cortado (Caramel - Vanilla - India - Espresso) 120ml",
+      "d": ""
+    },
+    "pt": {
+      "n": "Café Espresso Cortado (Caramelo - Baunilha - Índia - Espresso) 120ml",
+      "d": ""
+    },
+    "it": {
+      "n": "Espresso Macchiato (Caramello - Vaniglia - India - Espresso) 120ml",
+      "d": ""
+    },
+    "zh": {
+      "n": "玛奇朵浓缩咖啡(焦糖、香草、India、Espresso)120毫升",
+      "d": ""
+    }
+  },
+  "Café Espresso Doble Forte 80 ml": {
+    "en": {
+      "n": "Double Strong Espresso 80 ml",
+      "d": ""
+    },
+    "pt": {
+      "n": "Café Espresso Duplo Forte 80 ml",
+      "d": ""
+    },
+    "it": {
+      "n": "Caffè Espresso Doppio Forte 80 ml",
+      "d": ""
+    },
+    "zh": {
+      "n": "双份浓烈浓缩咖啡80毫升",
+      "d": ""
+    }
+  },
+  "Cerveza Austral Calafate": {
+    "en": {
+      "n": "Austral Calafate Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Austral Calafate",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Austral Calafate",
+      "d": ""
+    },
+    "zh": {
+      "n": "Austral Calafate啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza Corona": {
+    "en": {
+      "n": "Corona Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Corona",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Corona",
+      "d": ""
+    },
+    "zh": {
+      "n": "Corona啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza Cusqueña": {
+    "en": {
+      "n": "Cusqueña Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Cusqueña",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Cusqueña",
+      "d": ""
+    },
+    "zh": {
+      "n": "Cusqueña啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza Dolbek MAKI": {
+    "en": {
+      "n": "Dolbek Maki Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Dolbek Maki",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Dolbek Maki",
+      "d": ""
+    },
+    "zh": {
+      "n": "Dolbek Maki啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza Heineken": {
+    "en": {
+      "n": "Heineken Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Heineken",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Heineken",
+      "d": ""
+    },
+    "zh": {
+      "n": "Heineken啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza Kunstmann Miel 330cc": {
+    "en": {
+      "n": "Kunstmann Miel Beer 330cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Kunstmann Miel 330cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Kunstmann Miel 330cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Kunstmann Miel啤酒 330cc",
+      "d": ""
+    }
+  },
+  "Cerveza Kunstmann Torobayo 330cc": {
+    "en": {
+      "n": "Kunstmann Torobayo Beer 330cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Kunstmann Torobayo 330cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Kunstmann Torobayo 330cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Kunstmann Torobayo啤酒 330cc",
+      "d": ""
+    }
+  },
+  "Cerveza Mestra Cero 0,0": {
+    "en": {
+      "n": "Mestra Cero 0.0 Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Mestra Cero 0,0",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Mestra Cero 0,0",
+      "d": ""
+    },
+    "zh": {
+      "n": "Mestra Cero 0.0啤酒",
+      "d": ""
+    }
+  },
+  "Cerveza SOL": {
+    "en": {
+      "n": "Sol Beer",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cerveja Sol",
+      "d": ""
+    },
+    "it": {
+      "n": "Birra Sol",
+      "d": ""
+    },
+    "zh": {
+      "n": "Sol啤酒",
+      "d": ""
+    }
+  },
+  "Cocktail Hawaiano Azul": {
+    "en": {
+      "n": "Blue Hawaiian Cocktail",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel Blue Hawaiian",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail Blue Hawaiian",
+      "d": ""
+    },
+    "zh": {
+      "n": "蓝色夏威夷鸡尾酒",
+      "d": ""
+    }
+  },
+  "Cocktail J.W. Wine Cask (J.W. Wine Cask Ginger Ale)": {
+    "en": {
+      "n": "J.W. Wine Cask Cocktail (J.W. Wine Cask + Ginger Ale)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel J.W. Wine Cask (J.W. Wine Cask + Ginger Ale)",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail J.W. Wine Cask (J.W. Wine Cask + Ginger Ale)",
+      "d": ""
+    },
+    "zh": {
+      "n": "J.W. Wine Cask鸡尾酒(J.W. Wine Cask+姜汁汽水)",
+      "d": ""
+    }
+  },
+  "Cocktail Kir Royal ( Espumante y Casis)": {
+    "en": {
+      "n": "Kir Royal Cocktail (Sparkling Wine and Cassis)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel Kir Royal (Espumante e Cassis)",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail Kir Royal (Spumante e Cassis)",
+      "d": ""
+    },
+    "zh": {
+      "n": "皇家基尔鸡尾酒(起泡酒和黑加仑)",
+      "d": ""
+    }
+  },
+  "Cocktail TEQUILA SUNRISE": {
+    "en": {
+      "n": "Tequila Sunrise Cocktail",
+      "d": ""
+    },
+    "pt": {
+      "n": "Coquetel Tequila Sunrise",
+      "d": ""
+    },
+    "it": {
+      "n": "Cocktail Tequila Sunrise",
+      "d": ""
+    },
+    "zh": {
+      "n": "龙舌兰日出鸡尾酒",
+      "d": ""
+    }
+  },
+  "Copa de Espumante": {
+    "en": {
+      "n": "Glass of Sparkling Wine",
+      "d": ""
+    },
+    "pt": {
+      "n": "Taça de Espumante",
+      "d": ""
+    },
+    "it": {
+      "n": "Calice di Spumante",
+      "d": ""
+    },
+    "zh": {
+      "n": "一杯起泡酒",
+      "d": ""
+    }
+  },
+  "COPA DE VINO RESERVA": {
+    "en": {
+      "n": "Glass of Reserve Wine",
+      "d": ""
+    },
+    "pt": {
+      "n": "Taça de Vinho Reserva",
+      "d": ""
+    },
+    "it": {
+      "n": "Calice di Vino Reserva",
+      "d": ""
+    },
+    "zh": {
+      "n": "一杯珍藏葡萄酒",
+      "d": ""
+    }
+  },
+  "Destilado Bacardi Carta Blanca": {
+    "en": {
+      "n": "Bacardi Carta Blanca Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Bacardi Carta Blanca",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Bacardi Carta Blanca",
+      "d": ""
+    },
+    "zh": {
+      "n": "Bacardi Carta Blanca烈酒",
+      "d": ""
+    }
+  },
+  "Destilado Bacardi Carta Oro": {
+    "en": {
+      "n": "Bacardi Carta Oro Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Bacardi Carta Oro",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Bacardi Carta Oro",
+      "d": ""
+    },
+    "zh": {
+      "n": "Bacardi Carta Oro烈酒",
+      "d": ""
+    }
+  },
+  "Destilado Baileys": {
+    "en": {
+      "n": "Baileys Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Baileys",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Baileys",
+      "d": ""
+    },
+    "zh": {
+      "n": "Baileys利口酒",
+      "d": ""
+    }
+  },
+  "Destilado Chivas Regal": {
+    "en": {
+      "n": "Chivas Regal Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Chivas Regal",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Chivas Regal",
+      "d": ""
+    },
+    "zh": {
+      "n": "Chivas Regal威士忌",
+      "d": ""
+    }
+  },
+  "Destilado Clavo Oxidado": {
+    "en": {
+      "n": "Rusty Nail Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Rusty Nail",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Rusty Nail",
+      "d": ""
+    },
+    "zh": {
+      "n": "Rusty Nail烈酒",
+      "d": ""
+    }
+  },
+  "Destilado Gin BullDog": {
+    "en": {
+      "n": "Bulldog Gin Spirit",
+      "d": "add a mixer"
+    },
+    "pt": {
+      "n": "Destilado Gin Bulldog",
+      "d": "adicionar refrigerante"
+    },
+    "it": {
+      "n": "Distillato Gin Bulldog",
+      "d": "aggiungi una bibita"
+    },
+    "zh": {
+      "n": "Bulldog金酒",
+      "d": "可加配汽水"
+    }
+  },
+  "Destilado Gin HENDRICK`S": {
+    "en": {
+      "n": "Hendrick's Gin Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Gin Hendrick's",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Gin Hendrick's",
+      "d": ""
+    },
+    "zh": {
+      "n": "Hendrick's金酒",
+      "d": ""
+    }
+  },
+  "Destilado Gin Tanqueray": {
+    "en": {
+      "n": "Tanqueray Gin Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Gin Tanqueray",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Gin Tanqueray",
+      "d": ""
+    },
+    "zh": {
+      "n": "Tanqueray金酒",
+      "d": ""
+    }
+  },
+  "Destilado Havana Añejo Reserva": {
+    "en": {
+      "n": "Havana Añejo Reserva Spirit",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Havana Añejo Reserva",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Havana Añejo Reserva",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Havana Añejo Reserva朗姆酒",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Havana Blanco": {
+    "en": {
+      "n": "Havana Blanco Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Havana Blanco",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Havana Blanco",
+      "d": ""
+    },
+    "zh": {
+      "n": "Havana Blanco朗姆酒",
+      "d": ""
+    }
+  },
+  "Destilado Jack Daniel`s": {
+    "en": {
+      "n": "Jack Daniel's Spirit",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Jack Daniel's",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Jack Daniel's",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Jack Daniel's威士忌",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Jack Daniel`s (Fire, Manzana, Miel, Blackberry)": {
+    "en": {
+      "n": "Jack Daniel's Spirit (Fire, Apple, Honey, Blackberry)",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Jack Daniel's (Fire, Maçã, Mel, Blackberry)",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Jack Daniel's (Fire, Mela, Miele, Blackberry)",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Jack Daniel's威士忌(Fire、苹果、蜂蜜、黑莓)",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Jhonnie Walker E-NEGRA": {
+    "en": {
+      "n": "Johnnie Walker Black Label Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Johnnie Walker Etiqueta Preta",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Johnnie Walker Etichetta Nera",
+      "d": ""
+    },
+    "zh": {
+      "n": "Johnnie Walker黑牌威士忌",
+      "d": ""
+    }
+  },
+  "Destilado Jhonnie Walker E-Roja": {
+    "en": {
+      "n": "Johnnie Walker Red Label Spirit",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Johnnie Walker Etiqueta Vermelha",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Johnnie Walker Etichetta Rossa",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Johnnie Walker红牌威士忌",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Pisco Alto del Carmen 35º": {
+    "en": {
+      "n": "Alto del Carmen Pisco 35º Spirit",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Pisco Alto del Carmen 35º",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Pisco Alto del Carmen 35º",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Alto del Carmen皮斯科 35º",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Pisco Alto del Carmen 40º": {
+    "en": {
+      "n": "Alto del Carmen Pisco 40º Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Pisco Alto del Carmen 40º",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Pisco Alto del Carmen 40º",
+      "d": ""
+    },
+    "zh": {
+      "n": "Alto del Carmen皮斯科 40º",
+      "d": ""
+    }
+  },
+  "Destilado Pisco Horcon Quemado 1 año": {
+    "en": {
+      "n": "Horcón Quemado Pisco 1 Year Spirit",
+      "d": "Mixer not included"
+    },
+    "pt": {
+      "n": "Destilado Pisco Horcón Quemado 1 Ano",
+      "d": "Não inclui refrigerante"
+    },
+    "it": {
+      "n": "Distillato Pisco Horcón Quemado 1 Anno",
+      "d": "Bibita non inclusa"
+    },
+    "zh": {
+      "n": "Horcón Quemado皮斯科(1年)",
+      "d": "不含配饮"
+    }
+  },
+  "Destilado Pisco Mistral 35°": {
+    "en": {
+      "n": "Mistral Pisco 35° Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Pisco Mistral 35°",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Pisco Mistral 35°",
+      "d": ""
+    },
+    "zh": {
+      "n": "Mistral皮斯科 35°",
+      "d": ""
+    }
+  },
+  "Destilado Pisco Mistral Roble 40º": {
+    "en": {
+      "n": "Mistral Roble Pisco 40º Spirit",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Pisco Mistral Roble 40º",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Pisco Mistral Roble 40º",
+      "d": ""
+    },
+    "zh": {
+      "n": "Mistral Roble皮斯科 40º",
+      "d": ""
+    }
+  },
+  "Destilado Vodka Skyy Sabores (Durazno, Piña, Frutilla, Manzana, Naranja)": {
+    "en": {
+      "n": "Skyy Flavored Vodka Spirit (Peach, Pineapple, Strawberry, Apple, Orange)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Destilado Vodka Skyy Sabores (Pêssego, Abacaxi, Morango, Maçã, Laranja)",
+      "d": ""
+    },
+    "it": {
+      "n": "Distillato Vodka Skyy Gusti (Pesca, Ananas, Fragola, Mela, Arancia)",
+      "d": ""
+    },
+    "zh": {
+      "n": "Skyy风味伏特加(桃子、菠萝、草莓、苹果、橙子)",
+      "d": ""
+    }
+  },
+  "Red Bull 250 cc / Original / Tropical/ Sandia": {
+    "en": {
+      "n": "Red Bull 250 cc / Original / Tropical / Watermelon",
+      "d": ""
+    },
+    "pt": {
+      "n": "Red Bull 250 cc / Original / Tropical / Melancia",
+      "d": ""
+    },
+    "it": {
+      "n": "Red Bull 250 cc / Original / Tropical / Anguria",
+      "d": ""
+    },
+    "zh": {
+      "n": "Red Bull 250 cc / 原味 / 热带 / 西瓜",
+      "d": ""
+    }
+  },
+  "TÉ DE HOJA VARO`S (Hierba Luisa, Cedrón y Canela)": {
+    "en": {
+      "n": "Varo's Leaf Tea (Lemongrass, Lemon Verbena and Cinnamon)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Chá de Folhas do Varo's (Capim-limão, Cidró e Canela)",
+      "d": ""
+    },
+    "it": {
+      "n": "Tè in Foglie di Varo's (Citronella, Cedrina e Cannella)",
+      "d": ""
+    },
+    "zh": {
+      "n": "Varo's叶茶(香茅、柠檬马鞭草和肉桂)",
+      "d": ""
+    }
+  },
+  "PULPO A LA PARRILLA EN SALSA BBQ CON  PAPAS DORADAS": {
+    "en": {
+      "n": "Grilled Octopus in BBQ Sauce with Golden Potatoes",
+      "d": "Tender grilled octopus in our house BBQ sauce, served with crispy golden potatoes."
+    },
+    "pt": {
+      "n": "Polvo na Grelha com Molho BBQ e Batatas Douradas",
+      "d": "Polvo macio grelhado, coberto com o molho BBQ da casa, acompanhado de batatas douradas crocantes."
+    },
+    "it": {
+      "n": "Polpo alla Griglia in Salsa BBQ con Patate Dorate",
+      "d": "Tenero polpo alla griglia nella nostra salsa BBQ della casa, servito con patate dorate croccanti."
+    },
+    "zh": {
+      "n": "烤章鱼配BBQ酱和金黄薯条",
+      "d": "软嫩的烤章鱼淋上本店特制BBQ酱,搭配香脆金黄的薯条。"
+    }
+  },
+  "🍲 SOPA MARINERA": {
+    "en": {
+      "n": "Seafood Soup (Sopa Marinera)",
+      "d": "Rich broth with fresh shellfish and fish, full of flavor and the tradition of our Chilean coast."
+    },
+    "pt": {
+      "n": "Sopa Marinera (Sopa de Frutos do Mar)",
+      "d": "Caldo intenso com frutos do mar frescos e peixe, cheio de sabor e da tradição da nossa costa chilena."
+    },
+    "it": {
+      "n": "Zuppa Marinera",
+      "d": "Ricco brodo con frutti di mare freschi e pesce, pieno di sapore e della tradizione della nostra costa cilena."
+    },
+    "zh": {
+      "n": "海鲜汤(Sopa Marinera)",
+      "d": "浓郁的高汤配新鲜海鲜和鱼肉,风味十足,承载着智利海岸的传统。"
+    }
+  },
+  "🍽️ TRIO MARINO": {
+    "en": {
+      "n": "Seafood Trio",
+      "d": "Rice with assorted shellfish, traditional ceviche and fish chicharrón, all on one plate to enjoy."
+    },
+    "pt": {
+      "n": "Trio Marinho",
+      "d": "Arroz com frutos do mar variados, ceviche tradicional e chicharrón de peixe em um só prato para aproveitar."
+    },
+    "it": {
+      "n": "Trio di Mare",
+      "d": "Riso con frutti di mare misti, ceviche tradizionale e chicharrón di pesce, tutto in un unico piatto da gustare."
+    },
+    "zh": {
+      "n": "海鲜三重奏",
+      "d": "什锦海鲜饭、传统酸橘汁腌鱼和炸鱼块同盛一盘,尽情享用。"
+    }
+  },
+  "ARROZ A LA MARINERA": {
+    "en": {
+      "n": "Seafood Rice (Arroz a la Marinera)",
+      "d": "Tasty coastal-inspired rice prepared with shrimp, octopus, clams, mussels and scallops, sautéed with the aromas and flavors of the sea, paying homage to the chinchorrera tradition of northern Chile. An intense, fresh seafood experience full of local identity."
+    },
+    "pt": {
+      "n": "Arroz à Marinera (Arroz com Frutos do Mar)",
+      "d": "Saboroso arroz de inspiração costeira, preparado com camarão, polvo, amêijoas, mexilhões e vieiras, salteados com aromas e sabores do mar que homenageiam a tradição chinchorrera do norte do Chile. Uma experiência marinha intensa, fresca e cheia de identidade local."
+    },
+    "it": {
+      "n": "Riso alla Marinera (Riso ai Frutti di Mare)",
+      "d": "Saporito riso di ispirazione costiera preparato con gamberetti, polpo, vongole, cozze e capesante, saltati con gli aromi e i sapori del mare, in omaggio alla tradizione chinchorrera del nord del Cile. Un'esperienza di mare intensa, fresca e ricca di identità locale."
+    },
+    "zh": {
+      "n": "海鲜饭(Arroz a la Marinera)",
+      "d": "滋味浓郁的海岸风味米饭,以虾、章鱼、蛤蜊、贻贝和扇贝烹制,融入大海的香气与味道,向智利北部chinchorrera传统致敬。一次浓烈、新鲜、充满本地特色的海味体验。"
+    }
+  },
+  "CEVICHE MIXTO DEL PACIFICO CON CHICHARRON DE PESCADO Y LECHE DE TIGRE": {
+    "en": {
+      "n": "Pacific Mixed Ceviche with Fish Chicharrón and Leche de Tigre",
+      "d": "A fresh combination of shellfish such as mussels, clams, shrimp, octopus and catch of the day in leche de tigre, served with crispy fish chicharrón and potato."
+    },
+    "pt": {
+      "n": "Ceviche Misto do Pacífico com Chicharrón de Peixe e Leite de Tigre",
+      "d": "Fresca combinação de frutos do mar como mexilhões, amêijoas, camarões, polvo e peixe do dia em leite de tigre, acompanhada de chicharrón de peixe crocante e batata."
+    },
+    "it": {
+      "n": "Ceviche Misto del Pacifico con Chicharrón di Pesce e Leche de Tigre",
+      "d": "Una fresca combinazione di frutti di mare come cozze, vongole, gamberetti, polpo e pescato del giorno in leche de tigre, servita con croccante chicharrón di pesce e patata."
+    },
+    "zh": {
+      "n": "太平洋综合酸橘汁腌鱼配炸鱼块和虎奶汁",
+      "d": "贻贝、蛤蜊、虾、章鱼和当日鲜鱼组成的清新组合,浸在虎奶汁中,搭配香脆炸鱼块和土豆。"
+    }
+  },
+  "CEVICHE TRADICIONAL CON CHICHARRON DE PESCADO Y LECHE DE TIGRE": {
+    "en": {
+      "n": "Traditional Ceviche with Fish Chicharrón and Leche de Tigre",
+      "d": "Fresh fillets marinated in citrusy leche de tigre, served with crispy fish chicharrón and potatoes."
+    },
+    "pt": {
+      "n": "Ceviche Tradicional com Chicharrón de Peixe e Leite de Tigre",
+      "d": "Filés frescos marinados em leite de tigre cítrico, acompanhados de chicharrón de peixe crocante e batatas."
+    },
+    "it": {
+      "n": "Ceviche Tradizionale con Chicharrón di Pesce e Leche de Tigre",
+      "d": "Filetti freschi marinati in leche de tigre agrumata, serviti con croccante chicharrón di pesce e patate."
+    },
+    "zh": {
+      "n": "传统酸橘汁腌鱼配炸鱼块和虎奶汁",
+      "d": "新鲜鱼片以柑橘风味虎奶汁腌制,搭配香脆炸鱼块和土豆。"
+    }
+  },
+  "FETTUCCINE A LA HUANCAINA CON LOMO SALTADO": {
+    "en": {
+      "n": "Fettuccine a la Huancaína with Lomo Saltado",
+      "d": ""
+    },
+    "pt": {
+      "n": "Fettuccine à Huancaína com Lomo Saltado",
+      "d": ""
+    },
+    "it": {
+      "n": "Fettuccine alla Huancaína con Lomo Saltado",
+      "d": ""
+    },
+    "zh": {
+      "n": "万卡依纳酱宽面配炒牛肉",
+      "d": ""
+    }
+  },
+  "PARRILLADA (1 lomo, 1 truto, 1 prieta, 2 longaniza)  2 GUARNICION": {
+    "en": {
+      "n": "Mixed Grill (1 tenderloin, 1 chicken leg, 1 blood sausage, 2 longaniza sausages) with 2 sides",
+      "d": ""
+    },
+    "pt": {
+      "n": "Parrillada (1 lombo, 1 coxa de frango, 1 morcela, 2 linguiças) com 2 acompanhamentos",
+      "d": ""
+    },
+    "it": {
+      "n": "Grigliata Mista (1 lombo, 1 coscia di pollo, 1 sanguinaccio, 2 salsicce) con 2 contorni",
+      "d": ""
+    },
+    "zh": {
+      "n": "混合烧烤拼盘(1份里脊、1个鸡腿、1份血肠、2根香肠)配2份配菜",
+      "d": ""
+    }
+  },
+  "REINETA EN SALSA DE CAMARONES CON ACOMPAÑAMIENTO A ELECCION": {
+    "en": {
+      "n": "Reineta in Shrimp Sauce with Side of Your Choice",
+      "d": "Juicy fillet covered in shrimp sauce. Perfect with the side of your choice: rice, potatoes or salad. A delicate, flavorful dish."
+    },
+    "pt": {
+      "n": "Reineta ao Molho de Camarões com Acompanhamento à Escolha",
+      "d": "Filé suculento coberto com molho de camarões. Perfeito com o acompanhamento de sua escolha: arroz, batatas ou salada. Um prato delicado e cheio de sabor."
+    },
+    "it": {
+      "n": "Reineta in Salsa di Gamberetti con Contorno a Scelta",
+      "d": "Filetto succoso ricoperto di salsa di gamberetti. Perfetto con il contorno a scelta: riso, patate o insalata. Un piatto delicato e saporito."
+    },
+    "zh": {
+      "n": "虾酱烩Reineta鱼配任选配菜",
+      "d": "多汁的鱼排淋上虾酱。可搭配任选配菜:米饭、土豆或沙拉。一道精致美味的菜肴。"
+    }
+  },
+  "REINETA EN SALSA DE MARISCOS ACOMPAÑAMIENTO A ELECCION": {
+    "en": {
+      "n": "Reineta in Seafood Sauce with Side of Your Choice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Reineta ao Molho de Frutos do Mar com Acompanhamento à Escolha",
+      "d": ""
+    },
+    "it": {
+      "n": "Reineta in Salsa di Frutti di Mare con Contorno a Scelta",
+      "d": ""
+    },
+    "zh": {
+      "n": "海鲜酱烩Reineta鱼配任选配菜",
+      "d": ""
+    }
+  },
+  "REINETA FRITA CON ENSALADA SURTIDA DEL VALLE": {
+    "en": {
+      "n": "Fried Reineta with Mixed Valley Salad",
+      "d": "Fish fillet crispy on the outside and juicy inside, served with a mixed salad from our valley."
+    },
+    "pt": {
+      "n": "Reineta Frita com Salada Mista do Vale",
+      "d": "Filé de peixe crocante por fora e suculento por dentro, acompanhado de salada mista do nosso vale."
+    },
+    "it": {
+      "n": "Reineta Fritta con Insalata Mista della Valle",
+      "d": "Filetto di pesce croccante fuori e succoso dentro, servito con un'insalata mista della nostra valle."
+    },
+    "zh": {
+      "n": "香煎Reineta鱼配山谷什锦沙拉",
+      "d": "鱼排外酥里嫩,搭配本地山谷什锦沙拉。"
+    }
+  },
+  "🥩ENTRECOT DE VACUNO GRILLE CON CHIMICHURRI 500 Gramos GUARNICION A ELECCION": {
+    "en": {
+      "n": "Grilled Beef Entrecôte with Chimichurri, 500 g, Side of Your Choice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Entrecôte Bovino Grelhado com Chimichurri 500 g, Acompanhamento à Escolha",
+      "d": ""
+    },
+    "it": {
+      "n": "Entrecôte di Manzo alla Griglia con Chimichurri 500 g, Contorno a Scelta",
+      "d": ""
+    },
+    "zh": {
+      "n": "烤牛肋排配chimichurri酱 500克,配菜任选",
+      "d": ""
+    }
+  },
+  "🌶️PICANTE DE GUATA Y PATA CON ARROZ BLANCO": {
+    "en": {
+      "n": "Picante de Guata y Pata with White Rice",
+      "d": "Northern Chilean tradition: tender tripe and trotters in a spiced sauce, served with white rice."
+    },
+    "pt": {
+      "n": "Picante de Guata y Pata com Arroz Branco",
+      "d": "Tradicional do norte do Chile: bucho e mocotó macios em molho temperado, acompanhado de arroz branco."
+    },
+    "it": {
+      "n": "Picante de Guata y Pata con Riso Bianco",
+      "d": "Tradizione del nord del Cile: trippa e zampetti teneri in salsa speziata, serviti con riso bianco."
+    },
+    "zh": {
+      "n": "Picante de Guata y Pata配白米饭",
+      "d": "智利北部传统美食:软嫩牛肚和牛蹄配香辣酱汁,佐白米饭。"
+    }
+  },
+  "🌶️PICANTE DE MARISCOS CON ARROZ": {
+    "en": {
+      "n": "Picante de Mariscos with Rice",
+      "d": "Spicy seafood stew with rice"
+    },
+    "pt": {
+      "n": "Picante de Mariscos com Arroz",
+      "d": "Ensopado picante de frutos do mar com arroz"
+    },
+    "it": {
+      "n": "Picante de Mariscos con Riso",
+      "d": "Stufato piccante di frutti di mare con riso"
+    },
+    "zh": {
+      "n": "Picante de Mariscos配米饭",
+      "d": "香辣海鲜炖菜配米饭"
+    }
+  },
+  "🌶️PICANTE DE PULPO CON ARROZ": {
+    "en": {
+      "n": "Picante de Pulpo with Rice",
+      "d": "An ancestral heritage dish of northern Chile and southern Peru, where tender octopus is cooked in a creamy, spiced ají sauce, served with traditional rice."
+    },
+    "pt": {
+      "n": "Picante de Pulpo com Arroz",
+      "d": "Prato ancestral e patrimonial do norte do Chile e sul do Peru, em que o polvo macio é cozido em um cremoso e temperado molho de ají, acompanhado de arroz tradicional."
+    },
+    "it": {
+      "n": "Picante de Pulpo con Riso",
+      "d": "Piatto ancestrale e patrimoniale del nord del Cile e del sud del Perù, in cui il tenero polpo è cotto in una cremosa e speziata salsa di ají, servito con riso tradizionale."
+    },
+    "zh": {
+      "n": "Picante de Pulpo配米饭",
+      "d": "智利北部和秘鲁南部的古老传统菜肴,软嫩章鱼以浓滑香辣的辣椒酱烹制,佐传统米饭。"
+    }
+  },
+  "BIFE DE CHORIZO 350 GMOS   2 GUARNICIONES A ELECCIÓN": {
+    "en": {
+      "n": "Sirloin Steak 350 g with 2 Sides of Your Choice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Bife de Chorizo 350 g com 2 Acompanhamentos à Escolha",
+      "d": ""
+    },
+    "it": {
+      "n": "Bistecca di Controfiletto 350 g con 2 Contorni a Scelta",
+      "d": ""
+    },
+    "zh": {
+      "n": "西冷牛排350克配2份任选配菜",
+      "d": ""
+    }
+  },
+  "LOMO A LO POBRE 200 GRMS": {
+    "en": {
+      "n": "Lomo a lo Pobre 200 g",
+      "d": "Classic Chilean dish with 200 g of juicy tenderloin, served with french fries, two fried eggs, rice and sautéed onion."
+    },
+    "pt": {
+      "n": "Lomo a lo Pobre 200 g",
+      "d": "Clássico prato chileno com 200 g de lombo suculento, acompanhado de batatas fritas, dois ovos fritos, arroz e cebola salteada."
+    },
+    "it": {
+      "n": "Lomo a lo Pobre 200 g",
+      "d": "Classico piatto cileno con 200 g di succoso lombo, servito con patatine fritte, due uova fritte, riso e cipolla saltata."
+    },
+    "zh": {
+      "n": "Lomo a lo Pobre 200克",
+      "d": "智利经典菜肴,200克多汁里脊,配薯条、两个煎蛋、米饭和炒洋葱。"
+    }
+  },
+  "LOMO GRILLE 200 GRAMOS A LA ORDEN": {
+    "en": {
+      "n": "Grilled Tenderloin 200 g, Cooked to Order",
+      "d": ""
+    },
+    "pt": {
+      "n": "Lombo Grelhado 200 g, no Ponto Desejado",
+      "d": ""
+    },
+    "it": {
+      "n": "Lombo alla Griglia 200 g, Cottura a Scelta",
+      "d": ""
+    },
+    "zh": {
+      "n": "烤里脊200克,按需烹制",
+      "d": ""
+    }
+  },
+  "LOMO SALTADO CLASICO": {
+    "en": {
+      "n": "Classic Lomo Saltado",
+      "d": "Wok-sautéed with onion, tomato and spices, served with rice and french fries."
+    },
+    "pt": {
+      "n": "Lomo Saltado Clássico",
+      "d": "Salteado no wok com cebola, tomate e temperos, acompanhado de arroz e batatas fritas."
+    },
+    "it": {
+      "n": "Lomo Saltado Classico",
+      "d": "Saltato nel wok con cipolla, pomodoro e spezie, servito con riso e patatine fritte."
+    },
+    "zh": {
+      "n": "经典炒牛肉(Lomo Saltado)",
+      "d": "与洋葱、番茄和香料一起在炒锅中爆炒,配米饭和薯条。"
+    }
+  },
+  "LOMO SALTADO CON RISSOTTO A LA HUANCAINA": {
+    "en": {
+      "n": "Lomo Saltado with Risotto a la Huancaína",
+      "d": "Italian-Peruvian fusion with creamy ají amarillo risotto."
+    },
+    "pt": {
+      "n": "Lomo Saltado com Risoto à Huancaína",
+      "d": "Fusão ítalo-peruana com cremoso risoto de ají amarillo."
+    },
+    "it": {
+      "n": "Lomo Saltado con Risotto alla Huancaína",
+      "d": "Fusione italo-peruviana con cremoso risotto all'ají amarillo."
+    },
+    "zh": {
+      "n": "炒牛肉配万卡依纳酱烩饭",
+      "d": "意大利与秘鲁融合风味,配浓滑的黄辣椒烩饭。"
+    }
+  },
+  "SPAGUETTI EN TINTA DE CALAMAR CON SALSA DE MARISCOS": {
+    "en": {
+      "n": "Squid Ink Spaghetti with Seafood Sauce",
+      "d": ""
+    },
+    "pt": {
+      "n": "Espaguete de Tinta de Lula com Molho de Frutos do Mar",
+      "d": ""
+    },
+    "it": {
+      "n": "Spaghetti al Nero di Seppia con Salsa di Frutti di Mare",
+      "d": ""
+    },
+    "zh": {
+      "n": "墨鱼汁意面配海鲜酱",
+      "d": ""
+    }
+  },
+  "SUPREMA DE AVE A LA PLANCHA EN SALSA HUANCAINA ACOMPAÑADO DE ARROZ AL OLIVO": {
+    "en": {
+      "n": "Grilled Chicken Breast in Huancaína Sauce with Olive Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Peito de Frango Grelhado com Molho Huancaína e Arroz ao Olivo",
+      "d": ""
+    },
+    "it": {
+      "n": "Petto di Pollo alla Piastra in Salsa Huancaína con Riso all'Olivo",
+      "d": ""
+    },
+    "zh": {
+      "n": "铁板鸡胸配万卡依纳酱和橄榄饭",
+      "d": ""
+    }
+  },
+  "SUPREMA DE AVE CON SALSA DE  CHAMPIGNONES ARROZ A LAS FINAS HIERBAS": {
+    "en": {
+      "n": "Chicken Breast with Mushroom Sauce and Fine Herb Rice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Peito de Frango com Molho de Cogumelos e Arroz com Ervas Finas",
+      "d": ""
+    },
+    "it": {
+      "n": "Petto di Pollo con Salsa ai Funghi Champignon e Riso alle Erbe Fini",
+      "d": ""
+    },
+    "zh": {
+      "n": "鸡胸配蘑菇酱和香草饭",
+      "d": ""
+    }
+  },
+  "🍖 COSTILLAR DE CERDO ASADO  GUARNICION A ELECCION": {
+    "en": {
+      "n": "Roasted Pork Ribs with Side of Your Choice",
+      "d": "Slow-cooked ribs with smoky notes, served with merkén mashed potatoes."
+    },
+    "pt": {
+      "n": "Costelas de Porco Assadas com Acompanhamento à Escolha",
+      "d": "Costelas cozidas lentamente, com notas defumadas, acompanhadas de purê de merkén."
+    },
+    "it": {
+      "n": "Costine di Maiale Arrosto con Contorno a Scelta",
+      "d": "Costine cotte lentamente con note affumicate, servite con purè al merkén."
+    },
+    "zh": {
+      "n": "烤猪肋排配任选配菜",
+      "d": "慢炖猪肋排,带烟熏风味,配merkén辣椒土豆泥。"
+    }
+  },
+  "🥩 TOMAHAWK 800 GRMS CON CHIMICHURRI Y 2 ACOMPAÑAMIENTOS A ELECCION": {
+    "en": {
+      "n": "Tomahawk 800 g with Chimichurri and 2 Sides of Your Choice",
+      "d": "Premium grilled cut, juicy, served with house-made chimichurri and two sides of your choice."
+    },
+    "pt": {
+      "n": "Tomahawk 800 g com Chimichurri e 2 Acompanhamentos à Escolha",
+      "d": "Corte premium na grelha, suculento, servido com chimichurri caseiro e dois acompanhamentos à escolha."
+    },
+    "it": {
+      "n": "Tomahawk 800 g con Chimichurri e 2 Contorni a Scelta",
+      "d": "Taglio premium alla griglia, succoso, servito con chimichurri fatto in casa e due contorni a scelta."
+    },
+    "zh": {
+      "n": "战斧牛排800克配chimichurri酱和2份任选配菜",
+      "d": "优质烧烤切块,多汁鲜嫩,配自制chimichurri酱和两份任选配菜。"
+    }
+  },
+  "🥩ASADO DE TIRA AL VINO TINTO CON GUARNICION A LA ORDEN 500gm": {
+    "en": {
+      "n": "Short Ribs in Red Wine with Side of Your Choice 500 g",
+      "d": "Tender, flavorful cut slow-cooked in red wine to bring out its deep flavor, served with a side of your choice."
+    },
+    "pt": {
+      "n": "Assado de Tira ao Vinho Tinto com Acompanhamento à Escolha 500 g",
+      "d": "Corte macio e saboroso cozido lentamente em vinho tinto, realçando seu sabor profundo, acompanhado de um acompanhamento à escolha."
+    },
+    "it": {
+      "n": "Asado de Tira al Vino Rosso con Contorno a Scelta 500 g",
+      "d": "Taglio tenero e saporito cotto lentamente nel vino rosso per esaltarne il sapore profondo, servito con un contorno a scelta."
+    },
+    "zh": {
+      "n": "红酒炖牛小排配任选配菜 500克",
+      "d": "软嫩多味的牛肉块以红酒慢炖,凸显醇厚风味,配一份任选配菜。"
+    }
+  },
+  "🥩FLAT IRON STEAK 350 GMS  GUARNICION A ELECCIÓN": {
+    "en": {
+      "n": "Flat Iron Steak 350 g with Side of Your Choice",
+      "d": ""
+    },
+    "pt": {
+      "n": "Flat Iron Steak 350 g com Acompanhamento à Escolha",
+      "d": ""
+    },
+    "it": {
+      "n": "Flat Iron Steak 350 g con Contorno a Scelta",
+      "d": ""
+    },
+    "zh": {
+      "n": "嫩肩牛排350克配任选配菜",
+      "d": ""
+    }
+  },
+  "🌊 FIESTA DEL MAR": {
+    "en": {
+      "n": "Sea Feast (Fiesta del Mar)",
+      "d": "A dish to share: ceviche, grilled octopus, fish chicharrón, seafood rice and octopus causa."
+    },
+    "pt": {
+      "n": "Festa do Mar (Fiesta del Mar)",
+      "d": "Experiência para compartilhar: ceviche, polvo na grelha, chicharrón de peixe, arroz com frutos do mar e causa de polvo."
+    },
+    "it": {
+      "n": "Festa del Mare (Fiesta del Mar)",
+      "d": "Piatto da condividere: ceviche, polpo alla griglia, chicharrón di pesce, riso ai frutti di mare e causa di polpo."
+    },
+    "zh": {
+      "n": "海洋盛宴(Fiesta del Mar)",
+      "d": "适合分享的拼盘:酸橘汁腌鱼、烤章鱼、炸鱼块、海鲜饭和章鱼卡乌萨。"
+    }
+  },
+  "BROWNIE CON HELADO": {
+    "en": {
+      "n": "Brownie with Ice Cream",
+      "d": "(You can choose the ice cream flavor.) Warm, moist, intense chocolate brownie with creamy ice cream for a perfect contrast of temperature and flavor."
+    },
+    "pt": {
+      "n": "Brownie com Sorvete",
+      "d": "(Você pode escolher o sabor do sorvete.) Brownie de chocolate morno, úmido e intenso, acompanhado de sorvete cremoso para um contraste perfeito de temperatura e sabor."
+    },
+    "it": {
+      "n": "Brownie con Gelato",
+      "d": "(Puoi scegliere il gusto del gelato.) Brownie al cioccolato caldo, umido e intenso, con gelato cremoso per un perfetto contrasto di temperatura e sapore."
+    },
+    "zh": {
+      "n": "布朗尼配冰淇淋",
+      "d": "(冰淇淋口味可选。)温热湿润、浓郁的巧克力布朗尼,搭配绵密冰淇淋,冷热与风味的完美对比。"
+    }
+  },
+  "CHEESECAKE CON SALSA DE FRUTILLA, MANGO O MARACUYA": {
+    "en": {
+      "n": "Cheesecake with Strawberry, Mango or Passion Fruit Sauce",
+      "d": ""
+    },
+    "pt": {
+      "n": "Cheesecake com Calda de Morango, Manga ou Maracujá",
+      "d": ""
+    },
+    "it": {
+      "n": "Cheesecake con Salsa di Fragola, Mango o Frutto della Passione",
+      "d": ""
+    },
+    "zh": {
+      "n": "芝士蛋糕配草莓、芒果或百香果酱",
+      "d": ""
+    }
+  },
+  "COPA DE HELADO": {
+    "en": {
+      "n": "Ice Cream Cup",
+      "d": "3 FLAVORS"
+    },
+    "pt": {
+      "n": "Taça de Sorvete",
+      "d": "3 SABORES"
+    },
+    "it": {
+      "n": "Coppa di Gelato",
+      "d": "3 GUSTI"
+    },
+    "zh": {
+      "n": "冰淇淋杯",
+      "d": "3种口味"
+    }
+  },
+  "COPA DE HELADO 1 SABOR (ACAI)": {
+    "en": {
+      "n": "Ice Cream Cup, 1 Flavor (Açaí)",
+      "d": ""
+    },
+    "pt": {
+      "n": "Taça de Sorvete, 1 Sabor (Açaí)",
+      "d": ""
+    },
+    "it": {
+      "n": "Coppa di Gelato 1 Gusto (Açaí)",
+      "d": ""
+    },
+    "zh": {
+      "n": "冰淇淋杯,1种口味(巴西莓)",
+      "d": ""
+    }
+  },
+  "FONDUE DE FRUTILLAS CON NUTELLA": {
+    "en": {
+      "n": "Strawberry Fondue with Nutella",
+      "d": "An irresistible warm, smooth and creamy Nutella, served with strawberries and more for dipping and enjoying. A sweet, elegant dessert, perfect for sharing."
+    },
+    "pt": {
+      "n": "Fondue de Morangos com Nutella",
+      "d": "Um irresistível creme de Nutella morno, suave e cremoso, acompanhado de morangos e mais para mergulhar e desfrutar. Uma sobremesa doce, elegante e perfeita para compartilhar."
+    },
+    "it": {
+      "n": "Fonduta di Fragole con Nutella",
+      "d": "Un'irresistibile Nutella calda, liscia e cremosa, servita con fragole e altro ancora da intingere e gustare. Un dolce elegante, perfetto da condividere."
+    },
+    "zh": {
+      "n": "草莓Nutella火锅",
+      "d": "令人难以抗拒的温热顺滑Nutella,配草莓和更多水果蘸着享用。一道优雅的甜点,适合分享。"
+    }
+  },
+  "LECHE ASADA": {
+    "en": {
+      "n": "Leche Asada",
+      "d": "Traditional Chilean baked milk custard with a soft texture and homemade flavor, oven-baked with a fine golden top and a delicate caramel that enhances its sweetness."
+    },
+    "pt": {
+      "n": "Leche Asada",
+      "d": "Tradicional pudim de leite assado chileno, de textura suave e sabor caseiro, preparado no forno com uma fina camada dourada e acompanhado de um delicado caramelo que realça sua doçura."
+    },
+    "it": {
+      "n": "Leche Asada",
+      "d": "Tradizionale budino di latte al forno cileno dalla consistenza morbida e dal sapore casalingo, cotto in forno con una sottile superficie dorata e un delicato caramello che ne esalta la dolcezza."
+    },
+    "zh": {
+      "n": "烤牛奶布丁(Leche Asada)",
+      "d": "智利传统烤牛奶布丁,口感柔软,带有家常风味,经烤箱烘焙,表面呈金黄薄层,配上细腻的焦糖,更显香甜。"
+    }
+  },
+  "MOUSSE DE MARACUYA EN SALSA DE MARACUYA": {
+    "en": {
+      "n": "Passion Fruit Mousse in Passion Fruit Sauce",
+      "d": ""
+    },
+    "pt": {
+      "n": "Mousse de Maracujá com Calda de Maracujá",
+      "d": ""
+    },
+    "it": {
+      "n": "Mousse di Frutto della Passione in Salsa di Frutto della Passione",
+      "d": ""
+    },
+    "zh": {
+      "n": "百香果慕斯配百香果酱",
+      "d": ""
+    }
+  },
+  "PANACOTTA CON SALSA DE FRUTILLA": {
+    "en": {
+      "n": "Panna Cotta with Strawberry Sauce",
+      "d": "Classic Italian dessert with a soft, silky texture, made with cream and served with a delicate natural strawberry sauce that enhances its freshness and sweetness."
+    },
+    "pt": {
+      "n": "Panna Cotta com Calda de Morango",
+      "d": "Clássica sobremesa italiana de textura suave e sedosa, preparada com creme de leite e acompanhada de uma delicada calda de morangos naturais que realça sua frescura e doçura."
+    },
+    "it": {
+      "n": "Panna Cotta con Salsa di Fragola",
+      "d": "Classico dolce italiano dalla consistenza morbida e setosa, preparato con panna e servito con una delicata salsa di fragole naturali che ne esalta freschezza e dolcezza."
+    },
+    "zh": {
+      "n": "奶冻配草莓酱",
+      "d": "经典意式甜点,口感柔软丝滑,以奶油制成,配上细腻的天然草莓酱,更添清新与香甜。"
+    }
+  },
+  "SUSPIRO LIMEÑO": {
+    "en": {
+      "n": "Suspiro Limeño",
+      "d": "Creamy traditional dessert made with dulce de leche and milk, topped with soft meringue and a touch of cinnamon. Sweet, delicate and perfect to close the experience."
+    },
+    "pt": {
+      "n": "Suspiro Limeño",
+      "d": "Cremosa sobremesa tradicional à base de doce de leite e leite, coberta com suave merengue e um toque de canela. Doce, delicada e perfeita para fechar a experiência."
+    },
+    "it": {
+      "n": "Suspiro Limeño",
+      "d": "Cremoso dolce tradizionale a base di dulce de leche e latte, ricoperto di soffice meringa e un tocco di cannella. Dolce, delicato e perfetto per concludere l'esperienza."
+    },
+    "zh": {
+      "n": "Suspiro Limeño",
+      "d": "传统奶香甜点,以牛奶焦糖酱和牛奶制成,覆盖柔软的蛋白霜,点缀一丝肉桂。香甜细腻,为这顿美餐画上完美句号。"
+    }
+  },
+  "TENTACION x 4 UNIDADES": {
+    "en": {
+      "n": "Temptation x 4 Pieces",
+      "d": "(Panna cotta with strawberry sauce, passion fruit mousse, leche asada, chocolate volcano)"
+    },
+    "pt": {
+      "n": "Tentação x 4 Unidades",
+      "d": "(Panna cotta com calda de morango, mousse de maracujá, leche asada, vulcão de chocolate)"
+    },
+    "it": {
+      "n": "Tentazione x 4 Pezzi",
+      "d": "(Panna cotta con salsa di fragole, mousse di frutto della passione, leche asada, vulcano di cioccolato)"
+    },
+    "zh": {
+      "n": "诱惑甜点 x 4份",
+      "d": "(草莓酱奶冻、百香果慕斯、烤牛奶布丁、巧克力熔岩)"
+    }
+  },
+  "TIRAMISÚ": {
+    "en": {
+      "n": "Tiramisu",
+      "d": "Italian dessert of smooth cream, coffee and cocoa, with a creamy texture and a delicate yet intense flavor."
+    },
+    "pt": {
+      "n": "Tiramisù",
+      "d": "Sobremesa italiana de creme suave, café e cacau, com textura cremosa e sabor delicado e intenso."
+    },
+    "it": {
+      "n": "Tiramisù",
+      "d": "Dolce italiano di crema morbida, caffè e cacao, dalla consistenza cremosa e dal sapore delicato ma intenso."
+    },
+    "zh": {
+      "n": "提拉米苏",
+      "d": "意式甜点,由细滑奶油、咖啡和可可制成,口感绵密,风味细腻而浓郁。"
+    }
+  },
+  "VOLCÁN DE CHOCOLATE CON HELADO": {
+    "en": {
+      "n": "Chocolate Volcano with Ice Cream",
+      "d": "(You can choose the ice cream flavor.) Warm chocolate cake with a molten center, served with ice cream for a perfect contrast of warmth, creaminess and sweetness."
+    },
+    "pt": {
+      "n": "Vulcão de Chocolate com Sorvete",
+      "d": "(Você pode escolher o sabor do sorvete.) Bolo de chocolate morno com centro derretido, acompanhado de sorvete para um contraste perfeito entre calor, cremosidade e doçura."
+    },
+    "it": {
+      "n": "Vulcano di Cioccolato con Gelato",
+      "d": "(Puoi scegliere il gusto del gelato.) Tortino caldo al cioccolato dal cuore fondente, servito con gelato per un perfetto contrasto di calore, cremosità e dolcezza."
+    },
+    "zh": {
+      "n": "巧克力熔岩蛋糕配冰淇淋",
+      "d": "(冰淇淋口味可选。)温热的巧克力蛋糕,内心流心,搭配冰淇淋,温热、绵密与香甜的完美对比。"
+    }
+  },
+  "ALPACA RESERVA - CARMENERE - 2023 VIÑA SAN PEDRO": {
+    "en": {
+      "n": "Alpaca Reserva - Carmenère - 2023 Viña San Pedro",
+      "d": ""
+    },
+    "pt": {
+      "n": "Alpaca Reserva - Carmenère - 2023 Viña San Pedro",
+      "d": ""
+    },
+    "it": {
+      "n": "Alpaca Reserva - Carmenère - 2023 Viña San Pedro",
+      "d": ""
+    },
+    "zh": {
+      "n": "Alpaca Reserva - Carmenère - 2023 Viña San Pedro",
+      "d": ""
+    }
+  },
+  "CALITERRA RESERVA SHIRAZ 2013 -750cc": {
+    "en": {
+      "n": "Caliterra Reserva Shiraz 2013 - 750cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Caliterra Reserva Shiraz 2013 - 750cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Caliterra Reserva Shiraz 2013 - 750cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Caliterra Reserva Shiraz 2013 - 750cc",
+      "d": ""
+    }
+  },
+  "CASILLERO DEL DIABLO DARK BLACK / RED": {
+    "en": {
+      "n": "Casillero del Diablo Dark Black / Red",
+      "d": ""
+    },
+    "pt": {
+      "n": "Casillero del Diablo Dark Black / Red",
+      "d": ""
+    },
+    "it": {
+      "n": "Casillero del Diablo Dark Black / Red",
+      "d": ""
+    },
+    "zh": {
+      "n": "Casillero del Diablo Dark Black / Red",
+      "d": ""
+    }
+  },
+  "CASTILLO DE MOLINA GRAN RESERVA /CABERNET SAUVIGNON 2021": {
+    "en": {
+      "n": "Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "pt": {
+      "n": "Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "it": {
+      "n": "Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "zh": {
+      "n": "Castillo de Molina Gran Reserva / Cabernet Sauvignon 2021",
+      "d": ""
+    }
+  },
+  "Copa de Vino Tinto Reserva": {
+    "en": {
+      "n": "Glass of Reserve Red Wine",
+      "d": ""
+    },
+    "pt": {
+      "n": "Taça de Vinho Tinto Reserva",
+      "d": ""
+    },
+    "it": {
+      "n": "Calice di Vino Rosso Reserva",
+      "d": ""
+    },
+    "zh": {
+      "n": "一杯珍藏红葡萄酒",
+      "d": ""
+    }
+  },
+  "ESPUMANTE BARON LACROIX- MOSCATO -750 cc": {
+    "en": {
+      "n": "Baron Lacroix Sparkling Wine - Moscato - 750 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Espumante Baron Lacroix - Moscato - 750 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Spumante Baron Lacroix - Moscato - 750 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Baron Lacroix起泡酒 - Moscato - 750 cc",
+      "d": ""
+    }
+  },
+  "FRIDA KAHLO - Gran Reserva -CARMENERE- VIÑA CARMEN 750 CC": {
+    "en": {
+      "n": "Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Frida Kahlo - Gran Reserva - Carmenère - Viña Carmen 750 cc",
+      "d": ""
+    }
+  },
+  "Frida Kahlo Reserva Cabernet Sauvignon 2021": {
+    "en": {
+      "n": "Frida Kahlo Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "pt": {
+      "n": "Frida Kahlo Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "it": {
+      "n": "Frida Kahlo Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "zh": {
+      "n": "Frida Kahlo Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    }
+  },
+  "GREY - CABERNET SAUVIGNON 2019": {
+    "en": {
+      "n": "Grey - Cabernet Sauvignon 2019",
+      "d": ""
+    },
+    "pt": {
+      "n": "Grey - Cabernet Sauvignon 2019",
+      "d": ""
+    },
+    "it": {
+      "n": "Grey - Cabernet Sauvignon 2019",
+      "d": ""
+    },
+    "zh": {
+      "n": "Grey - Cabernet Sauvignon 2019",
+      "d": ""
+    }
+  },
+  "KALFU MOLU": {
+    "en": {
+      "n": "Kalfu Molu",
+      "d": ""
+    },
+    "pt": {
+      "n": "Kalfu Molu",
+      "d": ""
+    },
+    "it": {
+      "n": "Kalfu Molu",
+      "d": ""
+    },
+    "zh": {
+      "n": "Kalfu Molu",
+      "d": ""
+    }
+  },
+  "LA JOYA, GRAN RESERVA, CABERNET SAUVIGNON 2020, 750 cc": {
+    "en": {
+      "n": "La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "La Joya, Gran Reserva, Cabernet Sauvignon 2020, 750 cc",
+      "d": ""
+    }
+  },
+  "MEDALLA REAL  Cabernet Sauvignon": {
+    "en": {
+      "n": "Medalla Real Cabernet Sauvignon",
+      "d": ""
+    },
+    "pt": {
+      "n": "Medalla Real Cabernet Sauvignon",
+      "d": ""
+    },
+    "it": {
+      "n": "Medalla Real Cabernet Sauvignon",
+      "d": ""
+    },
+    "zh": {
+      "n": "Medalla Real Cabernet Sauvignon",
+      "d": ""
+    }
+  },
+  "Medalla Real Sauvignon Blanc": {
+    "en": {
+      "n": "Medalla Real Sauvignon Blanc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Medalla Real Sauvignon Blanc",
+      "d": ""
+    },
+    "it": {
+      "n": "Medalla Real Sauvignon Blanc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Medalla Real Sauvignon Blanc",
+      "d": ""
+    }
+  },
+  "Misiones de Rengo Chardonay 2003 D.O Valle de Casa Blanca": {
+    "en": {
+      "n": "Misiones de Rengo Chardonnay 2003 D.O. Casablanca Valley",
+      "d": ""
+    },
+    "pt": {
+      "n": "Misiones de Rengo Chardonnay 2003 D.O. Vale de Casablanca",
+      "d": ""
+    },
+    "it": {
+      "n": "Misiones de Rengo Chardonnay 2003 D.O. Valle di Casablanca",
+      "d": ""
+    },
+    "zh": {
+      "n": "Misiones de Rengo 霞多丽 2003 D.O.卡萨布兰卡谷",
+      "d": ""
+    }
+  },
+  "MISIONES DE RENGO RESERVA - CARMENERE 2022": {
+    "en": {
+      "n": "Misiones de Rengo Reserva - Carmenère 2022",
+      "d": ""
+    },
+    "pt": {
+      "n": "Misiones de Rengo Reserva - Carmenère 2022",
+      "d": ""
+    },
+    "it": {
+      "n": "Misiones de Rengo Reserva - Carmenère 2022",
+      "d": ""
+    },
+    "zh": {
+      "n": "Misiones de Rengo Reserva - Carmenère 2022",
+      "d": ""
+    }
+  },
+  "OVEJA NEGRA RESERVA CABERNET FRANC /CARMENERE 2022 750cc": {
+    "en": {
+      "n": "Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Oveja Negra Reserva Cabernet Franc / Carmenère 2022 750cc",
+      "d": ""
+    }
+  },
+  "RAMIRANA TRINIDAD (syrah-cab sauv-carmenere) 2019- 750 cc": {
+    "en": {
+      "n": "Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Ramirana Trinidad (Syrah - Cabernet Sauvignon - Carmenère) 2019 - 750 cc",
+      "d": ""
+    }
+  },
+  "SANGRE DE TORO ORIGINAL 2019 (GARNACHA /CARIGNAN) 750cc": {
+    "en": {
+      "n": "Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc",
+      "d": ""
+    },
+    "pt": {
+      "n": "Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc",
+      "d": ""
+    },
+    "it": {
+      "n": "Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc",
+      "d": ""
+    },
+    "zh": {
+      "n": "Sangre de Toro Original 2019 (Garnacha / Carignan) 750cc",
+      "d": ""
+    }
+  },
+  "TERRA ANDINA RESERVA  Cabernet Sauvignon 2021": {
+    "en": {
+      "n": "Terra Andina Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "pt": {
+      "n": "Terra Andina Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "it": {
+      "n": "Terra Andina Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    },
+    "zh": {
+      "n": "Terra Andina Reserva Cabernet Sauvignon 2021",
+      "d": ""
+    }
+  },
+  "VERTICE APALTA VINEYARD 2017": {
+    "en": {
+      "n": "Vértice Apalta Vineyard 2017",
+      "d": ""
+    },
+    "pt": {
+      "n": "Vértice Apalta Vineyard 2017",
+      "d": ""
+    },
+    "it": {
+      "n": "Vértice Apalta Vineyard 2017",
+      "d": ""
+    },
+    "zh": {
+      "n": "Vértice Apalta Vineyard 2017",
+      "d": ""
+    }
+  }
 }

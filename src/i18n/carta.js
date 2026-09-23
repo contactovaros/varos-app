@@ -4,7 +4,7 @@ import TRADUCCIONES from '../data/carta_traducciones.json'
 // Idiomas de la carta pública (/carta2). Aparte de i18n/reservas.js a propósito:
 // la reserva solo está en ES/EN porque el personal confirma por WhatsApp en esos
 // idiomas; la carta es de solo lectura, así que puede ofrecer más.
-export const IDIOMAS_CARTA = ['es', 'en', 'pt']
+export const IDIOMAS_CARTA = ['es', 'en', 'pt', 'it', 'zh']
 
 const CLAVE_LS = 'varos_idioma_carta'
 
@@ -29,31 +29,45 @@ const UI = {
     pedidos: 'Pedidos e Reservas pelo',
     sommelier: 'Sommelier',
     nuevo: 'NOVO'
+  },
+  it: {
+    error_carga: 'Impossibile caricare il menu:',
+    vacia: 'Non ci sono ancora piatti nel menu.',
+    pedidos: 'Ordini e Prenotazioni al',
+    sommelier: 'Sommelier',
+    nuevo: 'NUOVO'
+  },
+  zh: {
+    error_carga: '无法加载菜单：',
+    vacia: '菜单中暂无菜品。',
+    pedidos: '订餐与预订电话',
+    sommelier: '侍酒师',
+    nuevo: '新'
   }
 }
 
 // Claves = categorías reales de menu_items, normalizadas (mayúscula, sin tildes).
 const CATEGORIAS = {
-  'MENU DEL DIA': { en: 'Menu of the Day', pt: 'Menu do Dia' },
-  'NUESTRO BAR': { en: 'Our Bar', pt: 'Nosso Bar' },
-  APERITIVOS: { en: 'Cocktails & Aperitifs', pt: 'Aperitivos e Drinks' },
-  'ENTRADAS FRIAS Y CALIENTES': { en: 'Cold & Hot Starters', pt: 'Entradas Frias e Quentes' },
-  'PLATOS PRINCIPALES': { en: 'Main Courses', pt: 'Pratos Principais' },
-  NINOS: { en: 'Kids', pt: 'Infantil' },
-  GUARNICIONES: { en: 'Side Dishes', pt: 'Acompanhamentos' },
-  'POSTRES & TENTACIONES': { en: 'Desserts & Temptations', pt: 'Sobremesas e Tentações' },
-  'MOCKTAILS (SIN ALCOHOL)': { en: 'Mocktails (Alcohol-Free)', pt: 'Mocktails (Sem Álcool)' },
-  'VINOS & ESPUMANTES': { en: 'Wines & Sparkling', pt: 'Vinhos e Espumantes' }
+  'MENU DEL DIA': { en: 'Menu of the Day', pt: 'Menu do Dia', it: 'Menù del Giorno', zh: '今日套餐' },
+  'NUESTRO BAR': { en: 'Our Bar', pt: 'Nosso Bar', it: 'Il Nostro Bar', zh: '我们的酒吧' },
+  APERITIVOS: { en: 'Cocktails & Aperitifs', pt: 'Aperitivos e Drinks', it: 'Aperitivi e Cocktail', zh: '开胃酒与鸡尾酒' },
+  'ENTRADAS FRIAS Y CALIENTES': { en: 'Cold & Hot Starters', pt: 'Entradas Frias e Quentes', it: 'Antipasti Freddi e Caldi', zh: '冷热前菜' },
+  'PLATOS PRINCIPALES': { en: 'Main Courses', pt: 'Pratos Principais', it: 'Piatti Principali', zh: '主菜' },
+  NINOS: { en: 'Kids', pt: 'Infantil', it: 'Bambini', zh: '儿童餐' },
+  GUARNICIONES: { en: 'Side Dishes', pt: 'Acompanhamentos', it: 'Contorni', zh: '配菜' },
+  'POSTRES & TENTACIONES': { en: 'Desserts & Temptations', pt: 'Sobremesas e Tentações', it: 'Dolci e Tentazioni', zh: '甜点' },
+  'MOCKTAILS (SIN ALCOHOL)': { en: 'Mocktails (Alcohol-Free)', pt: 'Mocktails (Sem Álcool)', it: 'Mocktail (Analcolici)', zh: '无酒精特饮' },
+  'VINOS & ESPUMANTES': { en: 'Wines & Sparkling', pt: 'Vinhos e Espumantes', it: 'Vini e Spumanti', zh: '葡萄酒与起泡酒' }
 }
 
 // Etiquetas de curso en la descripción del Menú del Día ("Entrada: ...").
 const CURSOS = {
-  entrada: { en: 'Starter', pt: 'Entrada' },
-  entradas: { en: 'Starters', pt: 'Entradas' },
-  'plato principal': { en: 'Main course', pt: 'Prato principal' },
-  principal: { en: 'Main course', pt: 'Prato principal' },
-  postre: { en: 'Dessert', pt: 'Sobremesa' },
-  postres: { en: 'Desserts', pt: 'Sobremesas' }
+  entrada: { en: 'Starter', pt: 'Entrada', it: 'Antipasto', zh: '前菜' },
+  entradas: { en: 'Starters', pt: 'Entradas', it: 'Antipasti', zh: '前菜' },
+  'plato principal': { en: 'Main course', pt: 'Prato principal', it: 'Piatto principale', zh: '主菜' },
+  principal: { en: 'Main course', pt: 'Prato principal', it: 'Piatto principale', zh: '主菜' },
+  postre: { en: 'Dessert', pt: 'Sobremesa', it: 'Dolce', zh: '甜点' },
+  postres: { en: 'Desserts', pt: 'Sobremesas', it: 'Dolci', zh: '甜点' }
 }
 
 function sinTildes(s) {
