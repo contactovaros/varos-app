@@ -17,6 +17,37 @@ function precioCLP(texto) {
   return soloDigitos === '' ? NaN : Number(soloDigitos)
 }
 
+// Traduce el error crudo de Supabase/Postgres a qué pasó y qué hacer, en castellano.
+// El texto original va al final, entre paréntesis, por si hace falta pasárselo a soporte.
+function explicarError(err) {
+  const msg = String(err?.message ?? err ?? '')
+  const codigo = err?.code ?? ''
+  let causa = null
+  if (codigo === '22P02' || /invalid input syntax/i.test(msg)) {
+    causa = /integer/i.test(msg)
+      ? 'Uno de los números no es válido: los precios y cantidades van sin decimales ni letras (ej. 14900).'
+      : 'Uno de los campos tiene un formato que la base no acepta.'
+  } else if (codigo === '23505' || /duplicate key/i.test(msg)) {
+    causa = 'Ya existe un registro igual (nombre repetido u otro dato que no puede duplicarse).'
+  } else if (codigo === '23502' || /null value in column/i.test(msg)) {
+    const col = msg.match(/column "([^"]+)"/)?.[1]
+    causa = `Falta completar un dato obligatorio${col ? ` (${col})` : ''}.`
+  } else if (codigo === '42501' || /row-level security|permission denied/i.test(msg)) {
+    causa = 'Tu usuario no tiene permiso para hacer este cambio. Cerrá sesión, volvé a entrar como administrador y probá de nuevo.'
+  } else if (codigo === '42703' || /column .* does not exist/i.test(msg)) {
+    causa = 'Falta actualizar la base de datos (una columna nueva todavía no existe).'
+  } else if (/JWT|token|session/i.test(msg)) {
+    causa = 'Se venció la sesión. Volvé a entrar y probá de nuevo.'
+  } else if (/fetch|network|Failed to fetch|timeout/i.test(msg)) {
+    causa = 'No hay conexión con el servidor. Revisá internet y probá de nuevo.'
+  } else if (/payload too large|too large|exceeded/i.test(msg)) {
+    causa = 'El archivo es demasiado pesado. Probá con una imagen más liviana.'
+  }
+  return causa ? `${causa}
+
+(Detalle técnico: ${msg})` : msg
+}
+
 function formatCLP(valor) {
   const n = Number(valor) || 0
   return `$${n.toLocaleString('es-CL')}`
@@ -173,7 +204,7 @@ export default function AdminProductos() {
         setTraduccion({ hechos: Math.min(k + 4, pendientes.length), total: pendientes.length })
       }
     } catch (e) {
-      alert(`Se cortó la traducción: ${e.message}. Lo que ya se tradujo quedó guardado; podés volver a apretar el botón.`)
+      alert(`Se cortó la traducción: ${explicarError(e)}\nLo que ya se tradujo quedó guardado; podés volver a apretar el botón.`)
     }
     setTraduccion(null)
   }
@@ -252,7 +283,7 @@ export default function AdminProductos() {
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, price_clp: anterior } : i)))
       setPrecioForm(String(anterior))
-      alert('No se pudo guardar el precio: ' + err.message)
+      alert('No se pudo guardar el precio.\n' + explicarError(err))
     } else {
       syncCampoConPos(seleccionado, 'Precio', nuevo)
     }
@@ -274,7 +305,7 @@ export default function AdminProductos() {
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === seleccionado.id ? { ...i, description: anterior } : i)))
       setDescripcionForm(anterior ?? '')
-      alert('No se pudo guardar la descripción: ' + err.message)
+      alert('No se pudo guardar la descripción.\n' + explicarError(err))
     } else {
       traducirEnSegundoPlano(seleccionado.id)
     }
@@ -287,7 +318,7 @@ export default function AdminProductos() {
     const { error: err } = await supabase.from('menu_items').update({ available: disponible }).eq('id', item.id)
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, available: !disponible } : i)))
-      alert('No se pudo cambiar el estado: ' + err.message)
+      alert('No se pudo cambiar el estado.\n' + explicarError(err))
     }
   }
 
@@ -297,7 +328,7 @@ export default function AdminProductos() {
     const { error: err } = await supabase.from('menu_items').update({ visible_carta: nuevo }).eq('id', item.id)
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, visible_carta: !nuevo } : i)))
-      alert('No se pudo cambiar la visibilidad en varos.cl: ' + err.message)
+      alert('No se pudo cambiar la visibilidad en varos.cl.\n' + explicarError(err))
     } else {
       // "Bloqueado" en el PHP es justo lo inverso de visible_carta (confirmado:
       // solo oculta de la carta pública, no del catálogo interno de menús).
@@ -322,7 +353,7 @@ export default function AdminProductos() {
       const { data } = supabase.storage.from('menu-fotos').getPublicUrl(path)
       return data.publicUrl
     } catch (err) {
-      setErrorFoto('No se pudo subir la foto: ' + err.message)
+      setErrorFoto('No se pudo subir la foto. ' + explicarError(err))
       return null
     } finally {
       setSubiendoFoto(false)
@@ -339,7 +370,7 @@ export default function AdminProductos() {
     if (!url) return
     setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, image_url: url } : i)))
     const { error: err } = await supabase.from('menu_items').update({ image_url: url }).eq('id', item.id)
-    if (err) alert('La foto se subió pero no se pudo guardar en el producto: ' + err.message)
+    if (err) alert('La foto se subió pero no se pudo guardar en el producto.\n' + explicarError(err))
     else syncFotoConPos(item, url)
   }
 
@@ -361,7 +392,9 @@ export default function AdminProductos() {
     const nombre = nuevoProducto.name.trim()
     const cat = nuevoProducto.category.trim()
     const precio = precioCLP(nuevoProducto.price_clp)
-    if (!nombre || !cat || !Number.isFinite(precio) || precio < 0) return
+    if (!nombre) return alert('Falta el nombre del producto.')
+    if (!cat) return alert('Falta elegir la categoría.')
+    if (!Number.isFinite(precio) || precio < 0) return alert('El precio no es válido: escribí solo el monto en pesos, por ejemplo 14900.')
 
     setCreando(true)
     const payload = {
@@ -376,7 +409,7 @@ export default function AdminProductos() {
     const { data, error: err } = await supabase.from('menu_items').insert(payload).select().single()
     setCreando(false)
     if (err) {
-      alert('No se pudo crear el producto: ' + err.message)
+      alert('No se pudo crear el producto.\n' + explicarError(err))
       return
     }
     setNuevoProducto(null)
