@@ -10,6 +10,13 @@ import { postJson } from '../lib/apiAdmin'
 // que se agregan por una migración .sql que el usuario corre a mano — este
 // componente ya asume que existen.
 
+// El peso chileno no tiene decimales: "14.900", "14,900" y "$14 900" son catorce mil
+// novecientos. Number("14.900") daba 14.9 y la base rechazaba el insert.
+function precioCLP(texto) {
+  const soloDigitos = String(texto ?? '').replace(/[^\d]/g, '')
+  return soloDigitos === '' ? NaN : Number(soloDigitos)
+}
+
 function formatCLP(valor) {
   const n = Number(valor) || 0
   return `$${n.toLocaleString('es-CL')}`
@@ -236,7 +243,7 @@ export default function AdminProductos() {
 
   async function guardarPrecio() {
     if (!seleccionado) return
-    const nuevo = Number(precioForm)
+    const nuevo = precioCLP(precioForm)
     if (!Number.isFinite(nuevo) || nuevo < 0 || nuevo === seleccionado.price_clp) return
     setGuardandoPrecio(true)
     const anterior = seleccionado.price_clp
@@ -353,7 +360,7 @@ export default function AdminProductos() {
     if (!nuevoProducto) return
     const nombre = nuevoProducto.name.trim()
     const cat = nuevoProducto.category.trim()
-    const precio = Number(nuevoProducto.price_clp)
+    const precio = precioCLP(nuevoProducto.price_clp)
     if (!nombre || !cat || !Number.isFinite(precio) || precio < 0) return
 
     setCreando(true)
