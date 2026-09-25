@@ -58,8 +58,7 @@ export const NAV_ITEMS = [
     icon: 'i-cook',
     label: 'Cocina',
     desc: 'Pantalla de cocina: las comandas para preparar. Se entra con el código de cocina',
-    accent: 'gold',
-    nuevo: true
+    accent: 'gold'
   },
   {
     to: '/barra',
@@ -67,8 +66,7 @@ export const NAV_ITEMS = [
     icon: 'i-bar',
     label: 'Barra',
     desc: 'Pantalla de la barra: las bebidas de cada comanda. Se entra con el código de la barra',
-    accent: 'gold',
-    nuevo: true
+    accent: 'gold'
   },
   {
     to: '/cocina?tv=1',
@@ -89,7 +87,7 @@ export const NAV_ITEMS = [
   {
     to: '/admin/mesas-pos',
     mobileHeading: '🪑 Mesas del POS',
-    icon: 'i-grid',
+    icon: 'i-table',
     label: 'Mesas del POS',
     desc: 'La numeración real por sector (Bar, Carpa, Andino…) que ve el garzón en /mozo',
     accent: 'gold'
@@ -114,7 +112,7 @@ export const NAV_ITEMS = [
     to: '/admin/mesas',
     mobileHeading: '🥂 Editar planos y mesas',
     icon: 'i-compass',
-    label: 'Editar planos y mesas',
+    label: 'Planos y mesas',
     desc: 'Comedor Exterior, Comedor Principal y Terraza — mover, agrandar y bloquear mesas',
     accent: 'ember'
   },
@@ -130,7 +128,7 @@ export const NAV_ITEMS = [
     to: '/admin/resenas',
     mobileHeading: 'Consultor de reseñas',
     icon: 'i-chat',
-    label: 'Consultor de reseñas',
+    label: 'Reseñas',
     desc: 'Preguntale a tus reseñas de Google qué reclama y qué celebra la gente',
     accent: 'ember'
   },
@@ -162,7 +160,7 @@ export const NAV_ITEMS = [
     to: '/reservas',
     mobileHeading: 'Página de reservas',
     icon: 'i-link',
-    label: 'Reservar (público)',
+    label: 'Reservar',
     desc: 'La página que ve el cliente para reservar mesa, para compartir el link directo',
     accent: 'ember'
   },
@@ -170,7 +168,7 @@ export const NAV_ITEMS = [
     to: '/club',
     mobileHeading: 'Club Varo’s',
     icon: 'i-star',
-    label: 'Club (público)',
+    label: 'Club',
     desc: 'La tarjeta del Club como la ve el socio: estrellas y premio de 5 visitas',
     accent: 'ember'
   },
@@ -178,7 +176,7 @@ export const NAV_ITEMS = [
     to: '/sommelier',
     mobileHeading: 'Sommelier',
     icon: 'i-glass',
-    label: 'Sommelier (público)',
+    label: 'Sommelier',
     desc: 'El sommelier virtual: recomienda qué tomar según lo que se va a comer',
     accent: 'ember'
   },
@@ -203,6 +201,7 @@ export function IconSprite() {
       <symbol id="i-tray" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="4" rx="1" /><circle cx="8" cy="6" r="2.2" /><circle cx="16" cy="6" r="2.2" /><path d="M4 13v6h16v-6" /></symbol>
       <symbol id="i-cash" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="1.5" /><path d="M3 10h18" /><circle cx="17" cy="14.5" r="1.4" fill="currentColor" stroke="none" /></symbol>
       <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1" /><rect x="13" y="4" width="7" height="7" rx="1" /><rect x="4" y="13" width="7" height="7" rx="1" /><rect x="13" y="13" width="7" height="7" rx="1" /></symbol>
+      <symbol id="i-table" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="8" rx="1.5" /><path d="M9 5h6M9 19h6M3 10.5v3M21 10.5v3" /></symbol>
       <symbol id="i-clip" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="1.5" /><rect x="9" y="2.5" width="6" height="3" rx="1" /><path d="M8 10h8M8 13.5h8M8 17h5" /></symbol>
       <symbol id="i-compass" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 3v3M12 18v3M3 12h3M18 12h3" /><path d="m9 15 3-6 3 6-3-1.5Z" /></symbol>
       <symbol id="i-plan" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="17" height="17" rx="1.5" /><circle cx="8" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="8" r="0.9" fill="currentColor" stroke="none" /><circle cx="8" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="12" cy="16" r="0.9" fill="currentColor" stroke="none" /><circle cx="16" cy="16" r="0.9" fill="currentColor" stroke="none" /></symbol>
@@ -250,19 +249,69 @@ export function NavIcon({ id, className = 'w-4 h-4' }) {
 // El orden es el de uso: lo que se toca todos los días primero, Club y negocio
 // (lo que menos se abre) al final.
 const NAV_GROUPS = [
-  { id: 'dia', label: 'Día a día', rutas: ['/mozo', '/cocina', '/barra', '/cocina?tv=1', '/admin/caja', '/admin/garzones', '/admin/mesas-pos'] },
+  { id: 'servicio', label: 'Servicio', rutas: ['/mozo', '/cocina', '/barra', '/cocina?tv=1'] },
+  { id: 'caja', label: 'Caja y equipo', rutas: ['/admin/caja', '/admin/garzones', '/admin/mesas-pos'] },
   { id: 'carta', label: 'Carta', rutas: ['/admin/productos', '/admin/menu', '/carta2'] },
   { id: 'salon', label: 'Salón', rutas: ['/admin/reservas', '/admin/mesa-trabajo', '/admin/mesas', '/admin/plano'] },
   { id: 'club', label: 'Club y negocio', rutas: ['/admin/clientes', '/admin/canjes', '/admin/resenas', '/admin/ajustes'] },
   { id: 'publico', label: 'Para clientes', rutas: ['/reservas', '/club', '/sommelier', '/mostrar-qr'] }
 ].map((g) => ({ ...g, items: g.rutas.map((to) => NAV_ITEMS.find((i) => i.to === to)).filter(Boolean) }))
 
+// Los grupos de destinos, en grilla. Se usa en dos lugares: dentro del menú
+// desplegable (todas las pantallas del admin) y abierto, como contenido, en la
+// portada /admin — ahí la portada era casi solo el título y el menú tapaba lo
+// único que tenía (pedido del usuario, 2026-09-25).
+export function NavGrupos() {
+  const location = useLocation()
+  return (
+    <div className="grid gap-x-4 gap-y-5 sm:grid-cols-3 lg:grid-cols-6">
+      {NAV_GROUPS.map((g) => (
+        <div key={g.id}>
+          <h2
+            id={`grupo-${g.id}`}
+            className="font-head text-[11px] font-semibold uppercase tracking-wider text-paper/55 px-2.5 mb-1.5"
+          >
+            {g.label}
+          </h2>
+          <ul aria-labelledby={`grupo-${g.id}`} className="grid grid-cols-2 gap-1 sm:grid-cols-1">
+            {g.items.map((item) => {
+              const activo = location.pathname === item.to
+              const idDesc = `desc-${item.icon}`
+              return (
+                <li key={item.to}>
+                  <Link
+                    to={item.to}
+                    title={item.desc}
+                    aria-describedby={idDesc}
+                    aria-current={activo ? 'page' : undefined}
+                    // El naranja queda solo para "estás acá": antes también lo
+                    // usaban el botón abierto y las etiquetas "nuevo".
+                    className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors duration-150 ease-salida ${
+                      activo
+                        ? 'bg-ember/10 border-ember/50 text-ember'
+                        : 'border-transparent text-paper hover:bg-paper/5 active:bg-paper/5'
+                    }`}
+                  >
+                    <NavIcon id={item.icon} className={`w-4 h-4 shrink-0 ${activo ? '' : 'text-gold'}`} />
+                    <span className="font-head text-xs font-medium leading-tight">{item.label}</span>
+                    <span id={idDesc} className="sr-only">{item.desc}</span>
+                  </Link>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // Un solo botón que abre todos los destinos de /admin, agrupados. Reemplaza a
 // la barra lateral fija y a la tira que había que deslizar (pedido del
-// usuario, 2026-09-21): la pantalla de trabajo queda con todo el ancho y en el
-// celular se ven los 14 destinos de una vez. Cerrado por defecto — se abre
-// cuando hace falta y se cierra solo al elegir un destino, al tocar fuera o con
-// Escape.
+// usuario, 2026-09-21): la pantalla de trabajo queda con todo el ancho. Cerrado
+// por defecto — se abre cuando hace falta y se cierra solo al elegir un
+// destino, al tocar fuera, con Escape o al salir con Tab. En la portada /admin
+// no se dibuja: ahí los grupos ya están abiertos como contenido.
 export function AdminMenu({ className = '' }) {
   const location = useLocation()
   const [abierto, setAbierto] = useState(false)
@@ -310,13 +359,11 @@ export function AdminMenu({ className = '' }) {
           aria-expanded={abierto}
           aria-controls="admin-menu"
           onClick={() => setAbierto((v) => !v)}
-          className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 font-head text-sm transition-colors duration-150 ease-salida ${
-            abierto
-              ? 'bg-ember/10 border-ember/50 text-ember'
-              : 'bg-inkSoft border-paper/35 text-paper hover:border-ember/50 active:border-ember/50'
+          className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 font-head text-sm text-paper transition-colors duration-150 ease-salida ${
+            abierto ? 'bg-paper/10 border-paper/50' : 'bg-inkSoft border-paper/35 hover:border-paper/50 active:border-paper/50'
           }`}
         >
-          <NavIcon id="i-grid" className="w-4 h-4" />
+          <NavIcon id="i-grid" className="w-4 h-4 text-gold" />
           Navegación
           <svg
             className={`w-3.5 h-3.5 transition-transform duration-150 ease-salida ${abierto ? 'rotate-180' : ''}`}
@@ -342,43 +389,9 @@ export function AdminMenu({ className = '' }) {
         <nav
           id="admin-menu"
           aria-label="Todo el admin"
-          className="absolute z-40 left-4 right-4 mt-2 rounded-2xl border border-paper/15 bg-inkSoft p-4 shadow-2xl shadow-black/50 origin-top motion-safe:animate-panel-in lg:left-0 lg:right-auto lg:w-[58rem] lg:max-w-[calc(100vw-3rem)] max-h-[calc(100dvh-6.5rem)] overflow-y-auto"
+          className="absolute z-40 left-4 right-4 mt-2 rounded-2xl border border-paper/15 bg-inkSoft p-4 shadow-2xl shadow-black/50 origin-top motion-safe:animate-panel-in lg:left-0 lg:right-auto lg:w-[64rem] lg:max-w-[calc(100vw-3rem)] max-h-[calc(100dvh-6.5rem)] overflow-y-auto"
         >
-          <div className="grid gap-4 lg:grid-cols-5">
-            {NAV_GROUPS.map((g) => (
-              <div key={g.id}>
-                <div id={`grupo-${g.id}`} className="font-mono text-[10px] tracking-[0.2em] text-paper/55 uppercase px-2 mb-1.5">{g.label}</div>
-                <ul aria-labelledby={`grupo-${g.id}`} className="grid grid-cols-2 gap-1 lg:grid-cols-1">
-                  {g.items.map((item) => {
-                    const activo = location.pathname === item.to
-                    const idDesc = `desc-${item.icon}`
-                    return (
-                      <li key={item.to}>
-                      <Link
-                        to={item.to}
-                        title={item.desc}
-                        aria-describedby={idDesc}
-                        aria-current={activo ? 'page' : undefined}
-                        className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors duration-150 ease-salida ${
-                          activo
-                            ? 'bg-ember/10 border-ember/50 text-ember'
-                            : 'border-transparent text-paper hover:bg-paper/5 active:bg-paper/5'
-                        }`}
-                      >
-                        <NavIcon id={item.icon} className={`w-4 h-4 shrink-0 ${activo ? '' : 'text-gold'}`} />
-                        <span className="font-head text-xs font-medium leading-tight">{item.label}</span>
-                        {item.nuevo && (
-                          <span className="ml-auto rounded bg-ember px-1.5 py-px font-mono text-[9px] font-medium text-ink">nuevo</span>
-                        )}
-                        <span id={idDesc} className="sr-only">{item.desc}</span>
-                      </Link>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <NavGrupos />
         </nav>
       )}
     </div>

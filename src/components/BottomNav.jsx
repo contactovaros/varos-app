@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext.jsx'
 
 // Iconos de un solo trazo, todos con la misma caja, grosor y estilo de remate.
@@ -82,7 +82,7 @@ const IconoCarta = (
 const itemsAdmin = [
   { to: '/', label: 'Menú', icon: IconoMenu, end: true },
   { to: '/pedidos', label: 'Pedidos', icon: IconoPedidos },
-  { to: '/club', label: "Club Varo's", icon: IconoClub },
+  { to: '/club', label: 'Club', icon: IconoClub },
   { to: '/carta2', label: 'Carta', icon: IconoCarta },
   { to: '/sommelier', label: 'Sommelier', icon: IconoSommelier },
   { to: '/admin', label: 'Admin', icon: IconoAdmin },
@@ -92,12 +92,16 @@ const itemsAdmin = [
 
 export default function BottomNav() {
   const { isAdmin } = useAuth()
+  const { pathname } = useLocation()
 
   // Los clientes normales solo tienen una pantalla (su tarjeta), sin necesidad de navegación
   if (!isAdmin) return null
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-ink/95 backdrop-blur border-t border-white/5 flex px-2 pt-2 pb-5 max-w-md mx-auto">
+    // Dentro de /admin, en escritorio, se esconde: ahí ya está la navegación
+    // agrupada del admin y esta barra de celular repetía la mitad de sus
+    // destinos, flotando chica al centro de la pantalla.
+    <nav className={`${pathname.startsWith('/admin') ? 'lg:hidden ' : ''}fixed bottom-0 left-0 right-0 z-40 bg-ink/95 backdrop-blur border-t border-white/5 flex px-2 pt-2 pb-5 max-w-md mx-auto`}>
       {itemsAdmin.map((item) => (
         <NavLink
           key={item.to}

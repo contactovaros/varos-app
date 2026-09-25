@@ -33,7 +33,9 @@ export default function AdminLayout() {
     <div className={ancho ? 'lg:px-6 lg:pt-8' : ''}>
       <IconSprite />
 
-      <AdminMenu className={ancho ? 'lg:px-0 lg:pt-0 lg:pb-4' : ''} />
+      {/* En la portada los grupos ya están abiertos como contenido (ver
+          Admin.jsx), así que el botón desplegable sobraría. */}
+      {location.pathname !== '/admin' && <AdminMenu className={ancho ? 'lg:px-0 lg:pt-0 lg:pb-4' : ''} />}
 
       {/* El estado del club (clientes, menú, canjes, ajustes…) se carga acá,
           una sola vez para toda la subruta /admin — así Clientes, Ajustes,

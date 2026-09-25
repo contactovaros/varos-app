@@ -1,16 +1,17 @@
 import { useAuth } from '../context/AuthContext.jsx'
 import { useAdminData } from '../context/AdminDataContext.jsx'
+import { NavGrupos } from '../components/AdminNav.jsx'
 
 function formatFechaCorta(iso) {
   if (!iso) return ''
   return new Date(iso).toLocaleDateString('es-CL', { day: 'numeric', month: 'short' })
 }
 
-// Portada de /admin (index de la ruta anidada). Pedido explícito del usuario
-// (2026-09-14): acá va UNA sola cosa — el bloque de premios pendientes, gold,
-// sin acordeón, porque es lo único del panel que tiene a una persona
-// esperando algo. Todo lo demás (Clientes, Menú, Canjes, Ajustes, y las
-// otras 8 pantallas) se accede por la navegación que pone AdminLayout.
+// Portada de /admin (index de la ruta anidada). Arriba, el bloque de premios
+// pendientes (pedido del usuario, 2026-09-14): gold, sin acordeón, porque es lo
+// único del panel que tiene a una persona esperando algo. Abajo, todos los
+// destinos abiertos (2026-09-25): antes había que abrir el menú desplegable, y
+// al abrirlo tapaba justo los premios. AdminLayout no dibuja ese botón acá.
 export default function Admin() {
   const { isAdmin, loading: authLoading } = useAuth()
   const { pendientes, entregarPremio } = useAdminData()
@@ -63,8 +64,12 @@ export default function Admin() {
           </ul>
         </div>
       ) : (
-        <p className="text-paper/55 text-xs">Sin premios pendientes por ahora. Usa la navegación para ir a Clientes, Menú, Caja y el resto.</p>
+        <p className="text-paper/55 text-xs">Sin premios pendientes por ahora.</p>
       )}
+
+      <nav aria-label="Todo el admin" className="mt-8 -mx-2.5">
+        <NavGrupos />
+      </nav>
     </div>
   )
 }
