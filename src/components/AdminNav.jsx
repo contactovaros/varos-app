@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 // Navegación compartida de todo /admin: el sprite de íconos, el array de
 // destinos y el menú desplegable que los muestra agrupados (AdminMenu, más
@@ -318,6 +318,41 @@ export function AdminMenu({ className = '' }) {
   const contenedor = useRef(null)
   const boton = useRef(null)
   const actual = NAV_ITEMS.find((i) => i.to === location.pathname)
+  // Posición del panel en escritorio. Iba `absolute` pegado al botón, y en
+  // las pantallas angostas (Caja, Garzones…) el botón queda al centro: el
+  // panel de 64rem se salía por la derecha y había que achicar la ventana
+  // para verlo. Ahora es `fixed`, centrado en la ventana y justo debajo del
+  // botón, con el ancho topado al de la ventana. En el celular sigue igual.
+  const [posEscritorio, setPosEscritorio] = useState(null)
+
+  useLayoutEffect(() => {
+    if (!abierto) return undefined
+    const calcular = () => {
+      if (!window.matchMedia('(min-width: 1024px)').matches || !boton.current) {
+        setPosEscritorio(null)
+        return
+      }
+      const r = boton.current.getBoundingClientRect()
+      const ancho = Math.min(1152, window.innerWidth - 48)
+      const top = r.bottom + 8
+      setPosEscritorio({
+        position: 'fixed',
+        top,
+        left: Math.round((window.innerWidth - ancho) / 2),
+        width: ancho,
+        right: 'auto',
+        marginTop: 0,
+        maxHeight: window.innerHeight - top - 16
+      })
+    }
+    calcular()
+    window.addEventListener('resize', calcular)
+    window.addEventListener('scroll', calcular, true)
+    return () => {
+      window.removeEventListener('resize', calcular)
+      window.removeEventListener('scroll', calcular, true)
+    }
+  }, [abierto])
 
   useEffect(() => {
     setAbierto(false)
@@ -389,7 +424,8 @@ export function AdminMenu({ className = '' }) {
         <nav
           id="admin-menu"
           aria-label="Todo el admin"
-          className="absolute z-40 left-4 right-4 mt-2 rounded-2xl border border-paper/15 bg-inkSoft p-4 shadow-2xl shadow-black/50 origin-top motion-safe:animate-panel-in lg:left-0 lg:right-auto lg:w-[64rem] lg:max-w-[calc(100vw-3rem)] max-h-[calc(100dvh-6.5rem)] overflow-y-auto"
+          style={posEscritorio ?? undefined}
+          className="absolute z-40 left-4 right-4 mt-2 rounded-2xl border border-paper/15 bg-inkSoft p-4 lg:p-5 shadow-2xl shadow-black/50 origin-top motion-safe:animate-panel-in max-h-[calc(100dvh-6.5rem)] overflow-y-auto"
         >
           <NavGrupos />
         </nav>
