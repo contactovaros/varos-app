@@ -38,7 +38,13 @@ export default function ReciboBoleta({ cobro, onCerrar }) {
       const el = document.getElementById('recibo-boleta')
       if (!el || !estiloPagina.current) return
       const mm = Math.ceil((el.getBoundingClientRect().height * 25.4) / 96) + 2
-      estiloPagina.current.textContent = `@page { size: 80mm ${mm}mm; margin: 0; }`
+      // La BIXOLON SRP-350III solo ofrece tres papeles en el driver: 80x3276,
+      // 80x297 y A4. Una altura "a medida" no coincide con ninguno y Chrome cae
+      // en el primero de la lista (80x3276 = 3,2 m de rollo corriendo). Pedir
+      // 80x297 exacto hace que Chrome lo elija solo; el largo solo si la boleta
+      // no cabe en 297 mm.
+      const alto = mm <= 295 ? 297 : 3276
+      estiloPagina.current.textContent = `@page { size: 80mm ${alto}mm; margin: 0; }`
     }
     ajustar()
     window.addEventListener('beforeprint', ajustar)
@@ -63,7 +69,7 @@ export default function ReciboBoleta({ cobro, onCerrar }) {
         @media print {
           body > *:not(#recibo-print) { display: none !important; }
           html, body { margin: 0; padding: 0; background: #fff; height: auto; }
-          #recibo-boleta { width: 80mm; }
+          #recibo-boleta { width: 70mm; margin: 0 auto; }
         }
       `}</style>
 
