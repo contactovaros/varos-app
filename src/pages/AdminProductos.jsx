@@ -573,7 +573,7 @@ export default function AdminProductos() {
         </div>
 
         {/* ---- Panel lateral: crear, o editar ---- */}
-        <aside className="lg:w-80 shrink-0 lg:sticky lg:top-6 lg:self-start">
+        <aside className="lg:w-80 shrink-0 lg:sticky lg:top-20 lg:self-start">
           <div className="bg-inkSoft border border-white/5 rounded-2xl p-4">
             {nuevoProducto ? (
               <div className="flex flex-col gap-4">

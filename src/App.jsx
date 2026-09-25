@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
-import BottomNav from './components/BottomNav.jsx'
+import BottomNav, { NavEscritorio } from './components/BottomNav.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
 import Menu from './pages/Menu.jsx'
 import Cart from './pages/Cart.jsx'
@@ -127,7 +127,8 @@ export default function App() {
 
   return (
     <CartProvider>
-      <div className={`${anchoAmplio ? 'lg:max-w-7xl' : ''} max-w-md mx-auto min-h-screen pb-24 relative`}>
+      <NavEscritorio />
+      <div className={`${anchoAmplio ? 'lg:max-w-7xl' : ''} max-w-md mx-auto min-h-screen pb-24 lg:pb-10 relative`}>
         <Routes>
           <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
           <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
