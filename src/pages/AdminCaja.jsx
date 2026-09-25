@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { comandasAbiertas, cerrarMesaYCobrar } from '../lib/comandasApi.js'
 import { useSistemaComandas, InsigniaSistema, AvisoRecargar } from '../components/SistemaComandas.jsx'
 import ReciboBoleta from '../components/ReciboBoleta.jsx'
+import HistorialCaja from '../components/HistorialCaja.jsx'
 
 // Caja fase 1 — cobrar y cerrar mesa. Ver varos-pos/DECISIONES.md,
 // "Caja fase 1: cobrar y cerrar mesa".
@@ -49,10 +50,6 @@ function formatCLP(n) {
   return '$' + Math.round(n || 0).toLocaleString('es-CL')
 }
 
-function formatHora(iso) {
-  return new Date(iso).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })
-}
-
 export default function AdminCaja() {
   const { isAdmin, loading: authLoading, session, customer } = useAuth()
   // Con qué sistema de comandas cargó esta pantalla (null = consultando).
@@ -75,8 +72,6 @@ export default function AdminCaja() {
   const [errorCobro, setErrorCobro] = useState('')
   const [toast, setToast] = useState('')
 
-  const [resumenHoy, setResumenHoy] = useState(null)
-  const [detalleAbierto, setDetalleAbierto] = useState(false)
   const [reciboImprimir, setReciboImprimir] = useState(null) // fila de pos_cobros a imprimir
 
   useEffect(() => {
@@ -174,29 +169,6 @@ export default function AdminCaja() {
     }
     cargarPrecios()
   }, [isAdmin])
-
-  useEffect(() => {
-    async function cargarResumen() {
-      const hoy = new Date().toISOString().slice(0, 10)
-      const { data } = await supabase
-        .from('pos_cobros')
-        .select('id, mesa, sector, garzon, items, total, medio_pago, cobrado_por, created_at')
-        .gte('created_at', hoy + 'T00:00:00')
-        .order('created_at', { ascending: false })
-      if (!data) return
-      const porMedio = {}
-      let total = 0
-      for (const c of data) {
-        porMedio[c.medio_pago] = (porMedio[c.medio_pago] || 0) + Number(c.total)
-        total += Number(c.total)
-      }
-      // El detalle fila por fila — antes solo se veía el total del día, sin
-      // forma de saber qué mesa se cobró ni a qué hora (pedido del usuario,
-      // 2026-09-14): "y el registro de caja dónde lo veo".
-      setResumenHoy({ total, porMedio, cantidad: data.length, detalle: data })
-    }
-    if (isAdmin) cargarResumen()
-  }, [isAdmin, toast])
 
   // Abrir solo el/los sectores que tienen algo pendiente — si no hay ninguno
   // pendiente en absoluto, no tocamos lo que el admin ya haya abierto a mano.
@@ -437,55 +409,8 @@ export default function AdminCaja() {
         </div>
       )}
 
-      {resumenHoy && resumenHoy.cantidad > 0 && (
-        <div className="bg-inkSoft border border-gold/25 rounded-2xl p-4 mb-4">
-          <div className="text-[10.5px] font-bold uppercase tracking-wide text-paper/40 mb-2">Cerrar turno — hoy</div>
-          <div className="text-xl font-head font-semibold text-gold mb-1.5">{formatCLP(resumenHoy.total)}</div>
-          <div className="flex gap-3 text-[11.5px] text-paper/50">
-            {Object.entries(resumenHoy.porMedio).map(([medio, monto]) => (
-              <span key={medio}>
-                {MEDIOS_PAGO.find((m) => m.value === medio)?.label || medio}: {formatCLP(monto)}
-              </span>
-            ))}
-          </div>
-          <div className="text-[11px] text-paper/35 mt-1.5">{resumenHoy.cantidad} mesa(s) cobrada(s)</div>
-
-          <button
-            onClick={() => setDetalleAbierto((v) => !v)}
-            className="text-[11px] text-gold underline mt-2.5"
-          >
-            {detalleAbierto ? 'Ocultar detalle' : 'Ver registro de caja'}
-          </button>
-
-          {detalleAbierto && (
-            <div className="mt-3 pt-3 border-t border-white/5 divide-y divide-white/5">
-              {resumenHoy.detalle.map((c, i) => (
-                <div key={i} className="flex items-center justify-between gap-3 py-2 text-xs">
-                  <div className="min-w-0">
-                    <div className="text-paper">Mesa {c.mesa} · {c.sector}</div>
-                    <div className="text-paper/35 text-[10px] truncate">
-                      {formatHora(c.created_at)} · {c.garzon || 'sin garzón'} · cobró {c.cobrado_por}
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <div className="text-gold font-medium tabular-nums">{formatCLP(c.total)}</div>
-                    <div className="text-paper/35 text-[10px]">
-                      {MEDIOS_PAGO.find((m) => m.value === c.medio_pago)?.label || c.medio_pago}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => setReciboImprimir(c)}
-                    className="shrink-0 text-base leading-none px-1.5 py-1 -mr-1"
-                    title="Imprimir boleta"
-                  >
-                    🖨️
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+      {/* Historial de cualquier período (antes solo "Cerrar turno — hoy"). */}
+      <HistorialCaja onImprimir={setReciboImprimir} recargar={toast} />
 
       {!mesaSel && (
         <>
