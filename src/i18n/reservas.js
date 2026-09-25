@@ -40,7 +40,7 @@ export const DICCIONARIO = {
     // Menú del Día + carta
     menuDia_titulo: 'Menú del Día',
     menuDia_bajada: 'Martes a domingo · $15.900',
-    menuDia_hoy: 'Consultá los platos de hoy en la carta',
+    menuDia_hoy: 'Consulta los platos de hoy en la carta',
     verCarta: 'Ver la carta',
 
     // Paso "filtros"

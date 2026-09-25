@@ -183,18 +183,18 @@ function Header() {
 function PieContacto({ t }) {
   return (
     <div className="w-full max-w-md flex flex-col items-center gap-1.5 mt-8 pt-5 border-t border-gold/10 text-center">
-      <p className="text-[11px] text-paper/40">
+      <p className="text-xs text-paper/60">
         {t('pie_dudas')}
         <a
           href="https://wa.me/56999235368"
           target="_blank"
           rel="noreferrer"
-          className="text-gold/70 underline decoration-gold/30"
+          className="text-gold/80 underline decoration-gold/40 inline-block py-2"
         >
           {t('pie_whatsapp')}
         </a>
       </p>
-      <div className="text-[10px] text-gold/30 tracking-wide">contacto@varos.cl</div>
+      <div className="text-[11px] text-gold/60 tracking-wide">contacto@varos.cl</div>
     </div>
   )
 }
@@ -208,7 +208,7 @@ function BloqueCarta({ t }) {
     <div className="w-full max-w-md mt-6 rounded-2xl border border-gold/20 bg-inkSoft p-4 text-center">
       <h2 className="font-serif text-lg tracking-wide text-gold">{t('menuDia_titulo')}</h2>
       <p className="mt-1 text-xs text-paper/55">{t('menuDia_bajada')}</p>
-      <p className="mt-0.5 text-[11px] text-paper/40">{t('menuDia_hoy')}</p>
+      <p className="mt-0.5 text-[11px] text-paper/60">{t('menuDia_hoy')}</p>
       <a
         href="https://www.varos.cl/carta"
         target="_blank"
@@ -225,7 +225,7 @@ function TituloReserva({ children }) {
   return (
     <div className="w-full max-w-md text-center mb-5">
       <h1 className="font-serif text-2xl sm:text-[28px] tracking-wide text-gold">RESERVA TU MESA</h1>
-      <p className="text-paper/45 text-sm mt-1.5">{children}</p>
+      <p className="text-paper/65 text-sm mt-1.5">{children}</p>
       <div className="flex items-center justify-center gap-2 mt-4 mx-auto w-32">
         <span className="h-px flex-1 bg-gold/30" />
         <span className="w-1.5 h-1.5 rotate-45 bg-gold/50 shrink-0" />
@@ -324,6 +324,13 @@ export default function Reservas() {
     ...(salas.salon?.activo !== false ? ['Comedor Principal'] : []),
     ...(salas.terraza?.activo !== false ? ['Terraza'] : [])
   ]
+
+  // Si hoy hay una sola zona abierta, se elige sola: antes aparecía sin marcar
+  // y el cliente se enteraba de que era obligatoria recién al enviar.
+  const unicaZona = zonaOptions.length === 2 ? zonaOptions[1] : null
+  useEffect(() => {
+    if (unicaZona && zona === 'cualquiera') setZona(unicaZona)
+  }, [unicaZona, zona])
 
   function salaDeZona(z) {
     if (z === 'Comedor Principal') return 'salon'
@@ -629,7 +636,7 @@ export default function Reservas() {
           }}
           className="w-full max-w-md flex flex-col gap-3"
         >
-          <p className="text-[11px] text-paper/45 -mb-1">
+          <p className="text-[13px] text-paper/75 -mb-1">
             {t('atencion_horario', { inicio: ALMUERZO_INICIO, fin: ALMUERZO_FIN })}
           </p>
 
@@ -642,12 +649,14 @@ export default function Reservas() {
                   required
                   type="date"
                   min={todayISO()}
+                  aria-invalid={fechaError ? true : undefined}
+                  aria-describedby={fechaError ? 'err-fecha' : undefined}
                   value={fecha}
                   onChange={(e) => {
                     setFecha(e.target.value)
                     setFechaError('')
                   }}
-                  className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                  className="w-full rounded-xl bg-inkSoft border border-bronze/80 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 />
               </div>
             </label>
@@ -660,27 +669,31 @@ export default function Reservas() {
                   type="time"
                   min={cenaHabilitada ? undefined : ALMUERZO_INICIO}
                   max={cenaHabilitada ? undefined : ALMUERZO_FIN}
+                  aria-invalid={horaError ? true : undefined}
+                  aria-describedby={horaError ? 'err-hora' : undefined}
                   value={hora}
                   onChange={(e) => {
                     setHora(e.target.value)
                     setHoraError('')
                   }}
-                  className="w-full rounded-xl bg-inkSoft border border-bronze/25 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                  className="w-full rounded-xl bg-inkSoft border border-bronze/80 pl-10 pr-3 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 />
               </div>
             </label>
           </div>
-          {fechaError && <p className="text-xs text-wineSoft -mt-1">{fechaError}</p>}
-          {horaError && <p className="text-xs text-wineSoft -mt-1">{horaError}</p>}
+          {fechaError && <p id="err-fecha" role="alert" className="text-xs text-[#F07C88] -mt-1">{fechaError}</p>}
+          {horaError && <p id="err-hora" role="alert" className="text-xs text-[#F07C88] -mt-1">{horaError}</p>}
           {!cenaHabilitada && !horaError && (
-            <p className="text-[10px] text-paper/35 -mt-1">
+            <p className="text-[11px] text-paper/60 -mt-1">
               {t('nota_almuerzo')}
             </p>
           )}
 
-          <label className="text-xs tracking-wide text-gold/70">
-            {t('label_personas')}
-            <div className="mt-1.5 flex items-center gap-3 bg-inkSoft border border-bronze/25 rounded-xl px-4 py-2.5">
+          {/* div y no label: un label que envuelve botones reenvía el toque al
+              primero, y tocar la palabra "Personas" restaba una persona. */}
+          <div role="group" aria-labelledby="label-personas" className="text-xs tracking-wide text-gold/70">
+            <span id="label-personas">{t('label_personas')}</span>
+            <div className="mt-1.5 flex items-center gap-3 bg-inkSoft border border-bronze/80 rounded-xl px-4 py-2.5">
               {/* 44 px de lado: es el control más tocado del primer paso y
                   antes medía 36. Se deshabilitan en los extremos — tocar "+"
                   en 20 no hacía nada, en silencio. */}
@@ -706,7 +719,7 @@ export default function Reservas() {
                 +
               </button>
             </div>
-          </label>
+          </div>
 
           <div>
             <span className="text-xs tracking-wide text-gold/70">{t('label_zona')}</span>
@@ -718,21 +731,23 @@ export default function Reservas() {
                     key={z}
                     type="button"
                     onClick={() => {
-                      setZona(zona === z ? 'cualquiera' : z)
+                      // Con una sola zona abierta no hay nada que desmarcar.
+                      if (zonaOptions.length === 2) setZona(z)
+                      else setZona(zona === z ? 'cualquiera' : z)
                       setZonaError(false)
                     }}
                     aria-pressed={zona === z}
                     className={`px-3.5 py-2.5 rounded-full text-xs border transition-[color,background-color,border-color,transform] duration-150 ease-salida active:scale-95 motion-reduce:active:scale-100 ${
-                      zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/25 text-paper/50'
+                      zona === z ? 'border-gold text-gold bg-gold/10' : 'border-bronze/80 text-paper/70'
                     }`}
                   >
                     {t(ZONA_CLAVE[z] ?? z)}
                   </button>
                 ))}
             </div>
-            {zonaError && <p className="text-xs text-wineSoft mt-2">{t('err_zona')}</p>}
+            {zonaError && <p role="alert" className="text-xs text-[#F07C88] mt-2">{t('err_zona')}</p>}
             {salas.comedor?.activo === false && salas.salon?.activo === false && salas.terraza?.activo === false && (
-              <p className="text-xs text-wineSoft mt-2">{t('sin_salas')}</p>
+              <p className="text-xs text-[#F07C88] mt-2">{t('sin_salas')}</p>
             )}
           </div>
 
@@ -744,9 +759,10 @@ export default function Reservas() {
               {t('label_nombre')}
               <input
                 required
+                autoComplete="name"
                 value={nombre}
                 onChange={(e) => setNombre(e.target.value)}
-                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/80 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 placeholder={t('ph_nombre')}
               />
             </label>
@@ -755,12 +771,15 @@ export default function Reservas() {
               <input
                 required
                 type="tel"
+                autoComplete="tel"
+                aria-invalid={errorMsg ? true : undefined}
+                aria-describedby={errorMsg ? 'err-general' : undefined}
                 value={telefono}
                 onChange={(e) => {
                   setTelefono(e.target.value)
                   setErrorMsg('')
                 }}
-                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/80 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 placeholder={t('ph_telefono')}
               />
             </label>
@@ -769,9 +788,10 @@ export default function Reservas() {
               <input
                 required
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/80 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none"
                 placeholder={t('ph_email')}
               />
             </label>
@@ -781,13 +801,13 @@ export default function Reservas() {
                 value={alergias}
                 onChange={(e) => setAlergias(e.target.value)}
                 rows={2}
-                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/25 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
+                className="mt-1.5 w-full rounded-xl bg-inkSoft border border-bronze/80 px-4 py-3 text-paper focus:border-gold/50 focus:outline-none resize-none"
                 placeholder={t('ph_alergias')}
               />
             </label>
           </div>
 
-          {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
+          {errorMsg && <p id="err-general" role="alert" className="text-sm text-[#F07C88]">{errorMsg}</p>}
 
           {/* `buscando` no es cosmético: verPlano() espera dos consultas a
               Supabase (~220 ms medidos en producción) y sin esto el botón no
@@ -934,6 +954,13 @@ export default function Reservas() {
                     opacity={opacity}
                     filter={seleccionada ? 'url(#glowSeleccionada)' : undefined}
                     role="button"
+                    tabIndex={clickable ? 0 : -1}
+                    onKeyDown={(e) => {
+                      if (clickable && (e.key === 'Enter' || e.key === ' ')) {
+                        e.preventDefault()
+                        seleccionarMesa(m)
+                      }
+                    }}
                     aria-disabled={!clickable}
                     aria-label={`${m.etiqueta}, ${reservada ? t('estado_reservada') : seleccionada ? t('estado_seleccionada') : t('estado_disponible')}`}
                   >
@@ -1019,7 +1046,7 @@ export default function Reservas() {
           )}
 
           {necesitaCombo && !combo && (
-            <p className="w-full max-w-md text-center text-xs text-wineSoft mb-4">
+            <p className="w-full max-w-md text-center text-xs text-[#F07C88] mb-4">
               {t('combo_sin', { n: personas })}
             </p>
           )}
@@ -1035,13 +1062,13 @@ export default function Reservas() {
 
           {puedeContinuar ? (
             <div className="w-full max-w-md flex flex-col gap-2">
-              <div className="bg-inkSoft border border-bronze/25 rounded-xl px-4 py-3 text-xs text-paper/60">
+              <div className="bg-inkSoft border border-bronze/80 rounded-xl px-4 py-3 text-xs text-paper/60">
                 {t('reserva_a_nombre')} <span className="text-paper/90">{nombre}</span> · {telefono}
                 {alergias.trim() && <div className="text-gold/80 mt-1">⚠ {alergias.trim()}</div>}
               </div>
               <p className="text-[10px] text-paper/35 mb-1">{t('mesa_retenida', { n: HOLD_MIN })}</p>
 
-              {errorMsg && <p className="text-sm text-wineSoft">{errorMsg}</p>}
+              {errorMsg && <p role="alert" className="text-sm text-[#F07C88]">{errorMsg}</p>}
 
               <BotonOro onClick={confirmarReserva} type="button" cargando={enviando} textoCargando={t('btn_enviando')} className="mt-1">
                 {t('btn_confirmar')}

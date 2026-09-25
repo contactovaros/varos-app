@@ -2,8 +2,6 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CartProvider } from './context/CartContext.jsx'
 import BottomNav, { NavEscritorio } from './components/BottomNav.jsx'
 import AdminLayout from './components/AdminLayout.jsx'
-import Menu from './pages/Menu.jsx'
-import Cart from './pages/Cart.jsx'
 import Club from './pages/Club.jsx'
 import Admin from './pages/Admin.jsx'
 import Login from './pages/Login.jsx'
@@ -130,8 +128,12 @@ export default function App() {
       <NavEscritorio />
       <div className={`${anchoAmplio ? 'lg:max-w-7xl' : ''} max-w-md mx-auto min-h-screen pb-24 lg:pb-10 relative`}>
         <Routes>
-          <Route path="/" element={isAdmin ? <Menu /> : <Navigate to="/club" replace />} />
-          <Route path="/pedidos" element={isAdmin ? <Cart /> : <Navigate to="/club" replace />} />
+          {/* Menú y Pedidos (el carrito) eran de la primera versión: los pedidos
+              iban a `orders`, que ninguna pantalla lee (no llegaban a cocina
+              ni caja), y sumaban puntos del programa que ya no se usa. Se
+              sacaron el 2026-09-25; el admin entra directo a /admin. */}
+          <Route path="/" element={<Navigate to={isAdmin ? '/admin' : '/club'} replace />} />
+          <Route path="/pedidos" element={<Navigate to={isAdmin ? '/admin' : '/club'} replace />} />
           <Route path="/club" element={<Club />} />
           <Route path="/perfil" element={<Navigate to="/club" replace />} />
           {/* Las 10 pantallas de admin comparten AdminLayout (navegación

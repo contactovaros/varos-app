@@ -21,20 +21,6 @@ function Icono({ children }) {
   )
 }
 
-const IconoMenu = (
-  <Icono>
-    <path d="M4 5.5A1.5 1.5 0 0 1 5.5 4H10a2 2 0 0 1 2 2v13a1.5 1.5 0 0 0-1.5-1.5h-5A1.5 1.5 0 0 1 4 16z" />
-    <path d="M20 5.5A1.5 1.5 0 0 0 18.5 4H14a2 2 0 0 0-2 2v13a1.5 1.5 0 0 1 1.5-1.5h5A1.5 1.5 0 0 0 20 16z" />
-  </Icono>
-)
-
-const IconoPedidos = (
-  <Icono>
-    <path d="M6 3.5 7.5 5 9 3.5 10.5 5 12 3.5 13.5 5 15 3.5 16.5 5 18 3.5v15.9a1.6 1.6 0 0 1-1.6 1.6H7.6A1.6 1.6 0 0 1 6 19.4z" />
-    <path d="M9 9h6M9 12.5h6M9 16h3" />
-  </Icono>
-)
-
 const IconoClub = (
   <Icono>
     <path d="M12 3.6l2.5 5.2 5.6.8-4 4 .9 5.7-5-2.7-5 2.7.9-5.7-4-4 5.6-.8z" />
@@ -78,8 +64,6 @@ const IconoCarta = (
 )
 
 const itemsAdmin = [
-  { to: '/', label: 'Menú', icon: IconoMenu, end: true },
-  { to: '/pedidos', label: 'Pedidos', icon: IconoPedidos },
   { to: '/club', label: 'Club', icon: IconoClub },
   { to: '/carta2', label: 'Carta', icon: IconoCarta },
   { to: '/sommelier', label: 'Sommelier', icon: IconoSommelier },
@@ -128,7 +112,7 @@ export function NavEscritorio() {
   return (
     <header className="hidden lg:block sticky top-0 z-40 bg-ink/90 backdrop-blur border-b border-paper/10">
       <div className="max-w-7xl mx-auto h-14 px-6 flex items-center gap-8">
-        <Link to="/" className="font-display text-[1.7rem] leading-none text-ember tracking-wide">
+        <Link to="/admin" className="font-display text-[1.7rem] leading-none text-ember tracking-wide">
           Varo's
         </Link>
         <nav aria-label="Principal" className="flex-1 flex items-center">

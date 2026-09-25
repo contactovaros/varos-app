@@ -14,6 +14,9 @@ body { -webkit-font-smoothing: antialiased; }
   outline: 2px solid #E3B341;
   outline-offset: 2px;
 }
+/* Los campos de reservas usan `focus:outline-none` y marcan el foco con el
+   borde; las mesas del plano son <g> de SVG, donde outline-offset no aplica. */
+g[role="button"]:focus-visible { outline-offset: 0; }
 
 @keyframes emberFloat {
   from { transform: scale(1) translate(0, 0); }
