@@ -47,21 +47,22 @@ export default function Admin() {
               <div className="min-w-0">
                 <div className="text-paper truncate">{p.customers?.full_name ?? 'Cliente eliminado'}</div>
                 <div className="text-gold/80 truncate">{p.producto || 'Sin premio configurado'}</div>
-                <div className="text-paper/35 text-[10px]">
+                <div className="text-paper/55 text-[11px]">
                   {p.customers?.member_number} · {formatFechaCorta(p.fecha_ganado)}
                 </div>
               </div>
               <button
                 onClick={() => entregarPremio(p)}
+                aria-label={`Marcar entregado el premio de ${p.customers?.full_name ?? 'cliente eliminado'}`}
                 className="shrink-0 px-3 py-2 rounded-lg font-head font-semibold text-[11px] text-ink bg-gradient-to-br from-gold to-bronze"
               >
-                Entregado
+                Marcar entregado
               </button>
             </div>
           ))}
         </div>
       ) : (
-        <p className="text-paper/35 text-xs">Sin premios pendientes por ahora. Usa la navegación para ir a Clientes, Menú, Caja y el resto.</p>
+        <p className="text-paper/55 text-xs">Sin premios pendientes por ahora. Usa la navegación para ir a Clientes, Menú, Caja y el resto.</p>
       )}
     </div>
   )

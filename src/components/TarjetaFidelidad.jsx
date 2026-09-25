@@ -139,9 +139,11 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             )}
           </div>
           <div className="font-head font-semibold text-lg text-paper leading-tight">{customer.full_name}</div>
-          {cumpleanos && <p className="text-paper/45 text-[11px] tracking-wide mb-2">Cumple el {cumpleanos}</p>}
+          {cumpleanos && <p className="text-paper/55 text-[11px] tracking-wide mb-2">Cumple el {cumpleanos}</p>}
 
-          <div className="flex gap-1 justify-center mb-2">
+          {/* Oculta al lector de pantalla: leía diez símbolos sueltos, y la línea
+              "X de 5 visitas" de abajo ya dice lo mismo. */}
+          <div className="flex gap-1 justify-center mb-2" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, i) => (
               <span key={i} className={`text-2xl ${i < estrellas ? 'text-gold' : 'text-gold/20'}`}>
                 {i < estrellas ? '★' : '☆'}
@@ -175,7 +177,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             </div>
           )}
 
-          <div className="border-t border-gold/20 mt-3 pt-2.5 text-xs text-gold/50 tracking-wide">
+          <div className="border-t border-gold/20 mt-3 pt-2.5 text-xs text-gold/70 tracking-wide">
             contacto@varos.cl
           </div>
 

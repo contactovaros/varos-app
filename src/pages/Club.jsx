@@ -99,12 +99,12 @@ export default function Club() {
         </button>
       )}
       {estadoPush === 'activa' && (
-        <p className="mt-4 text-[11px] text-paper/40">Notificaciones activas</p>
+        <p className="mt-4 text-[11px] text-paper/55">Notificaciones activas</p>
       )}
 
       {/* Enlace discreto y no botón: nadie entra a la app para cerrar sesión, y
           como botón competía en peso con la acción principal. */}
-      <button onClick={signOut} className="mt-2.5 text-xs text-paper/40 underline">
+      <button onClick={signOut} className="mt-2.5 text-xs text-paper/55 underline">
         Cerrar sesión
       </button>
     </div>

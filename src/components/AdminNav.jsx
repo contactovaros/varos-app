@@ -339,7 +339,7 @@ export function AdminMenu({ className = '' }) {
           <div className="grid gap-4 lg:grid-cols-5">
             {NAV_GROUPS.map((g) => (
               <div key={g.id}>
-                <div className="font-mono text-[10px] tracking-[0.2em] text-paper/40 uppercase px-2 mb-1.5">{g.label}</div>
+                <div className="font-mono text-[10px] tracking-[0.2em] text-paper/55 uppercase px-2 mb-1.5">{g.label}</div>
                 <div className="grid grid-cols-2 gap-1 lg:grid-cols-1">
                   {g.items.map((item) => {
                     const activo = location.pathname === item.to
