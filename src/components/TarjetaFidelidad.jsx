@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { QRCodeSVG } from 'qrcode.react'
 import { supabase } from '../lib/supabase'
 
 export function Ornamento() {
@@ -81,8 +80,9 @@ export function BotonRedSocial({ href, label, children }) {
   )
 }
 
-// Muestra el QR solo cuando falta 1 o 2 visitas para el premio: el garzón lo usa
-// para identificar al cliente que está por completar su tarjeta.
+// Sin QR desde 2026-09-25: ninguna pantalla de la app lo escaneaba (era
+// decorativo) y era el bloque más grande y claro de la tarjeta. Su lugar lo
+// ocupan las estrellas y los textos, más grandes.
 export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
   const [premio, setPremio] = useState(null)
   const [porCanjear, setPorCanjear] = useState(null)
@@ -115,7 +115,6 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
 
   const primerNombre = customer.full_name?.split(' ')[0] ?? ''
   const cumpleanos = formatearCumpleanos(customer.birthday)
-  const mostrarQR = estrellas === 3 || estrellas === 4
   const restantes = 5 - estrellas
   const premioTexto = premio?.producto ? (premio.visible ? premio.producto : 'tu premio sorpresa') : null
   const mensajePremio = restantes > 0 && premioTexto ? mensajeFaltan(restantes, premioTexto) : null
@@ -130,28 +129,28 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
       <p className="text-gold/70 text-xs mb-1">Qué bueno tenerte de vuelta</p>
 
       <div className="w-full max-w-xs rounded-[22px] border-2 border-gold bg-inkSoft p-1.5 mt-4 shadow-[0_0_30px_rgba(227,179,65,0.35)]">
-        <div className="rounded-[17px] border border-gold/40 px-5 py-5 text-center">
-          <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
+        <div className="rounded-[17px] border border-gold/40 px-5 py-6 text-center">
+          <div className="w-20 h-20 rounded-full mx-auto mb-3 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
             {customer.avatar_url ? (
               <img src={customer.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
-              <span className="font-head font-bold text-xl text-gold">{customer.full_name?.[0]}</span>
+              <span className="font-head font-bold text-2xl text-gold">{customer.full_name?.[0]}</span>
             )}
           </div>
-          <div className="font-head font-semibold text-lg text-paper leading-tight">{customer.full_name}</div>
-          {cumpleanos && <p className="text-paper/55 text-[11px] tracking-wide mb-2">Cumple el {cumpleanos}</p>}
+          <div className="font-head font-semibold text-2xl text-paper leading-tight">{customer.full_name}</div>
+          {cumpleanos && <p className="text-paper/55 text-sm tracking-wide mt-1">Cumple el {cumpleanos}</p>}
 
           {/* Oculta al lector de pantalla: leía diez símbolos sueltos, y la línea
               "X de 5 visitas" de abajo ya dice lo mismo. */}
-          <div className="flex gap-1 justify-center mb-2" aria-hidden="true">
+          <div className="flex gap-2 justify-center mt-5 mb-3" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={`text-2xl ${i < estrellas ? 'text-gold' : 'text-gold/50'}`}>
+              <span key={i} className={`text-[2.6rem] leading-none ${i < estrellas ? 'text-gold' : 'text-gold/50'}`}>
                 {i < estrellas ? '★' : '☆'}
               </span>
             ))}
           </div>
-          <p className="text-paper text-sm">{estrellas} de 5 visitas</p>
-          {mensajePremio && <p className="text-gold/80 text-xs mb-1">{mensajePremio}</p>}
+          <p className="font-head font-semibold text-paper text-lg">{estrellas} de 5 visitas</p>
+          {mensajePremio && <p className="text-gold/80 text-sm leading-snug mt-1 mb-1">{mensajePremio}</p>}
 
           {/* El ticket queda acá hasta que el garzón marque la entrega. Es la
               constancia que antes se perdía al cerrar la pantalla del check-in. */}
@@ -171,24 +170,11 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
             </div>
           )}
 
-          {mostrarQR && (
-            <div className="bg-paper p-2.5 rounded-2xl border-2 border-gold/60 inline-block mt-3">
-              <QRCodeSVG
-                value={`VAROS-CLUB-${customer.member_number}`}
-                size={112}
-                role="img"
-                aria-label={`Código QR del socio número ${customer.member_number}`}
-              />
-              {/* Respaldo si la cámara del garzón no lee el código. */}
-              <p className="font-mono text-[11px] text-ink/70 mt-1.5">Socio Nº {customer.member_number}</p>
-            </div>
-          )}
-
-          <div className="border-t border-gold/20 mt-3 pt-2.5 text-xs text-gold/70 tracking-wide">
+          <div className="border-t border-gold/20 mt-5 pt-3 text-sm text-gold/70 tracking-wide">
             contacto@varos.cl
           </div>
 
-          <div className="flex items-center justify-center gap-2 mt-2.5">
+          <div className="flex items-center justify-center gap-2 mt-3">
             <BotonRedSocial href="https://www.instagram.com/varosrestaurant/?hl=es" label="Síguenos en Instagram">
               <IconoInstagram />
             </BotonRedSocial>
