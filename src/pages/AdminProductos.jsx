@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext.jsx'
 import { supabase } from '../lib/supabase'
 import { postJson } from '../lib/apiAdmin'
@@ -101,6 +101,35 @@ export default function AdminProductos() {
   const [creando, setCreando] = useState(false)
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const [errorFoto, setErrorFoto] = useState('')
+
+  // Autocorrector: al salir de un campo de texto se corrigen ortografía, tildes y
+  // mayúsculas (netlify/functions/corregir-texto.mjs). Si algo falla se deja el
+  // texto tal cual — nunca bloquea el guardado. `Deshacer` devuelve el original y
+  // recuerda ese texto para no volver a corregirlo en el mismo campo.
+  const [correccion, setCorreccion] = useState(null) // { campo, antes }
+  const rechazadas = useRef(new Set())
+
+  async function corregirTexto(texto) {
+    if (!texto || texto.trim().length < 3 || rechazadas.current.has(texto)) return texto
+    try {
+      const r = await postJson('corregir-texto', { texto })
+      return typeof r.corregido === 'string' && r.corregido.trim() ? r.corregido : texto
+    } catch (e) {
+      console.error('Autocorrector no disponible:', e)
+      return texto
+    }
+  }
+
+  useEffect(() => {
+    setCorreccion(null)
+  }, [seleccionadoId, nuevoProducto === null])
+
+  function deshacerCorreccion(alRestaurar) {
+    if (!correccion) return
+    rechazadas.current.add(correccion.antes)
+    alRestaurar(correccion.antes)
+    setCorreccion(null)
+  }
 
   // Traducción automática de la carta (en/pt/it/zh) — ver netlify/functions/traducir-carta.mjs.
   // Se dispara sola al guardar la descripción o crear un producto, y en bloque con el botón.
@@ -227,9 +256,9 @@ export default function AdminProductos() {
   // — el campo solo se llenaba al crearlo. Se pidió específicamente para
   // poder escribir el desglose de "Entrada / Plato Principal / Postre" del
   // Menú del Día (ver Carta2.jsx, que ahora renderiza cada línea aparte).
-  async function guardarDescripcion() {
+  async function guardarDescripcion(valor = descripcionForm) {
     if (!seleccionado) return
-    const nueva = descripcionForm.trim() || null
+    const nueva = valor.trim() || null
     if (nueva === (seleccionado.description ?? null)) return
     setGuardandoDescripcion(true)
     const anterior = seleccionado.description
@@ -520,9 +549,31 @@ export default function AdminProductos() {
                   <input
                     value={nuevoProducto.name}
                     onChange={(e) => setNuevoProducto((prev) => ({ ...prev, name: e.target.value }))}
+                    onBlur={async (e) => {
+                      const original = e.target.value
+                      const corregido = await corregirTexto(original)
+                      if (corregido !== original) {
+                        setCorreccion({ campo: 'nombre', antes: original })
+                        setNuevoProducto((prev) => ({ ...prev, name: corregido }))
+                      }
+                    }}
+                    spellCheck
+                    lang="es"
                     placeholder="Ej: Ceviche mixto"
                     className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50"
                   />
+                  {correccion?.campo === 'nombre' && (
+                    <p className="mt-1 text-[11px] text-emerald-400/80">
+                      ✓ Autocorregido ·{' '}
+                      <button
+                        type="button"
+                        className="underline text-paper/60"
+                        onClick={() => deshacerCorreccion((antes) => setNuevoProducto((prev) => ({ ...prev, name: antes })))}
+                      >
+                        Deshacer
+                      </button>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -559,9 +610,31 @@ export default function AdminProductos() {
                   <textarea
                     value={nuevoProducto.description}
                     onChange={(e) => setNuevoProducto((prev) => ({ ...prev, description: e.target.value }))}
-                    rows={2}
-                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-none"
+                    onBlur={async (e) => {
+                      const original = e.target.value
+                      const corregido = await corregirTexto(original)
+                      if (corregido !== original) {
+                        setCorreccion({ campo: 'nuevaDescripcion', antes: original })
+                        setNuevoProducto((prev) => ({ ...prev, description: corregido }))
+                      }
+                    }}
+                    spellCheck
+                    lang="es"
+                    rows={3}
+                    className="w-full bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-y"
                   />
+                  {correccion?.campo === 'nuevaDescripcion' && (
+                    <p className="mt-1 text-[11px] text-emerald-400/80">
+                      ✓ Autocorregido ·{' '}
+                      <button
+                        type="button"
+                        className="underline text-paper/60"
+                        onClick={() => deshacerCorreccion((antes) => setNuevoProducto((prev) => ({ ...prev, description: antes })))}
+                      >
+                        Deshacer
+                      </button>
+                    </p>
+                  )}
                 </div>
 
                 <div>
@@ -697,7 +770,16 @@ export default function AdminProductos() {
                     <textarea
                       value={descripcionForm}
                       onChange={(e) => setDescripcionForm(e.target.value)}
-                      onBlur={guardarDescripcion}
+                      onBlur={async () => {
+                        const corregida = await corregirTexto(descripcionForm)
+                        if (corregida !== descripcionForm) {
+                          setCorreccion({ campo: 'descripcion', antes: descripcionForm })
+                          setDescripcionForm(corregida)
+                        }
+                        guardarDescripcion(corregida)
+                      }}
+                      spellCheck
+                      lang="es"
                       rows={10}
                       className="flex-1 bg-ink border border-white/10 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-gold/50 resize-y"
                     />
@@ -705,6 +787,23 @@ export default function AdminProductos() {
                       {guardandoDescripcion ? 'Guardando…' : ''}
                     </span>
                   </div>
+                  {correccion?.campo === 'descripcion' && (
+                    <p className="mt-1 text-[11px] text-emerald-400/80">
+                      ✓ Autocorregido ·{' '}
+                      <button
+                        type="button"
+                        className="underline text-paper/60"
+                        onClick={() =>
+                          deshacerCorreccion((antes) => {
+                            setDescripcionForm(antes)
+                            guardarDescripcion(antes)
+                          })
+                        }
+                      >
+                        Deshacer
+                      </button>
+                    </p>
+                  )}
                 </div>
 
                 <div>
