@@ -294,7 +294,15 @@ export function AdminMenu({ className = '' }) {
   }, [abierto])
 
   return (
-    <div ref={contenedor} className={`relative px-4 pt-4 pb-2 ${className}`}>
+    <div
+      ref={contenedor}
+      className={`relative px-4 pt-4 pb-2 ${className}`}
+      // Si el foco sale del menú con Tab, se cierra: si no, quedaba abierto
+      // tapando la pantalla mientras el teclado ya estaba en el contenido.
+      onBlur={(e) => {
+        if (abierto && !e.currentTarget.contains(e.relatedTarget)) setAbierto(false)
+      }}
+    >
       <div className="flex items-center gap-3">
         <button
           ref={boton}
@@ -305,7 +313,7 @@ export function AdminMenu({ className = '' }) {
           className={`inline-flex items-center gap-2 rounded-xl border px-3.5 py-2 font-head text-sm transition-colors duration-150 ease-salida ${
             abierto
               ? 'bg-ember/10 border-ember/50 text-ember'
-              : 'bg-inkSoft border-paper/20 text-paper hover:border-ember/50 active:border-ember/50'
+              : 'bg-inkSoft border-paper/35 text-paper hover:border-ember/50 active:border-ember/50'
           }`}
         >
           <NavIcon id="i-grid" className="w-4 h-4" />
@@ -339,15 +347,17 @@ export function AdminMenu({ className = '' }) {
           <div className="grid gap-4 lg:grid-cols-5">
             {NAV_GROUPS.map((g) => (
               <div key={g.id}>
-                <div className="font-mono text-[10px] tracking-[0.2em] text-paper/55 uppercase px-2 mb-1.5">{g.label}</div>
-                <div className="grid grid-cols-2 gap-1 lg:grid-cols-1">
+                <div id={`grupo-${g.id}`} className="font-mono text-[10px] tracking-[0.2em] text-paper/55 uppercase px-2 mb-1.5">{g.label}</div>
+                <ul aria-labelledby={`grupo-${g.id}`} className="grid grid-cols-2 gap-1 lg:grid-cols-1">
                   {g.items.map((item) => {
                     const activo = location.pathname === item.to
+                    const idDesc = `desc-${item.icon}`
                     return (
+                      <li key={item.to}>
                       <Link
-                        key={item.to}
                         to={item.to}
                         title={item.desc}
+                        aria-describedby={idDesc}
                         aria-current={activo ? 'page' : undefined}
                         className={`flex items-center gap-2.5 rounded-lg border px-2.5 py-2 transition-colors duration-150 ease-salida ${
                           activo
@@ -360,10 +370,12 @@ export function AdminMenu({ className = '' }) {
                         {item.nuevo && (
                           <span className="ml-auto rounded bg-ember px-1.5 py-px font-mono text-[9px] font-medium text-ink">nuevo</span>
                         )}
+                        <span id={idDesc} className="sr-only">{item.desc}</span>
                       </Link>
+                      </li>
                     )
                   })}
-                </div>
+                </ul>
               </div>
             ))}
           </div>

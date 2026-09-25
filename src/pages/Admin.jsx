@@ -20,8 +20,7 @@ export default function Admin() {
   if (!isAdmin) {
     return (
       <div className="px-6 pt-24 text-center">
-        <div className="text-3xl mb-3">🔒</div>
-        <h2 className="font-head text-lg font-semibold mb-2">Acceso restringido</h2>
+        <h1 className="font-head text-lg font-semibold mb-2">Acceso restringido</h1>
         <p className="text-sm text-paper/50">Esta sección es solo para administradores de Varo's.</p>
       </div>
     )
@@ -36,14 +35,15 @@ export default function Admin() {
 
       {pendientes.length > 0 ? (
         <div className="bg-gold/10 border border-gold/40 rounded-2xl p-4">
-          <div className="font-head font-semibold text-sm text-gold mb-0.5">
+          <h2 className="font-head font-semibold text-sm text-gold mb-0.5">
             {pendientes.length === 1 ? 'Hay un premio por entregar' : `Hay ${pendientes.length} premios por entregar`}
-          </div>
+          </h2>
           <p className="text-[11px] text-paper/50 mb-3">
             Completaron sus 5 visitas. Marca la entrega cuando se lo hayas dado.
           </p>
+          <ul>
           {pendientes.map((p) => (
-            <div key={p.id} className="flex items-center justify-between gap-3 py-2 border-t border-gold/15 text-xs">
+            <li key={p.id} className="flex items-center justify-between gap-3 py-2 border-t border-gold/15 text-xs">
               <div className="min-w-0">
                 <div className="text-paper truncate">{p.customers?.full_name ?? 'Cliente eliminado'}</div>
                 <div className="text-gold/80 truncate">{p.producto || 'Sin premio configurado'}</div>
@@ -58,8 +58,9 @@ export default function Admin() {
               >
                 Marcar entregado
               </button>
-            </div>
+            </li>
           ))}
+          </ul>
         </div>
       ) : (
         <p className="text-paper/55 text-xs">Sin premios pendientes por ahora. Usa la navegación para ir a Clientes, Menú, Caja y el resto.</p>

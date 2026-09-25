@@ -74,7 +74,7 @@ export function BotonRedSocial({ href, label, children }) {
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
-      className="inline-flex items-center justify-center w-8 h-8 rounded-full border border-gold/50 text-gold"
+      className="inline-flex items-center justify-center w-10 h-10 rounded-full border border-gold/50 text-gold"
     >
       {children}
     </a>
@@ -117,7 +117,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
   const cumpleanos = formatearCumpleanos(customer.birthday)
   const mostrarQR = estrellas === 3 || estrellas === 4
   const restantes = 5 - estrellas
-  const premioTexto = premio?.producto ? (premio.visible ? premio.producto : 'tu premio sorpresa 🎁') : null
+  const premioTexto = premio?.producto ? (premio.visible ? premio.producto : 'tu premio sorpresa') : null
   const mensajePremio = restantes > 0 && premioTexto ? mensajeFaltan(restantes, premioTexto) : null
 
   return (
@@ -133,7 +133,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
         <div className="rounded-[17px] border border-gold/40 px-5 py-5 text-center">
           <div className="w-16 h-16 rounded-full mx-auto mb-2 overflow-hidden border-2 border-gold/50 bg-ink flex items-center justify-center">
             {customer.avatar_url ? (
-              <img src={customer.avatar_url} alt={customer.full_name} className="w-full h-full object-cover" />
+              <img src={customer.avatar_url} alt="" className="w-full h-full object-cover" />
             ) : (
               <span className="font-head font-bold text-xl text-gold">{customer.full_name?.[0]}</span>
             )}
@@ -145,7 +145,7 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
               "X de 5 visitas" de abajo ya dice lo mismo. */}
           <div className="flex gap-1 justify-center mb-2" aria-hidden="true">
             {Array.from({ length: 5 }).map((_, i) => (
-              <span key={i} className={`text-2xl ${i < estrellas ? 'text-gold' : 'text-gold/20'}`}>
+              <span key={i} className={`text-2xl ${i < estrellas ? 'text-gold' : 'text-gold/50'}`}>
                 {i < estrellas ? '★' : '☆'}
               </span>
             ))}
@@ -157,11 +157,11 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
               constancia que antes se perdía al cerrar la pantalla del check-in. */}
           {porCanjear && (
             <div className="mt-3 rounded-xl border border-dashed border-gold/70 bg-gold/10 px-3 py-3">
-              <p className="font-head text-[10px] tracking-[0.2em] uppercase text-gold/80">Tienes un premio esperando</p>
+              <p className="font-head text-[11px] tracking-[0.2em] uppercase text-gold/80">Tienes un premio esperando</p>
               <p className="font-head font-bold text-base text-gold mt-1 leading-tight">
                 {premio?.visible === false ? 'Pregúntale a tu garzón cuál es' : porCanjear.producto}
               </p>
-              <p className="text-paper/50 text-[10px] mt-1.5">Muéstrale esta tarjeta para retirarlo</p>
+              <p className="text-paper/70 text-xs mt-1.5">Muéstrale esta tarjeta para retirarlo</p>
             </div>
           )}
 
@@ -173,7 +173,14 @@ export default function TarjetaFidelidad({ customer, estrellas, mensaje }) {
 
           {mostrarQR && (
             <div className="bg-paper p-2.5 rounded-2xl border-2 border-gold/60 inline-block mt-3">
-              <QRCodeSVG value={`VAROS-CLUB-${customer.member_number}`} size={112} />
+              <QRCodeSVG
+                value={`VAROS-CLUB-${customer.member_number}`}
+                size={112}
+                role="img"
+                aria-label={`Código QR del socio número ${customer.member_number}`}
+              />
+              {/* Respaldo si la cámara del garzón no lee el código. */}
+              <p className="font-mono text-[11px] text-ink/70 mt-1.5">Socio Nº {customer.member_number}</p>
             </div>
           )}
 
