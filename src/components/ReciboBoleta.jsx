@@ -75,6 +75,13 @@ export default function ReciboBoleta({ cobro, onCerrar }) {
 
       <div id="recibo-boleta" className="bg-white text-black w-[80mm] max-w-full p-3 font-mono text-[11px] leading-snug print:p-2">
         <div className="text-center mb-2">
+          {/* Logo arriba (pedido del usuario, 2026-09-25). Dos PNG del mismo
+              trazo: dorado en la vista previa del celular, negro al imprimir —
+              la BIXOLON es térmica y solo imprime negro; el dorado le salía
+              gris y granulado. Los dos cargan desde el inicio (display:none no
+              frena la descarga), así que al tocar Imprimir ya están listos. */}
+          <img src="/logo-varos-boleta-dorado.png" alt="Varo's" className="block mx-auto w-[28mm] mb-2.5 print:hidden" />
+          <img src="/logo-varos-boleta.png" alt="" className="hidden print:block mx-auto w-[28mm] mb-2.5" />
           <div className="font-bold">Productora, Centro de Eventos & Restaurant</div>
           <div className="mt-1">Camino Azapa Km. 3.5 - Arica, Chile.</div>
           <div>+56 9 7813 2192</div>
