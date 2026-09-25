@@ -328,7 +328,7 @@ export default function AdminProductos() {
     const { error: err } = await supabase.from('menu_items').update({ visible_carta: nuevo }).eq('id', item.id)
     if (err) {
       setItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, visible_carta: !nuevo } : i)))
-      alert('No se pudo cambiar la visibilidad en varos.cl.\n' + explicarError(err))
+      alert('No se pudo cambiar la visibilidad en la carta.\n' + explicarError(err))
     } else {
       // "Bloqueado" en el PHP es justo lo inverso de visible_carta (confirmado:
       // solo oculta de la carta pública, no del catálogo interno de menús).
@@ -521,8 +521,8 @@ export default function AdminProductos() {
                     <th className="text-left font-head font-medium px-3 py-2.5">Categoría</th>
                     <th className="text-right font-head font-medium px-3 py-2.5">Precio</th>
                     <th className="text-left font-head font-medium px-3 py-2.5">Estado</th>
-                    <th className="text-center font-head font-medium px-3 py-2.5" title="Visible en la carta pública de varos.cl">
-                      En varos.cl
+                    <th className="text-center font-head font-medium px-3 py-2.5" title="Visible en la carta digital">
+                      En la carta
                     </th>
                   </tr>
                 </thead>
@@ -554,7 +554,7 @@ export default function AdminProductos() {
                           className={`inline-block w-2.5 h-2.5 rounded-full border ${
                             item.visible_carta ? 'bg-gold border-gold' : 'bg-transparent border-white/20'
                           }`}
-                          title={item.visible_carta ? 'Visible en varos.cl' : 'Oculto en varos.cl'}
+                          title={item.visible_carta ? 'Visible en la carta' : 'Oculto en la carta'}
                         />
                       </td>
                     </tr>
@@ -717,7 +717,7 @@ export default function AdminProductos() {
                 </div>
 
                 <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-paper">Visible en la carta de varos.cl</span>
+                  <span className="text-xs text-paper">Visible en la carta</span>
                   <button
                     onClick={() => setNuevoProducto((prev) => ({ ...prev, visible_carta: !prev.visible_carta }))}
                     aria-pressed={!!nuevoProducto.visible_carta}
@@ -753,11 +753,6 @@ export default function AdminProductos() {
                 <div>
                   <div className="font-head font-semibold text-sm">{seleccionado.name}</div>
                   <div className="text-paper/40 text-[11px] mt-0.5">{seleccionado.category}</div>
-                  {!seleccionado.pos_prodid && (
-                    <p className="text-amber-400/80 text-[10px] mt-1.5 leading-relaxed">
-                      Sin conectar con varos.cl/carta — los cambios acá no se ven reflejados ahí todavía.
-                    </p>
-                  )}
                 </div>
 
                 <div>
@@ -870,7 +865,7 @@ export default function AdminProductos() {
 
                 <div className="border-t border-white/5 pt-3.5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-paper">Visible en la carta de varos.cl</span>
+                    <span className="text-xs text-paper">Visible en la carta</span>
                     <button
                       onClick={() => alternarVisibleCarta(seleccionado)}
                       aria-pressed={!!seleccionado.visible_carta}
@@ -886,7 +881,7 @@ export default function AdminProductos() {
                     </button>
                   </div>
                   <p className="text-paper/35 text-[10px] mt-1.5 leading-relaxed">
-                    Se actualiza al instante en la web pública.
+                    Se ve al instante en la carta digital.
                   </p>
                 </div>
               </div>
