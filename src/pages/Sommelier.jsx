@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { detectarPerfil, armarRecomendacion, perfilDePlato, PERFIL_GENERICO } from '../data/maridaje.js'
 
@@ -32,9 +32,10 @@ const TITULO_CATEGORIA = {
   'POSTRES & TENTACIONES': 'Postres',
 }
 
+// Sin precio cargado no se muestra nada: antes salía "$0".
 function formatCLP(valor) {
-  const n = Number(valor) || 0
-  return `$${n.toLocaleString('es-CL')}`
+  if (valor == null || valor === '') return ''
+  return `$${Number(valor).toLocaleString('es-CL')}`
 }
 
 export default function Sommelier() {
@@ -70,6 +71,9 @@ export default function Sommelier() {
       .eq('visible_carta', true)
       .eq('available', true)
       .in('category', [CATEGORIA_VINOS, ...CATEGORIAS_BAR, ...CATEGORIAS_COMIDA])
+      // Orden fijo: sin esto la base devolvía las filas en cualquier orden y,
+      // entre dos vinos igual de buenos, la recomendación cambiaba sola.
+      .order('name', { ascending: true })
       .then(({ data, error: err }) => {
         if (cancelado) return
         if (err) {
@@ -113,14 +117,32 @@ export default function Sommelier() {
     return armarRecomendacion(perfilUsado, vinos, bebidasBar)
   }, [perfilUsado, vinos, bebidasBar])
 
+  // En el celular la recomendación quedaba debajo de las categorías abiertas,
+  // fuera de la pantalla: al tocar un plato parecía que no pasaba nada. Ahora
+  // se cierran las categorías y la pantalla baja sola hasta el resultado, que
+  // además recibe el foco para que el lector de pantalla lo lea.
+  const resultadoRef = useRef(null)
+  const [irAlResultado, setIrAlResultado] = useState(0)
+
+  useEffect(() => {
+    if (!irAlResultado || !resultadoRef.current) return
+    const reducir = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    resultadoRef.current.scrollIntoView({ behavior: reducir ? 'auto' : 'smooth', block: 'start' })
+    resultadoRef.current.focus({ preventScroll: true })
+  }, [irAlResultado])
+
   function consultarPlato(item) {
     setConsulta({ modo: 'plato', item })
+    setCategoriasAbiertas(new Set())
+    setIrAlResultado((n) => n + 1)
   }
 
   function onSubmit(e) {
     e.preventDefault()
     if (!texto.trim()) return
     setConsulta({ modo: 'texto', texto })
+    setCategoriasAbiertas(new Set())
+    setIrAlResultado((n) => n + 1)
   }
 
   return (
@@ -134,8 +156,8 @@ export default function Sommelier() {
       )}
       <header className="text-center mb-8">
         <h1 className="font-serif text-3xl text-gold tracking-wide">Sommelier</h1>
-        <p className="text-paper/50 text-xs mt-2 leading-relaxed max-w-xs mx-auto">
-          Decinos qué vas a comer y te decimos qué tomar.
+        <p className="text-paper/65 text-sm mt-2 leading-relaxed max-w-xs mx-auto">
+          Dinos qué vas a comer y te decimos qué tomar.
         </p>
         <div className="flex items-center justify-center gap-2 mt-4 mx-auto w-24">
           <span className="h-px flex-1 bg-gold/30" />
@@ -145,7 +167,7 @@ export default function Sommelier() {
       </header>
 
       {error && (
-        <p className="text-rose-400 text-xs text-center mb-6 leading-relaxed">
+        <p role="alert" className="text-[#F07C88] text-xs text-center mb-6 leading-relaxed">
           No se pudo cargar la carta de bebidas: {error}
         </p>
       )}
@@ -164,7 +186,7 @@ export default function Sommelier() {
               setConsulta(null)
             }}
             placeholder="¿Qué vas a comer hoy?"
-            className="flex-1 bg-inkSoft border border-bronze/25 rounded-2xl px-4 py-3 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-gold/50"
+            className="flex-1 bg-inkSoft border border-bronze/80 rounded-2xl px-4 py-3 text-sm text-paper placeholder:text-paper/50 outline-none focus:border-gold"
           />
           <button
             type="submit"
@@ -180,23 +202,26 @@ export default function Sommelier() {
           {gruposChips.map((grupo) => {
             const abierta = categoriasAbiertas.has(grupo.categoria)
             return (
-              <div key={grupo.categoria} className="border border-bronze/20 rounded-2xl overflow-hidden">
+              <div key={grupo.categoria} className="border border-bronze/40 rounded-2xl overflow-hidden">
                 <button
                   type="button"
+                  aria-expanded={abierta}
+                  aria-controls={`platos-${grupo.categoria}`}
                   onClick={() => toggleCategoria(grupo.categoria)}
                   className="w-full flex items-center justify-between px-4 py-3 text-left"
                 >
                   <span className="text-paper/70 text-xs font-head font-semibold uppercase tracking-wide">
-                    {grupo.titulo} <span className="text-paper/35 font-normal normal-case">· {grupo.platos.length}</span>
+                    {grupo.titulo} <span className="text-paper/55 font-normal normal-case">· {grupo.platos.length}</span>
                   </span>
                   <span
+                    aria-hidden="true"
                     className={`text-gold/70 text-[10px] transition-transform duration-150 ease-salida ${abierta ? 'rotate-180' : ''}`}
                   >
                     ▾
                   </span>
                 </button>
                 {abierta && (
-                  <div className="flex flex-wrap gap-2 px-4 pb-4">
+                  <div id={`platos-${grupo.categoria}`} className="flex flex-wrap gap-2 px-4 pb-4">
                     {grupo.platos.map((plato) => {
                       const activo = consulta?.modo === 'plato' && consulta.item.id === plato.id
                       return (
@@ -204,10 +229,11 @@ export default function Sommelier() {
                           key={plato.id}
                           type="button"
                           onClick={() => consultarPlato(plato)}
+                          aria-pressed={activo}
                           className={`text-[11px] px-3 py-1.5 rounded-full border transition-colors ${
                             activo
                               ? 'border-gold/60 text-paper bg-gold/10'
-                              : 'border-bronze/25 text-paper/60 hover:border-gold/50 hover:text-paper'
+                              : 'border-bronze/50 text-paper/70 hover:border-gold/50 hover:text-paper'
                           }`}
                         >
                           {plato.name}
@@ -222,15 +248,17 @@ export default function Sommelier() {
         </div>
       )}
 
-      {cargando && <p className="text-paper/35 text-sm text-center py-6">Revisando la carta…</p>}
+      {cargando && <p className="text-paper/55 text-sm text-center py-6">Revisando la carta…</p>}
 
-      {!cargando && consulta && recomendacion && (
-        <RecomendacionCard texto={tituloConsulta} recomendacion={recomendacion} sinCoincidencia={!perfilDetectado} />
-      )}
+      <div ref={resultadoRef} tabIndex={-1} aria-live="polite" className="scroll-mt-6 outline-none">
+        {!cargando && consulta && recomendacion && (
+          <RecomendacionCard texto={tituloConsulta} recomendacion={recomendacion} sinCoincidencia={!perfilDetectado} />
+        )}
+      </div>
 
       {!cargando && !consulta && (
-        <p className="text-paper/35 text-[11px] text-center leading-relaxed px-4">
-          Escribí tu plato o elegí uno de los botones.
+        <p className="text-paper/55 text-xs text-center leading-relaxed px-4">
+          Escribe tu plato o elige uno de la lista.
         </p>
       )}
     </div>
@@ -238,17 +266,17 @@ export default function Sommelier() {
 }
 
 function RecomendacionCard({ texto, recomendacion, sinCoincidencia }) {
-  const { perfil, vino, notaEscasez, alternativaBar } = recomendacion
+  const { perfil, vino, notaEscasez, alternativaBar, alternativaSinAlcohol } = recomendacion
 
   return (
     <div className="bg-inkSoft border border-gold/15 rounded-2xl p-4">
-      <p className="text-paper/40 text-[11px] uppercase tracking-wide mb-1">
+      <p className="text-paper/60 text-[11px] uppercase tracking-wide mb-1">
         {sinCoincidencia ? `Sobre "${texto}"` : perfil.etiqueta}
       </p>
 
       {sinCoincidencia && (
-        <p className="text-paper/50 text-xs mb-3 leading-relaxed">
-          Ese plato todavía no lo tenemos mapeado, pero esta va segura. Para algo más afinado, preguntale a tu mozo.
+        <p className="text-paper/65 text-xs mb-3 leading-relaxed">
+          Ese plato todavía no lo tenemos mapeado, pero esta va segura. Para algo más afinado, pregúntale a tu garzón.
         </p>
       )}
 
@@ -256,33 +284,62 @@ function RecomendacionCard({ texto, recomendacion, sinCoincidencia }) {
 
       {vino ? (
         <div className="border-t border-gold/10 pt-3">
-          <p className="text-diamond/70 text-[10px] uppercase tracking-wide mb-1">Te recomendamos</p>
+          <p className="text-gold/80 text-[11px] uppercase tracking-wide mb-1">Te recomendamos</p>
           <div className="flex items-baseline gap-2">
             <span className="font-serif italic text-paper/90 text-sm leading-snug">{vino.name}</span>
-            <span className="flex-1 min-w-[6px] border-b border-dotted border-gold/20 translate-y-[-3px]" />
-            <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
-              {formatCLP(vino.price_clp)}
-            </span>
+            {formatCLP(vino.price_clp) && (
+              <>
+                <span className="flex-1 min-w-[6px] border-b border-dotted border-gold/20 translate-y-[-3px]" />
+                <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
+                  {formatCLP(vino.price_clp)}
+                </span>
+              </>
+            )}
           </div>
-          {notaEscasez && <p className="text-paper/35 text-[11px] mt-2 leading-relaxed italic">{notaEscasez}</p>}
+          {notaEscasez && <p className="text-paper/60 text-[11px] mt-2 leading-relaxed italic">{notaEscasez}</p>}
         </div>
-      ) : (
-        <p className="text-paper/50 text-xs border-t border-gold/10 pt-3">
-          Ahora mismo no hay disponible ningún vino de este estilo — preguntale a tu mozo por lo que quedó del día.
+      ) : perfil.sinVino ? null : (
+        <p className="text-paper/65 text-xs border-t border-gold/10 pt-3">
+          Ahora mismo no hay disponible ningún vino de este estilo. Pregúntale a tu garzón por lo que quedó del día.
         </p>
       )}
 
       {alternativaBar && (
         <div className="border-t border-gold/10 mt-3 pt-3">
-          <p className="text-diamond/70 text-[10px] uppercase tracking-wide mb-1">O, si preferís algo distinto</p>
+          {/* Si se pidió sin alcohol no hay vino: esta pasa a ser la recomendación principal. */}
+          <p className="text-gold/80 text-[11px] uppercase tracking-wide mb-1">
+            {perfil.sinVino ? 'Te recomendamos' : 'O, si prefieres algo distinto'}
+          </p>
           <div className="flex items-baseline gap-2">
             <span className="font-serif italic text-paper/90 text-sm leading-snug">{alternativaBar.item.name}</span>
-            <span className="flex-1 min-w-[6px] border-b border-dotted border-gold/20 translate-y-[-3px]" />
-            <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
-              {formatCLP(alternativaBar.item.price_clp)}
-            </span>
+            {formatCLP(alternativaBar.item.price_clp) && (
+              <>
+                <span className="flex-1 min-w-[6px] border-b border-dotted border-gold/20 translate-y-[-3px]" />
+                <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
+                  {formatCLP(alternativaBar.item.price_clp)}
+                </span>
+              </>
+            )}
           </div>
-          <p className="text-paper/35 text-[11px] mt-2 leading-relaxed italic">{alternativaBar.motivo}</p>
+          <p className="text-paper/60 text-[11px] mt-2 leading-relaxed italic">{alternativaBar.motivo}</p>
+        </div>
+      )}
+
+      {alternativaSinAlcohol && (
+        <div className="border-t border-gold/10 mt-3 pt-3">
+          <p className="text-gold/80 text-[11px] uppercase tracking-wide mb-1">Sin alcohol</p>
+          <div className="flex items-baseline gap-2">
+            <span className="font-serif italic text-paper/90 text-sm leading-snug">{alternativaSinAlcohol.item.name}</span>
+            {formatCLP(alternativaSinAlcohol.item.price_clp) && (
+              <>
+                <span className="flex-1 min-w-[6px] border-b border-dotted border-gold/20 translate-y-[-3px]" />
+                <span className="font-mono text-[12px] tabular-nums text-gold whitespace-nowrap shrink-0">
+                  {formatCLP(alternativaSinAlcohol.item.price_clp)}
+                </span>
+              </>
+            )}
+          </div>
+          <p className="text-paper/60 text-[11px] mt-2 leading-relaxed italic">{alternativaSinAlcohol.motivo}</p>
         </div>
       )}
     </div>
