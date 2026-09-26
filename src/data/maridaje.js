@@ -210,22 +210,43 @@ export const PERFILES = [
     ],
   },
   {
+    id: 'causa',
+    etiqueta: 'Causa limeña',
+    // Nuevo (2026-09-25, reclamo del dueño): las causas caían en
+    // `pescado_salsa` y la tarjeta hablaba de "pescado en salsa" para una
+    // causa con pulpo, que no lleva pescado. La causa es una entrada FRÍA de
+    // papa amarilla: lo que manda es la frescura y lo cremoso del relleno, no
+    // una salsa caliente. Va antes que `ceviche` y `mariscos` para que
+    // "causa acevichada" o "causa de pulpo" escritas a mano caigan acá.
+    // El texto de perfil no nombra relleno: cada causa real trae el suyo en
+    // el mapeo de platos (más abajo).
+    keywords: /\bcausas?\b/,
+    cuerpo: 'bajo',
+    principio:
+      'La causa es una entrada fría de papa amarilla, suave y cremosa: pide un blanco fresco, con acidez, que limpie el paladar. Un tinto con cuerpo la tapa.',
+    ordenVinos: ['sauvignon_blanc', 'chardonnay', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
+    contextoEscasez: 'La carta es mayoritariamente tinta.',
+    altBar: ALT_CERVEZA_RUBIA,
+  },
+  {
     id: 'ceviche',
-    etiqueta: 'Ceviche',
+    etiqueta: 'Ceviche y tiraditos',
     // "crudo" suelto se sacó a propósito (2026-09-25): en Chile "crudo" es
     // también el crudo de carne de vacuno y aparece en "jamón crudo" — ninguno
     // de los dos es pescado crudo con cítrico. Solo cuenta "pescado crudo".
     keywords: /\bceviche\b|\bleche de tigre\b|\btiradito\b|\bacevichad[oa]\b|\bsushi\b|\bsashimi\b|\bpescado crudo\b|\btartar de (atun|salmon|pescado)\b/,
     cuerpo: 'bajo',
+    // Redactado para que sea cierto con ceviche, tiradito y sushi (no todos
+    // son de pescado: hay tiraditos de pulpo).
     principio:
-      'El limón del ceviche pide un vino con acidez propia — si el vino es menos ácido que el plato, sabe plano al lado.',
+      'Producto del mar crudo o marinado en cítrico: pide un vino con acidez propia. Si el vino es menos ácido que el plato, sabe plano al lado.',
     ordenVinos: ['sauvignon_blanc', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
     contextoEscasez: 'La carta es mayoritariamente tinta.',
     altBar: ALT_CERVEZA_RUBIA,
   },
   {
     id: 'pasta_mariscos',
-    etiqueta: 'Pasta con mariscos',
+    etiqueta: 'Pasta con productos del mar',
     // Va ANTES que `pescado_salsa`: "Spaguetti en tinta de calamar con salsa
     // de mariscos" contiene literalmente "salsa de mariscos" y con el orden
     // viejo caía en `pescado_salsa` en vez de acá, que es lo correcto para
@@ -238,25 +259,45 @@ export const PERFILES = [
       /\b(spaguetti|spaghetti|espagueti|fettuccine|fetuccini|pasta|tallarines|tallarin|linguine|ravioles)\b.*\b(marisco|mariscos|camaron|camarones|calamar|calamares|tinta|pulpo|machas|almejas|choritos|salmon|albacora|atun|pescado|frutos del mar)\b|\b(marisco|mariscos|camarones)\b.*\b(pasta|tallarines|spaguetti|spaghetti|fettuccine)\b/,
     cuerpo: 'medio',
     principio:
-      'Pasta con mariscos o tinta de calamar: un blanco con cuerpo o un espumante; de los tintos, solo uno muy liviano tipo Pinot Noir, nunca uno tánico que se pelee con el marisco.',
+      'Pasta con sabor a mar: pide un blanco con cuerpo o un espumante. De los tintos, solo uno muy liviano tipo Pinot Noir; uno tánico se pelea con el mar.',
     ordenVinos: ['chardonnay', 'sauvignon_blanc', 'espumante_neutro', 'blanco_generico', 'pinot_noir'],
   },
   {
     id: 'pescado_salsa',
-    etiqueta: 'Pescado en salsa / mariscos',
+    // Hasta 2026-09-25 decía "Pescado en salsa / mariscos" y lo usaban también
+    // las causas y el pulpo a la oliva, que no llevan pescado. Ahora es SOLO
+    // para pescado con salsa: las causas tienen perfil propio y el pulpo en
+    // leche de tigre va a `ceviche`.
+    etiqueta: 'Pescado en salsa',
     keywords:
-      /\b(reineta|pescado|corvina|merluza|congrio|lenguado|salmon|albacora)\b.*\b(salsa|camarones|mariscos|a lo macho|crema)\b|\bsalsa de (mariscos|camarones)\b/,
+      /\b(reineta|pescado|corvina|merluza|congrio|lenguado|salmon|albacora)\b.*\b(salsa|camarones|mariscos|a lo macho|crema)\b|\b(reineta|pescado|corvina|merluza|congrio|lenguado)\b.*\bsalsa de (mariscos|camarones)\b/,
+    cuerpo: 'medio',
+    // Sin afirmar "grasa" ni "crema": no todas las salsas de pescado la llevan.
+    principio:
+      'La salsa le suma cuerpo al pescado: un blanco con algo más de estructura, como el Chardonnay, lo acompaña mejor que uno muy austero.',
+    ordenVinos: ['chardonnay', 'sauvignon_blanc', 'blanco_generico', 'espumante_neutro', 'moscato_espumante'],
+  },
+  {
+    id: 'mar_surtido',
+    etiqueta: 'Surtido del mar',
+    // Nuevo (2026-09-25): Trío Marino y Fiesta del Mar traen ceviche junto a
+    // cosas fritas, arroz o pulpo. Antes iban a `mariscos_arroz` (Chardonnay
+    // primero); con ceviche en el plato manda el limón, así que primero va
+    // el blanco con más acidez.
+    keywords: /\btrio marino\b|\bfiesta del mar\b|\btabla marina\b/,
     cuerpo: 'medio',
     principio:
-      'La salsa le suma cuerpo y grasa al pescado — un blanco con un poco más de estructura (Chardonnay) lo acompaña mejor que uno muy austero.',
-    ordenVinos: ['chardonnay', 'sauvignon_blanc', 'blanco_generico', 'espumante_neutro', 'moscato_espumante'],
+      'Varias preparaciones de mar en un mismo plato, con ceviche entre ellas: el limón manda, así que conviene un blanco con acidez propia que también acompañe lo frito.',
+    ordenVinos: ['sauvignon_blanc', 'chardonnay', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
+    contextoEscasez: 'La carta es mayoritariamente tinta.',
+    altBar: ALT_CERVEZA_RUBIA,
   },
   {
     id: 'mariscos_arroz',
     etiqueta: 'Arroz o sopa marinera',
-    keywords: /\bmarinera\b|\barroz\b.*\bmariscos?\b|\btrio marino\b|\bfiesta del mar\b|\bpaila marina\b|\bcaldillo\b|\bchupe\b|\bpaella\b|\bsopa de mariscos\b/,
+    keywords: /\bmarinera\b|\barroz\b.*\bmariscos?\b|\bpaila marina\b|\bcaldillo\b|\bchupe\b|\bpaella\b|\bsopa de mariscos\b/,
     cuerpo: 'medio',
-    principio: 'Plato de mar con cuerpo (arroz, caldo) — un blanco con algo de volumen o un espumante seco lo sostienen sin taparlo.',
+    principio: 'Plato de mar con cuerpo, de arroz o de caldo: un blanco con algo de volumen o un espumante seco lo sostienen sin taparlo.',
     ordenVinos: ['chardonnay', 'sauvignon_blanc', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
   },
   {
@@ -266,7 +307,10 @@ export const PERFILES = [
     // `carne_roja_parrilla`; ver el OJO de ese perfil.
     keywords: /\bpulpo (a la )?(parrilla|brasa|grill|grille)\b|\bpulpo\b.*\bbbq\b/,
     cuerpo: 'medio',
-    principio: 'El ahumado de la parrilla y el dulzor de la salsa BBQ piden un tinto frutal de cuerpo medio, sin exceso de tanino.',
+    // Sin afirmar salsa BBQ: el perfil también atrapa "pulpo a la brasa"
+    // escrito a mano. La BBQ la nombra el texto propio del plato real.
+    principio:
+      'La parrilla le da al pulpo notas ahumadas que aguantan un tinto frutal de cuerpo medio, sin exceso de tanino. Un blanco muy liviano se queda corto.',
     ordenVinos: ['carmenere', 'garnacha_carignan', 'pinot_noir', 'tinto_generico'],
     altBar: [
       { re: /\bkunstmann miel\b/, motivo: 'una cerveza con un toque de miel también hace buen match con el dulzor de la BBQ' },
@@ -278,12 +322,14 @@ export const PERFILES = [
   },
   {
     id: 'picante',
-    etiqueta: 'Picantes (guata, mariscos, pulpo)',
+    // Antes "Picantes (guata, mariscos, pulpo)": al picante de guata le
+    // mostraba "mariscos" en la etiqueta.
+    etiqueta: 'Picante',
     // Antes que `mariscos`: "picante de mariscos" es un picante.
     keywords: /\bpicante\b/,
     cuerpo: 'bajo',
     principio:
-      'El picante amplifica el alcohol y el tanino — conviene un tinto de tanino bajo y algo de fruta dulce, o directamente algo con un poco de dulzor que enfríe.',
+      'El picante amplifica el alcohol y el tanino: conviene un tinto de tanino bajo y fruta madura, o algo con un poco de dulzor que refresque.',
     ordenVinos: ['garnacha_carignan', 'carmenere', 'moscato_espumante'],
     altBar: ALT_CERVEZA_RUBIA,
   },
@@ -301,7 +347,7 @@ export const PERFILES = [
     etiqueta: 'Pescado blanco',
     keywords: /\b(pescado|pescados|reineta|corvina|merluza|congrio|lenguado|tilapia|pejerrey|cojinova|vidriola|palometa|bacalao)\b/,
     cuerpo: 'bajo',
-    principio: 'Pescado blanco y liviano pide un vino igual de liviano — un tinto con cuerpo lo tapa.',
+    principio: 'El pescado blanco tiene sabor suave: pide un vino igual de liviano. Un tinto con cuerpo lo tapa.',
     ordenVinos: ['sauvignon_blanc', 'chardonnay', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
     contextoEscasez: 'La carta es mayoritariamente tinta.',
     altBar: [
@@ -317,14 +363,13 @@ export const PERFILES = [
     keywords:
       /\b(marisco|mariscos|camaron|camarones|langostino|langostinos|machas?|ostiones?|ostras?|choritos?|choros|almejas?|locos?|jaiba|centolla|erizos?|calamar|calamares|pulpo|frutos del mar)\b/,
     cuerpo: 'bajo',
-    principio: 'Los mariscos son delicados y salinos: piden un blanco fresco o un espumante, que acompañan sin tapar el sabor a mar.',
-    ordenVinos: ['sauvignon_blanc', 'espumante_neutro', 'chardonnay', 'blanco_generico', 'moscato_espumante'],
+    principio: 'Los mariscos son delicados y salinos: piden un blanco fresco o un espumante, que acompañan sin tapar el sabor a mar.',    ordenVinos: ['sauvignon_blanc', 'espumante_neutro', 'chardonnay', 'blanco_generico', 'moscato_espumante'],
     contextoEscasez: 'La carta es mayoritariamente tinta.',
     altBar: ALT_CERVEZA_RUBIA,
   },
   {
     id: 'carne_roja_parrilla',
-    etiqueta: 'Carne roja a la parrilla',
+    etiqueta: 'Carne roja',
     // OJO: la palabra genérica "parrilla" sola NO va acá — antes estaba, y
     // como este perfil se evalúa antes que `pulpo_parrilla`, "Pulpo a la
     // parrilla" caía en Cabernet Sauvignon en vez del Carmenere/Garnacha que
@@ -333,15 +378,32 @@ export const PERFILES = [
     keywords:
       /\b(tomahawk|bife de chorizo|entrecot|asado de tira|lomo a la orden|lomo grille|lomo vetado|parrillada|carne roja|flat iron|steak|picana|punta de ganso|cordero|filete de vacuno)\b/,
     cuerpo: 'alto',
-    principio: 'La grasa de una carne roja a la parrilla necesita taninos altos que la corten — ahí un Cabernet Sauvignon o un blend potente rinde mejor.',
+    // Sin "a la parrilla" en el texto: la etiqueta la ven también cortes que
+    // la carta no dice cómo se cocinan (bife de chorizo, flat iron).
+    principio:
+      'Una carne roja jugosa pide taninos firmes que limpien la boca entre bocado y bocado: ahí un Cabernet Sauvignon o un blend con cuerpo rinde mejor.',
     ordenVinos: ['cabernet_sauvignon', 'blend_tinto_cuerpo', 'shiraz', 'tinto_generico', 'carmenere'],
   },
   {
-    id: 'guiso_lomo_pobre',
-    etiqueta: 'Lomo a lo pobre / guisos de carne',
-    keywords: /\blomo a lo pobre\b|\bguiso\b|\bestofado\b|\bcarne a la olla\b|\bplateada\b|\bmechada\b/,
+    // Separado de los guisos (2026-09-25): antes compartían perfil y un
+    // "estofado" escrito a mano recibía el texto de "carne con huevo y papas
+    // fritas". El lomo a lo pobre es carne a la plancha con acompañamientos
+    // contundentes, no un guiso.
+    id: 'lomo_pobre',
+    etiqueta: 'Lomo a lo pobre',
+    keywords: /\blomo a lo pobre\b|\ba lo pobre\b/,
     cuerpo: 'alto',
-    principio: 'Carne con huevo y papas fritas: sigue siendo un plato de carne con grasa, pide un tinto con cuerpo pero no necesariamente el más tánico.',
+    principio:
+      'Lomo con papas fritas, huevo frito y cebolla: un plato de carne contundente y con grasa. Pide un tinto con cuerpo, aunque no el más tánico.',
+    ordenVinos: ['carmenere', 'blend_tinto_cuerpo', 'cabernet_sauvignon', 'tinto_generico'],
+  },
+  {
+    id: 'guiso_carne',
+    etiqueta: 'Carne cocinada lento',
+    keywords: /\bguiso\b|\bestofado\b|\bcarne a la olla\b|\bplateada\b|\bmechada\b|\bal vino tinto\b|\bossobuco\b|\bcazuela de vacuno\b/,
+    cuerpo: 'alto',
+    principio:
+      'La carne cocinada lento queda tierna y con un jugo profundo: pide un tinto con cuerpo, pero no necesariamente el más tánico. Un Carmenere acompaña el jugo sin secar la boca.',
     ordenVinos: ['carmenere', 'blend_tinto_cuerpo', 'cabernet_sauvignon', 'tinto_generico'],
   },
   {
@@ -352,8 +414,10 @@ export const PERFILES = [
     // de carne (el umami de la soya es lo que define la regla acá).
     keywords: /\blomo saltado\b|\bsaltado de (carne|lomo|vacuno|res)\b|\b(carne|lomo|vacuno|res) salteado\b|\bwok de (carne|lomo|vacuno|res)\b/,
     cuerpo: 'medio',
+    // La carta no nombra la soya, pero el sillao es parte de la receta
+    // tradicional peruana; el texto lo dice como tradición, no como dato del plato.
     principio:
-      'Lleva salsa de soya — el umami choca con taninos muy marcados y los vuelve metálicos. Mejor un tinto afrutado y de tanino más suave que un Cabernet estructurado.',
+      'El lomo saltado tradicional se saltea al wok con sillao (salsa de soya): ese umami choca con taninos muy marcados y los vuelve metálicos. Mejor un tinto afrutado y de tanino suave que un Cabernet estructurado.',
     ordenVinos: ['carmenere', 'garnacha_carignan', 'pinot_noir', 'tinto_generico'],
   },
   {
@@ -388,16 +452,34 @@ export const PERFILES = [
     etiqueta: 'Cerdo asado',
     keywords: /\bcerdo\b|\bcostillar\b|\bchancho\b|\bpernil\b/,
     cuerpo: 'medio',
-    principio: 'El cerdo es más suave que la carne de vacuno — un tinto de cuerpo medio acompaña sin aplastarlo.',
+    principio: 'El cerdo es más suave que el vacuno: un tinto de cuerpo medio lo acompaña sin aplastarlo.',
     ordenVinos: ['carmenere', 'pinot_noir', 'garnacha_carignan', 'cabernet_franc_blend', 'tinto_generico'],
   },
   {
     id: 'ave_salsa',
-    etiqueta: 'Ave en salsa',
+    // Antes "Ave en salsa" / "Pollo en salsa cremosa o de hongos", y lo usaban
+    // también la ensalada César (sin pollo) y la palta reina (fría, sin
+    // salsa). Ahora el texto no afirma salsa: la nombra cada plato real.
+    etiqueta: 'Pollo y ave',
     keywords: /\bsuprema\b|\bpollo\b|\bave a la plancha\b|\bpavo\b|\bchampignones\b/,
     cuerpo: 'medio',
-    principio: 'Pollo en salsa cremosa o de hongos: un blanco con cuerpo (Chardonnay) o un tinto liviano funcionan mejor que uno muy potente.',
+    principio:
+      'El ave tiene sabor suave: un blanco con cuerpo como el Chardonnay, o un tinto liviano, la acompañan mejor que un tinto potente que la tape.',
     ordenVinos: ['chardonnay', 'sauvignon_blanc', 'blanco_generico', 'pinot_noir', 'carmenere'],
+  },
+  {
+    // Nuevo (2026-09-25): ensaladas y entradas frías sin pescado. Va después
+    // de los perfiles de pescado y de ave para que "reineta con ensalada"
+    // siga siendo pescado.
+    id: 'entrada_fresca',
+    etiqueta: 'Entrada fresca',
+    keywords: /\bensaladas?\b|\bpalta reina\b|\bpalta rellena\b|\bcesar\b/,
+    cuerpo: 'bajo',
+    principio:
+      'Una entrada fría y fresca pide un vino igual de liviano y con acidez, que limpie el paladar. Un tinto con cuerpo la tapa.',
+    ordenVinos: ['sauvignon_blanc', 'chardonnay', 'espumante_neutro', 'blanco_generico', 'moscato_espumante'],
+    contextoEscasez: 'La carta es mayoritariamente tinta.',
+    altBar: ALT_CERVEZA_RUBIA,
   },
   // --- Postres ---------------------------------------------------------
   // Divididos en cuatro (2026-09-25) porque la alternativa y el motivo
@@ -441,7 +523,9 @@ export const PERFILES = [
   {
     id: 'postre_chocolate',
     etiqueta: 'Postre de chocolate',
-    keywords: /\bchocolate\b|\bbrownie\b|\bvolcan\b|\bnutella\b|\bfondue\b|\bcacao\b|\btentacion\b/,
+    // "tentacion" salió de acá (2026-09-25): la Tentación x 4 es un surtido
+    // donde solo uno de los cuatro postres es de chocolate.
+    keywords: /\bchocolate\b|\bbrownie\b|\bvolcan\b|\bnutella\b|\bfondue\b|\bcacao\b/,
     cuerpo: 'bajo',
     principio: 'Regla de oro con postres: el vino tiene que ser más dulce que el plato, si no, el vino se siente amargo al lado.',
     ordenVinos: ['moscato_espumante', 'espumante_neutro'],
@@ -456,7 +540,7 @@ export const PERFILES = [
     id: 'postre_frutal',
     etiqueta: 'Postre',
     keywords:
-      /\bpostres?\b|\btorta\b|\bhelados?\b|\bdulce\b|\bpanacotta\b|\bpanna cotta\b|\bmousse\b|\bleche asada\b|\bflan\b|\bcheesecake\b|\bkuchen\b|\bfrutillas? con crema\b/,
+      /\bpostres?\b|\btentacion\b|\btorta\b|\bhelados?\b|\bdulce\b|\bpanacotta\b|\bpanna cotta\b|\bmousse\b|\bleche asada\b|\bflan\b|\bcheesecake\b|\bkuchen\b|\bfrutillas? con crema\b/,
     cuerpo: 'bajo',
     principio: 'Regla de oro con postres: el vino tiene que ser más dulce que el plato, si no, el vino se siente amargo al lado.',
     ordenVinos: ['moscato_espumante', 'espumante_neutro'],
@@ -787,56 +871,213 @@ export const CATEGORIAS_SIN_MARIDAJE = ['NIÑOS', 'GUARNICIONES']
 
 // Las claves se escriben como aparecen en la carta (con o sin tildes da
 // igual): se normalizan al cargar el módulo, más abajo.
+//
+// Cada valor es el id del perfil, o un objeto { perfil, etiqueta?,
+// principio? } cuando el texto genérico del perfil no describe bien ese plato
+// en particular (reclamo del dueño, 2026-09-25: a "Causa & pulpo al olivo" le
+// salía "Pescado en salsa" y un texto sobre pescado, y el plato no lleva
+// pescado). Regla para redactar estos textos: solo ingredientes que dicen el
+// nombre del plato o su descripción en la carta (carta_traducciones.json);
+// si la carta no lo dice, no se afirma. El override cambia SOLO lo que se
+// muestra: el orden de vinos, el cuerpo y las alternativas siguen siendo los
+// del perfil, así que la recomendación de mesa (Mozo.jsx) no cambia de forma.
 const MAPEO_PLATOS_CRUDO = {
   // -- ENTRADAS FRIAS Y CALIENTES --
-  'TIRADITO DE SALMON AHUMADO': 'ceviche',
-  'CAUSA PULPO AL OLIVO': 'pescado_salsa',
-  'CAUSA LIMEÑA ACEVICHADA': 'ceviche',
-  'CAUSA LIMEÑA CON POLLO': 'ave_salsa',
-  'CAUSA LIMEÑA DE CAMARONES EN SALSA GOLF': 'pescado_salsa',
-  'CEVICHE MIXTO': 'ceviche',
+  'TIRADITO DE SALMON AHUMADO': {
+    perfil: 'ceviche',
+    principio:
+      'Salmón ahumado en láminas con un toque cítrico: el salmón aguanta algo de cuerpo, pero el cítrico manda. Un blanco con acidez propia es la opción segura.',
+  },
+  'CAUSA PULPO AL OLIVO': {
+    perfil: 'causa',
+    principio:
+      'Causa de papa amarilla rellena de pulpo en crema de aceitunas de Azapa: fría, suave y algo salina. Pide un blanco fresco con acidez que limpie la crema; un tinto le pasaría por encima al pulpo.',
+  },
+  'CAUSA LIMEÑA ACEVICHADA': {
+    perfil: 'causa',
+    principio:
+      'Causa cubierta con ceviche de pescado en leche de tigre cremosa: el limón manda, así que pide un blanco con acidez propia. Si el vino es menos ácido que el plato, sabe plano al lado.',
+  },
+  'CAUSA LIMEÑA CON POLLO': {
+    perfil: 'causa',
+    principio:
+      'Causa de papa amarilla con ají amarillo, rellena de pollo, mayonesa y palta: fría y cremosa. Un blanco fresco con acidez corta la mayonesa y la palta sin tapar el pollo.',
+  },
+  'CAUSA LIMEÑA DE CAMARONES EN SALSA GOLF': {
+    perfil: 'causa',
+    principio:
+      'Camarones en salsa golf sobre base de causa: fría, cremosa y con sabor a mar. Un blanco fresco con acidez limpia la salsa sin tapar el camarón.',
+  },
+  'CEVICHE MIXTO': {
+    perfil: 'ceviche',
+    principio:
+      'Pescado y mariscos en leche de tigre: el limón pide un vino con acidez propia. Si el vino es menos ácido que el plato, sabe plano al lado.',
+  },
   'CEVICHE TRADICIONAL': 'ceviche',
-  'ENSALADA CESAR AL ESTILO VARO S': 'ave_salsa',
-  'PALTA REINA CORONADA CON POLLO Y MAYONESA EN MIX DE HOJAS VERDES': 'ave_salsa',
-  'PULPO A LA OLIVA': 'pescado_salsa',
-  'TIRADITO NIKKEI': 'ceviche',
-  'TRILOGIA DE CAUSA LIMEÑA': 'pescado_salsa',
+  'ENSALADA CESAR AL ESTILO VARO S': {
+    perfil: 'entrada_fresca',
+    etiqueta: 'Ensalada',
+    principio:
+      'Lechuga, crutones, parmesano, aceitunas y tomate cherry: fresca y con el salado del queso. Un blanco con acidez la acompaña; un tinto con cuerpo la tapa.',
+  },
+  'PALTA REINA CORONADA CON POLLO Y MAYONESA EN MIX DE HOJAS VERDES': {
+    perfil: 'entrada_fresca',
+    principio:
+      'Palta rellena de pollo con mayonesa sobre hojas verdes: fría y cremosa. Un blanco fresco con acidez corta la palta y la mayonesa sin tapar el pollo.',
+  },
+  'PULPO A LA OLIVA': {
+    perfil: 'ceviche',
+    etiqueta: 'Pulpo en leche de tigre',
+    principio:
+      'Láminas de pulpo en leche de tigre con aceitunas de Azapa: el limón manda, así que pide un blanco con acidez propia. Un tinto con tanino choca con el cítrico.',
+  },
+  'TIRADITO NIKKEI': {
+    perfil: 'ceviche',
+    principio:
+      'Láminas de pescado o pulpo en leche de tigre con ají amarillo y sésamo: el limón pide un vino con acidez propia, y un poco de fruta en el vino calma el ají.',
+  },
+  'TRILOGIA DE CAUSA LIMEÑA': {
+    perfil: 'causa',
+    principio:
+      'Tres causas (camarón, pollo y pulpo) con salsa de aceituna, de ají amarillo y de ajo. Las tres son frías y cremosas: un blanco fresco con acidez acompaña a todas.',
+  },
 
   // -- PLATOS PRINCIPALES --
-  'LOMO SALTADO CON RISSOTTO A LA HUANCAINA': 'lomo_saltado',
-  'PARRILLADA 1 LOMO 1 TRUTO 1 PRIETA 2 LONGANIZA 2 GUARNICION': 'carne_roja_parrilla',
-  'PULPO A LA PARRILLA EN SALSA BBQ CON PAPAS DORADAS': 'pulpo_parrilla',
+  'LOMO SALTADO CON RISSOTTO A LA HUANCAINA': {
+    perfil: 'lomo_saltado',
+    principio:
+      'Lomo saltado con un risotto cremoso de ají amarillo. El saltado tradicional lleva sillao (salsa de soya), y ese umami choca con taninos marcados: mejor un tinto afrutado y de tanino suave que un Cabernet estructurado.',
+  },
+  'PARRILLADA 1 LOMO 1 TRUTO 1 PRIETA 2 LONGANIZA 2 GUARNICION': {
+    perfil: 'carne_roja_parrilla',
+    etiqueta: 'Parrillada',
+    principio:
+      'Lomo, trutro, prieta y longaniza: mucha grasa y sabor a parrilla. Pide taninos firmes que limpien la boca entre bocado y bocado, como un Cabernet Sauvignon o un blend con cuerpo.',
+  },
+  'PULPO A LA PARRILLA EN SALSA BBQ CON PAPAS DORADAS': {
+    perfil: 'pulpo_parrilla',
+    principio:
+      'El ahumado de la parrilla y el dulzor de la salsa BBQ piden un tinto frutal de cuerpo medio, sin exceso de tanino.',
+  },
   'REINETA EN SALSA DE CAMARONES CON ACOMPAÑAMIENTO A ELECCION': 'pescado_salsa',
   'REINETA EN SALSA DE MARISCOS ACOMPAÑAMIENTO A ELECCION': 'pescado_salsa',
-  'REINETA FRITA CON ENSALADA SURTIDA DEL VALLE': 'pescado_blanco',
-  'SPAGUETTI EN TINTA DE CALAMAR CON SALSA DE MARISCOS': 'pasta_mariscos',
-  'SUPREMA DE AVE A LA PLANCHA EN SALSA HUANCAINA ACOMPAÑADO DE ARROZ AL OLIVO': 'ave_salsa',
-  'SUPREMA DE AVE CON SALSA DE CHAMPIGNONES ARROZ A LAS FINAS HIERBAS': 'ave_salsa',
-  'LOMO GRILLE 200 GRAMOS A LA ORDEN': 'carne_roja_parrilla',
-  'LOMO A LO POBRE 200 GRMS': 'guiso_lomo_pobre',
-  'FETTUCCINE A LA HUANCAINA CON LOMO SALTADO': 'lomo_saltado',
-  'CEVICHE TRADICIONAL CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': 'ceviche',
-  'CEVICHE MIXTO DEL PACIFICO CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': 'ceviche',
+  'REINETA FRITA CON ENSALADA SURTIDA DEL VALLE': {
+    perfil: 'pescado_blanco',
+    principio:
+      'Reineta frita con ensalada del valle: pescado blanco de sabor suave, crujiente por fuera. Un blanco fresco con acidez corta la fritura sin tapar el pescado.',
+  },
+  'SPAGUETTI EN TINTA DE CALAMAR CON SALSA DE MARISCOS': {
+    perfil: 'pasta_mariscos',
+    principio:
+      'Spaghetti en tinta de calamar con salsa de mariscos: pide un blanco con cuerpo o un espumante. De los tintos, solo uno muy liviano tipo Pinot Noir; uno tánico se pelea con el marisco.',
+  },
+  'SUPREMA DE AVE A LA PLANCHA EN SALSA HUANCAINA ACOMPAÑADO DE ARROZ AL OLIVO': {
+    perfil: 'ave_salsa',
+    principio:
+      'Suprema a la plancha con salsa huancaína (ají amarillo y queso): la salsa cremosa pide un blanco con cuerpo como el Chardonnay. Un tinto potente taparía el pollo.',
+  },
+  'SUPREMA DE AVE CON SALSA DE CHAMPIGNONES ARROZ A LAS FINAS HIERBAS': {
+    perfil: 'ave_salsa',
+    principio:
+      'Suprema con salsa de champiñones: los hongos y la salsa piden un blanco con cuerpo como el Chardonnay, o un tinto liviano. Uno muy potente taparía el pollo.',
+  },
+  'LOMO GRILLE 200 GRAMOS A LA ORDEN': {
+    perfil: 'carne_roja_parrilla',
+    principio:
+      'Lomo a la parrilla: carne roja jugosa que pide taninos firmes. Un Cabernet Sauvignon o un blend con cuerpo le quedan mejor que un tinto liviano.',
+  },
+  'LOMO A LO POBRE 200 GRMS': 'lomo_pobre',
+  'FETTUCCINE A LA HUANCAINA CON LOMO SALTADO': {
+    perfil: 'lomo_saltado',
+    principio:
+      'Fettuccine a la huancaína con lomo saltado. El saltado tradicional lleva sillao (salsa de soya), que choca con taninos marcados, y la huancaína es cremosa: mejor un tinto afrutado y de tanino suave.',
+  },
+  'CEVICHE TRADICIONAL CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': {
+    perfil: 'ceviche',
+    principio:
+      'Pescado en leche de tigre con chicharrón de pescado: el limón pide un vino con acidez propia, y esa misma acidez limpia lo frito.',
+  },
+  'CEVICHE MIXTO DEL PACIFICO CON CHICHARRON DE PESCADO Y LECHE DE TIGRE': {
+    perfil: 'ceviche',
+    principio:
+      'Mariscos y pesca del día en leche de tigre, con chicharrón de pescado: el limón pide un vino con acidez propia, y esa misma acidez limpia lo frito.',
+  },
   'BIFE DE CHORIZO 350 GMOS 2 GUARNICIONES A ELECCIÓN': 'carne_roja_parrilla',
-  'ARROZ A LA MARINERA': 'mariscos_arroz',
+  'ARROZ A LA MARINERA': {
+    perfil: 'mariscos_arroz',
+    principio:
+      'Arroz con camarón, pulpo, almejas, choritos y ostiones: plato de mar con cuerpo. Un blanco con algo de volumen o un espumante seco lo sostienen sin taparlo.',
+  },
   'FLAT IRON STEAK 350 GMS GUARNICION A ELECCIÓN': 'carne_roja_parrilla',
-  'ENTRECOT DE VACUNO GRILLE CON CHIMICHURRI 500 GRAMOS GUARNICION A ELECCION': 'carne_roja_parrilla',
-  'ASADO DE TIRA AL VINO TINTO CON GUARNICION A LA ORDEN 500GM': 'carne_roja_parrilla',
-  'TOMAHAWK 800 GRMS CON CHIMICHURRI Y 2 ACOMPAÑAMIENTOS A ELECCION': 'carne_roja_parrilla',
-  'TRIO MARINO': 'mariscos_arroz',
-  'SOPA MARINERA': 'mariscos_arroz',
-  'COSTILLAR DE CERDO ASADO GUARNICION A ELECCION': 'cerdo',
-  'PICANTE DE PULPO CON ARROZ': 'picante',
-  'PICANTE DE MARISCOS CON ARROZ': 'picante',
-  'PICANTE DE GUATA Y PATA CON ARROZ BLANCO': 'picante',
-  'FIESTA DEL MAR': 'mariscos_arroz',
-  'LOMO SALTADO CLASICO': 'lomo_saltado',
+  'ENTRECOT DE VACUNO GRILLE CON CHIMICHURRI 500 GRAMOS GUARNICION A ELECCION': {
+    perfil: 'carne_roja_parrilla',
+    principio:
+      'Entrecot a la parrilla con chimichurri: corte jugoso y con grasa. Pide taninos firmes que la corten, como un Cabernet Sauvignon o un blend con cuerpo.',
+  },
+  'ASADO DE TIRA AL VINO TINTO CON GUARNICION A LA ORDEN 500GM': {
+    // Antes `carne_roja_parrilla`: no es parrilla, es cocción lenta en vino.
+    perfil: 'guiso_carne',
+    etiqueta: 'Carne al vino tinto',
+    principio:
+      'Asado de tira cocinado lento en vino tinto: tierno y de sabor profundo. Pide un tinto con cuerpo que siga la línea de la salsa, sin necesidad de ser el más tánico.',
+  },
+  'TOMAHAWK 800 GRMS CON CHIMICHURRI Y 2 ACOMPAÑAMIENTOS A ELECCION': {
+    perfil: 'carne_roja_parrilla',
+    principio:
+      'Tomahawk a la parrilla con chimichurri: corte grande, jugoso y con grasa. Pide taninos firmes, como un Cabernet Sauvignon o un blend con cuerpo.',
+  },
+  'TRIO MARINO': {
+    perfil: 'mar_surtido',
+    principio:
+      'Arroz con mariscos, ceviche y chicharrón de pescado en un mismo plato: el ceviche pide acidez y lo frito también la agradece. Un blanco con acidez propia acompaña las tres cosas.',
+  },
+  'SOPA MARINERA': {
+    perfil: 'mariscos_arroz',
+    principio:
+      'Caldo con mariscos y pescado: plato de mar con cuerpo. Un blanco con algo de volumen o un espumante seco lo acompañan sin taparlo.',
+  },
+  'COSTILLAR DE CERDO ASADO GUARNICION A ELECCION': {
+    perfil: 'cerdo',
+    principio:
+      'Costillar cocinado lento, con notas ahumadas: el cerdo es más suave que el vacuno, así que un tinto de cuerpo medio lo acompaña sin aplastarlo.',
+  },
+  'PICANTE DE PULPO CON ARROZ': {
+    perfil: 'picante',
+    principio:
+      'Pulpo en salsa cremosa de ají, con arroz: el picante amplifica el alcohol y el tanino. Conviene un tinto de tanino bajo y fruta madura, o algo con un poco de dulzor que refresque.',
+  },
+  'PICANTE DE MARISCOS CON ARROZ': {
+    perfil: 'picante',
+    principio:
+      'Mariscos en salsa picante, con arroz: el picante amplifica el alcohol y el tanino. Conviene un tinto de tanino bajo y fruta madura, o algo con un poco de dulzor que refresque.',
+  },
+  'PICANTE DE GUATA Y PATA CON ARROZ BLANCO': {
+    perfil: 'picante',
+    principio:
+      'Guata y pata en salsa picante, con arroz blanco: sabor intenso y picor. El picante amplifica el alcohol y el tanino, así que conviene un tinto de tanino bajo y fruta madura.',
+  },
+  'FIESTA DEL MAR': {
+    perfil: 'mar_surtido',
+    principio:
+      'Para compartir: ceviche, pulpo a la parrilla, chicharrón de pescado, arroz con mariscos y causa de pulpo. Con tanto limón y fritura, un blanco con acidez propia es el que mejor acompaña todo.',
+  },
+  'LOMO SALTADO CLASICO': {
+    perfil: 'lomo_saltado',
+    principio:
+      'Lomo saltado al wok con cebolla y tomate, con arroz y papas fritas. El saltado tradicional lleva sillao (salsa de soya), y ese umami choca con taninos marcados: mejor un tinto afrutado y de tanino suave.',
+  },
 
   // -- POSTRES & TENTACIONES --
   'PANACOTTA CON SALSA DE FRUTILLA': 'postre_frutal',
   // El más dulce de la carta: ver la nota honesta de `postre_muy_dulce`.
   'SUSPIRO LIMEÑO': 'postre_muy_dulce',
-  'TENTACION X 4 UNIDADES': 'postre_chocolate',
+  'TENTACION X 4 UNIDADES': {
+    // Antes `postre_chocolate`: solo uno de los cuatro es de chocolate.
+    perfil: 'postre_frutal',
+    etiqueta: 'Surtido de postres',
+    principio:
+      'Panacotta con frutilla, mousse de maracuyá, leche asada y volcán de chocolate. Regla de oro con postres: el vino tiene que ser más dulce que el plato, si no, se siente amargo al lado.',
+  },
   TIRAMISÚ: 'postre_cafe',
   'VOLCÁN DE CHOCOLATE CON HELADO': 'postre_chocolate',
   'BROWNIE CON HELADO': 'postre_chocolate',
@@ -848,22 +1089,32 @@ const MAPEO_PLATOS_CRUDO = {
   'MOUSSE DE MARACUYA EN SALSA DE MARACUYA': 'postre_frutal',
 }
 
+// Clave normalizada → perfil final. Si el plato trae texto propio, es un
+// objeto nuevo con los campos del perfil + la etiqueta/principio del plato
+// (mismo id, mismos vinos). Se arma una sola vez al cargar el módulo, así
+// que el mismo plato devuelve siempre el mismo objeto (estable para useMemo).
 const MAPEO_PLATOS = Object.fromEntries(
-  Object.entries(MAPEO_PLATOS_CRUDO).map(([nombre, id]) => [normalizarNombrePlato(nombre), id])
+  Object.entries(MAPEO_PLATOS_CRUDO).map(([nombre, valor]) => {
+    const { perfil: id, etiqueta, principio } = typeof valor === 'string' ? { perfil: valor } : valor
+    const base = PERFILES.find((p) => p.id === id)
+    if (!base) throw new Error(`maridaje.js: el plato "${nombre}" apunta a un perfil que no existe (${id})`)
+    const perfil =
+      etiqueta || principio
+        ? { ...base, ...(etiqueta && { etiqueta }), ...(principio && { principio }) }
+        : base
+    return [normalizarNombrePlato(nombre), perfil]
+  })
 )
 
 // Resuelve el perfil de un plato REAL de la carta (objeto de `menu_items`,
 // con `name` y `category`). Prioridad: 1) categorías excluidas → null,
-// 2) mapeo explícito por nombre normalizado, 3) fallback a `detectarPerfil`
-// por regex sobre el nombre (cubre productos nuevos que todavía no se
-// agregaron al mapeo de arriba, sin dejarlos sin recomendación).
+// 2) mapeo explícito por nombre normalizado (con su texto propio si lo
+// tiene), 3) fallback a `detectarPerfil` por regex sobre el nombre (cubre
+// productos nuevos que todavía no se agregaron al mapeo de arriba, sin
+// dejarlos sin recomendación).
 export function perfilDePlato(item) {
   if (!item?.name) return null
   if (CATEGORIAS_SIN_MARIDAJE.includes(item.category)) return null
   const clave = normalizarNombrePlato(item.name)
-  const idMapeado = MAPEO_PLATOS[clave]
-  if (idMapeado) {
-    return PERFILES.find((p) => p.id === idMapeado) || null
-  }
-  return detectarPerfil(item.name)
+  return MAPEO_PLATOS[clave] || detectarPerfil(item.name)
 }
